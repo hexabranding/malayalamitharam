@@ -21,20 +21,17 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "https://demo.malayalamitharam.
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || process.env.NODE_ENV !== "production") {
-      return callback(null, true);
-    }
     const allowed = [
       FRONTEND_URL,
       process.env.ALLOWED_ORIGIN,
       "https://demo.malayalamitharam.in",
       "https://malayalamitharam.in",
+      "https://www.malayalamitharam.in",
     ].filter(Boolean);
-    if (allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true);
+    if (!origin || allowed.includes(origin) || process.env.NODE_ENV !== "production") {
+      return callback(null, true);
     }
+    callback(null, true);
   },
   credentials: true,
 }));

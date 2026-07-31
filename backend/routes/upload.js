@@ -30,7 +30,9 @@ const upload = multer({
 
 router.post("/image", authMiddleware, upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No image uploaded" });
-  res.json({ url: `/uploads/${req.file.filename}` });
+  const host = req.headers.host || "api.malayalamitharam.in";
+  const protocol = req.protocol || "https";
+  res.json({ url: `${protocol}://${host}/uploads/${req.file.filename}` });
 });
 
 module.exports = router;
