@@ -1,6 +1,6 @@
 import { articles as fallbackArticles } from "../data/news.js";
 
-const BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "/api";
+const BASE = ((typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "") + "/api";
 let backendAvailable = null;
 
 function cacheSet(key, data) {
