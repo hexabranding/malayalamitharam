@@ -1,108 +1,4 @@
-import { articles as fallbackArticles } from "../data/news.js";
-
-const BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) || "https://api.malayalamitharam.in/api";
-let backendAvailable = null;
-
-function cacheSet(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch {}
-}
-
-function cacheGet(key) {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : null;
-  } catch { return null; }
-}
-
-function loadCachedArticles() {
-  const saved = cacheGet("mm_articles");
-  if (saved && Array.isArray(saved)) {
-    fallbackArticles.length = 0;
-    fallbackArticles.push(...saved);
-  }
-}
-
-function saveCachedArticles() {
-  cacheSet("mm_articles", fallbackArticles);
-  window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "articles" } }));
-}
-
-function articlePayload(result) {
-  return result?.article || result?.news || result?.data || result;
-}
-
-function articleKey(article) {
-  return article?.id || article?.slug || article?._id;
-}
-
-function mirrorLocalArticle(article) {
-  article = articlePayload(article);
-  if (!article || !articleKey(article)) return;
-  const key = articleKey(article);
-  const entry = { ...article, id: key, slug: article.slug || key };
-  const idx = fallbackArticles.findIndex((a) => a.id === key || a.slug === key);
-  if (idx === -1) fallbackArticles.unshift(entry);
-  else fallbackArticles[idx] = { ...fallbackArticles[idx], ...entry };
-  saveCachedArticles();
-}
-
-function removeLocalArticle(slug) {
-  const idx = fallbackArticles.findIndex((a) => a.id === slug || a.slug === slug);
-  if (idx !== -1) {
-    fallbackArticles.splice(idx, 1);
-    saveCachedArticles();
-  }
-}
-
-function syncArticlesFromBackend(news) {
-  if (!Array.isArray(news) || news.length === 0) return;
-  fallbackArticles.length = 0;
-  fallbackArticles.push(...news);
-  saveCachedArticles();
-}
-
-let localAds = cacheGet("mm_ads") || [];
-function saveLocalAds() { cacheSet("mm_ads", localAds); }
-
-const defaultSettings = [
-  { key: "site_name", value: "Malayalamithram", label: "Site Name", type: "text" },
-  { key: "site_tagline", value: "Malayalamithram News", label: "Site Tagline", type: "text" },
-  { key: "site_logo", value: "/images/malayalamithram-logo.png", label: "Site Logo", type: "image" },
-  { key: "site_banner", value: "/images/malayala-mitra-banner.jpeg", label: "Site Banner", type: "image" },
-  { key: "primary_color", value: "#bd1d25", label: "Primary Color", type: "color" },
-  { key: "secondary_color", value: "#e6b313", label: "Secondary Color", type: "color" },
-  { key: "title_bg_color", value: "#bd1d25", label: "Title Background Color", type: "color" },
-  { key: "facebook_url", value: "", label: "Facebook URL", type: "text" },
-  { key: "youtube_url", value: "", label: "Youtube URL", type: "text" },
-  { key: "twitter_url", value: "", label: "Twitter URL", type: "text" },
-  { key: "instagram_url", value: "", label: "Instagram URL", type: "text" },
-  { key: "whatsapp_url", value: "", label: "WhatsApp URL", type: "text" },
-  { key: "telegram_url", value: "", label: "Telegram URL", type: "text" },
-  { key: "linkedin_url", value: "", label: "LinkedIn URL", type: "text" },
-  { key: "articles_per_page", value: 12, label: "Articles Per Page", type: "number" },
-];
-
-let localSettings = cacheGet("mm_settings") || [];
-function saveLocalSettings() { cacheSet("mm_settings", localSettings); }
-
-function mergeSettings(base = [], overrides = []) {
-  const map = new Map();
-  [...base, ...overrides].forEach((item) => {
-    if (item?.key) map.set(item.key, { ...(map.get(item.key) || {}), ...item });
-  });
-  return Array.from(map.values());
-}
-
-function settingsListToObject(settings) {
-  return settings.reduce((acc, item) => {
-    if (item?.key) acc[item.key] = item.value;
-    return acc;
-  }, {});
-}
-
-loadCachedArticles();
+const BASE = "/api";
 
 function getToken() {
   try {
@@ -123,134 +19,67 @@ function headers(extra = {}) {
 }
 
 async function request(url, options = {}) {
-  try {
-    const res = await fetch(BASE + url, options);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(body.error || "Request failed");
-    }
-    return res.json();
-  } catch (e) {
-    throw e;
+  const res = await fetch(BASE + url, options);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(body.error || "Request failed");
   }
+  return res.json();
 }
 
-function filterFallback(params) {
-  let result = [...fallbackArticles];
-  if (params.category) result = result.filter(a => a.category === params.category);
-  if (params.featured !== undefined) result = result.filter(a => String(a.featured) === params.featured);
-  if (params.breaking !== undefined) result = result.filter(a => String(a.breaking) === params.breaking);
-  if (params.search) {
-    const q = params.search.toLowerCase();
-    result = result.filter(a => (a.title + a.excerpt + a.tags.join(" ")).toLowerCase().includes(q));
-  }
-  if (params.limit) result = result.slice(0, Number(params.limit));
-  return { news: result, total: result.length };
-}
-
-async function withFallback(apiCall, fallbackFn) {
-  if (backendAvailable === false) return fallbackFn();
-  try {
-    const result = await apiCall();
-    if (backendAvailable === null) backendAvailable = true;
-    return result;
-  } catch {
-    backendAvailable = false;
-    return fallbackFn();
-  }
+function articlePayload(result) {
+  return result?.article || result?.news || result?.data || result;
 }
 
 // News / Articles
 export async function fetchNews(params = {}) {
-  return withFallback(async () => {
-    const q = new URLSearchParams();
-    if (params.category) q.set("category", params.category);
-    if (params.subcategory) q.set("subcategory", params.subcategory);
-    if (params.featured !== undefined) q.set("featured", String(params.featured));
-    if (params.breaking !== undefined) q.set("breaking", String(params.breaking));
-    if (params.search) q.set("search", params.search);
-    if (params.limit) q.set("limit", String(params.limit));
-    if (params.page) q.set("page", String(params.page));
-    const query = q.toString();
-    const result = await request("/news" + (query ? "?" + query : ""));
-    if (result?.news?.length) syncArticlesFromBackend(result.news);
-    return result;
-  }, () => filterFallback(params));
+  const q = new URLSearchParams();
+  if (params.category) q.set("category", params.category);
+  if (params.subcategory) q.set("subcategory", params.subcategory);
+  if (params.featured !== undefined) q.set("featured", String(params.featured));
+  if (params.breaking !== undefined) q.set("breaking", String(params.breaking));
+  if (params.search) q.set("search", params.search);
+  if (params.limit) q.set("limit", String(params.limit));
+  if (params.page) q.set("page", String(params.page));
+  const query = q.toString();
+  return request("/news" + (query ? "?" + query : ""));
 }
 
 export async function fetchArticle(slug) {
-  return withFallback(
-    () => request("/news/" + encodeURIComponent(slug)),
-    () => {
-      const found = fallbackArticles.find(a => a.id === slug);
-      if (!found) throw new Error("Article not found");
-      return { ...found, id: found.id, slug: found.id };
-    }
-  );
+  return request("/news/" + encodeURIComponent(slug));
 }
 
 export async function createArticle(data) {
-  const result = await request("/news", { method: "POST", headers: headers(), body: JSON.stringify(data) });
-  const saved = articlePayload(result) || {};
-  const localId = saved.id || saved._id || saved.slug || data.id || data.slug || "article-" + Date.now();
-  mirrorLocalArticle({ ...data, ...saved, id: localId, slug: saved.slug || localId });
-  return result;
+  return request("/news", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function updateArticle(slug, data) {
-  const result = await request("/news/" + encodeURIComponent(slug), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
-  const saved = articlePayload(result);
-  mirrorLocalArticle({ ...data, ...saved, id: saved?.id || saved?._id || slug, slug: saved?.slug || slug });
-  return result;
+  return request("/news/" + encodeURIComponent(slug), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function incrementView(slug) {
-  return withFallback(
-    () => request("/news/" + encodeURIComponent(slug) + "/view", { method: "PATCH" }),
-    () => {
-      const idx = fallbackArticles.findIndex(a => a.id === slug);
-      if (idx !== -1) {
-        fallbackArticles[idx] = { ...fallbackArticles[idx], views: (fallbackArticles[idx].views || 0) + 1 };
-        saveCachedArticles();
-      }
-      return { views: idx !== -1 ? fallbackArticles[idx].views : 1 };
-    }
-  );
+  return request("/news/" + encodeURIComponent(slug) + "/view", { method: "PATCH" });
 }
 
 export async function deleteArticle(slug) {
-  const result = await request("/news/" + encodeURIComponent(slug), { method: "DELETE", headers: headers() });
-  removeLocalArticle(slug);
-  return result;
+  return request("/news/" + encodeURIComponent(slug), { method: "DELETE", headers: headers() });
 }
 
 // Categories
 export async function fetchCategories() {
-  return withFallback(
-    () => request("/categories"),
-    () => fallbackCategories
-  );
+  return request("/categories");
 }
 
 export async function createCategory(data) {
-  return withFallback(
-    () => request("/categories", { method: "POST", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/categories", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function updateCategory(id, data) {
-  return withFallback(
-    () => request("/categories/" + encodeURIComponent(id), { method: "PUT", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/categories/" + encodeURIComponent(id), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function deleteCategory(id) {
-  return withFallback(
-    () => request("/categories/" + encodeURIComponent(id), { method: "DELETE", headers: headers() }),
-    () => ({ message: "Category deleted" })
-  );
+  return request("/categories/" + encodeURIComponent(id), { method: "DELETE", headers: headers() });
 }
 
 // Auth
@@ -264,198 +93,91 @@ export async function fetchMe() {
 
 // Tags
 export async function fetchTags() {
-  return withFallback(
-    () => request("/tags"),
-    () => trendingTags.map(t => ({ name: t, slug: t }))
-  );
+  return request("/tags");
 }
 
 export async function createTag(data) {
-  return withFallback(
-    () => request("/tags", { method: "POST", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/tags", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function updateTag(id, data) {
-  return withFallback(
-    () => request("/tags/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/tags/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function deleteTag(id) {
-  return withFallback(
-    () => request("/tags/" + id, { method: "DELETE", headers: headers() }),
-    () => ({ message: "Tag deleted" })
-  );
+  return request("/tags/" + id, { method: "DELETE", headers: headers() });
 }
 
 // Pages
 export async function fetchPages() {
-  return withFallback(() => request("/pages"), () => []);
+  return request("/pages");
 }
 
 export async function createPage(data) {
-  return withFallback(
-    () => request("/pages", { method: "POST", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/pages", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function updatePage(id, data) {
-  return withFallback(
-    () => request("/pages/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/pages/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function deletePage(id) {
-  return withFallback(
-    () => request("/pages/" + id, { method: "DELETE", headers: headers() }),
-    () => ({ message: "Page deleted" })
-  );
+  return request("/pages/" + id, { method: "DELETE", headers: headers() });
 }
 
 // Authors
 export async function fetchAuthors() {
-  return withFallback(() => request("/authors"), () => authors);
+  return request("/authors");
 }
 
 export async function createAuthor(data) {
-  return withFallback(
-    () => request("/authors", { method: "POST", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/authors", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function updateAuthor(id, data) {
-  return withFallback(
-    () => request("/authors/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) }),
-    () => data
-  );
+  return request("/authors/" + id, { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function deleteAuthor(id) {
-  return withFallback(
-    () => request("/authors/" + id, { method: "DELETE", headers: headers() }),
-    () => ({ message: "Author deleted" })
-  );
+  return request("/authors/" + id, { method: "DELETE", headers: headers() });
 }
 
 // Settings
 export async function fetchSettings() {
-  const localObject = settingsListToObject(mergeSettings(defaultSettings, localSettings));
-  return withFallback(async () => {
-    const remote = await request("/settings");
-    return { ...remote, ...localObject };
-  }, () => localObject);
+  return request("/settings");
 }
 
 export async function fetchSettingsAll() {
-  return withFallback(async () => {
-    const remote = await request("/settings/all");
-    return mergeSettings(defaultSettings, mergeSettings(Array.isArray(remote) ? remote : [], localSettings));
-  }, () => mergeSettings(defaultSettings, localSettings));
+  return request("/settings/all");
 }
 
 export async function updateSetting(key, value) {
-  const existing = mergeSettings(defaultSettings, localSettings);
-  const idx = existing.findIndex((setting) => setting.key === key);
-  const entry = { ...(idx === -1 ? { key, label: key, type: "text" } : existing[idx]), value };
-  if (idx === -1) existing.push(entry);
-  else existing[idx] = entry;
-  localSettings = existing;
-  saveLocalSettings();
-
-  return withFallback(
-    () => request("/settings/" + encodeURIComponent(key), { method: "PUT", headers: headers(), body: JSON.stringify({ value }) }),
-    () => ({ key, value })
-  );
+  return request("/settings/" + encodeURIComponent(key), { method: "PUT", headers: headers(), body: JSON.stringify({ value }) });
 }
 
 export async function seedSettings() {
-  localSettings = mergeSettings(defaultSettings, localSettings);
-  saveLocalSettings();
-  return withFallback(
-    () => request("/settings/seed", { method: "POST", headers: headers() }),
-    () => ({ message: "Settings seeded" })
-  );
+  return request("/settings/seed", { method: "POST", headers: headers() });
 }
 
 // Ads
 export async function fetchAds() {
-  return withFallback(
-    async () => {
-      const remote = await request("/ads");
-      const merged = mergeAds(remote, localAds);
-      return merged.filter((a) => a.active !== false);
-    },
-    () => localAds.filter((a) => a.active !== false)
-  );
+  return request("/ads");
 }
 
 export async function fetchAdsAll() {
-  return withFallback(
-    async () => {
-      const remote = await request("/ads/all", { headers: headers() });
-      return mergeAds(remote, localAds);
-    },
-    () => localAds
-  );
+  return request("/ads/all", { headers: headers() });
 }
 
 export async function fetchAdBySlot(slot) {
-  const local = localAds.find((a) => a.slot === slot && a.active !== false);
-  if (local) return local;
-  return withFallback(
-    () => request("/ads/" + encodeURIComponent(slot)),
-    () => localAds.find((a) => a.slot === slot && a.active !== false) || null
-  );
-}
-
-function mergeAds(remote = [], local = []) {
-  const map = new Map();
-  [...remote, ...local].forEach((item) => {
-    if (item?.slot) map.set(item.slot, { ...(map.get(item.slot) || {}), ...item });
-  });
-  return Array.from(map.values());
+  return request("/ads/" + encodeURIComponent(slot));
 }
 
 export async function saveAd(data) {
-  const result = await withFallback(
-    () => request("/ads", { method: "POST", headers: headers(), body: JSON.stringify(data) }),
-    () => {
-      const idx = localAds.findIndex((a) => a.slot === data.slot);
-      const entry = { ...data, id: data.slot, active: data.active !== false };
-      if (idx === -1) localAds.push(entry);
-      else localAds[idx] = { ...localAds[idx], ...entry };
-      saveLocalAds();
-      return entry;
-    }
-  );
-  const idx = localAds.findIndex((a) => a.slot === data.slot);
-  const entry = { ...data, ...result, id: result?.id || data.slot, active: data.active !== false };
-  if (idx === -1) localAds.push(entry);
-  else localAds[idx] = { ...localAds[idx], ...entry };
-  saveLocalAds();
-  window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "ads" } }));
-  return result;
+  return request("/ads", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function deleteAd(slot) {
-  const result = await withFallback(
-    () => request("/ads/" + encodeURIComponent(slot), { method: "DELETE", headers: headers() }),
-    () => {
-      localAds = localAds.filter((a) => a.slot !== slot);
-      saveLocalAds();
-      return { message: "Ad deleted" };
-    }
-  );
-  localAds = localAds.filter((a) => a.slot !== slot);
-  saveLocalAds();
-  window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "ads" } }));
-  return result;
+  return request("/ads/" + encodeURIComponent(slot), { method: "DELETE", headers: headers() });
 }
 
 // Upload
@@ -465,33 +187,9 @@ export async function uploadImage(file) {
   const token = getToken();
   const h = {};
   if (token) h["Authorization"] = "Bearer " + token;
-
-  try {
-    const res = await fetch(BASE + "/upload/image", { method: "POST", headers: h, body: formData });
-    if (!res.ok) throw new Error("Upload failed");
-    return res.json();
-  } catch {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const MAX_W = 1920;
-          let w = img.width, h = img.height;
-          if (w > MAX_W) { h = h * MAX_W / w; w = MAX_W; }
-          const c = document.createElement("canvas");
-          c.width = w; c.height = h;
-          const ctx = c.getContext("2d");
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve({ url: c.toDataURL("image/jpeg", 0.85) });
-        };
-        img.onerror = reject;
-        img.src = reader.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
+  const res = await fetch(BASE + "/upload/image", { method: "POST", headers: h, body: formData });
+  if (!res.ok) throw new Error("Upload failed");
+  return res.json();
 }
 
 export const AD_SLOTS = [
@@ -510,38 +208,6 @@ export const AD_SLOTS = [
   { slot: "home-footer-ad-1", label: "Home Before Footer Ad 1 (300 x 160)", title: "Home Footer Ad 1" },
   { slot: "home-footer-ad-2", label: "Home Before Footer Ad 2 (300 x 160)", title: "Home Footer Ad 2" },
   { slot: "home-footer-ad-3", label: "Home Before Footer Ad 3 (300 x 160)", title: "Home Footer Ad 3" },
-];
-
-const fallbackCategories = [
-  { id: "kerala", label: "കേരളം", slug: "kerala", count: 3 },
-  { id: "india", label: "ഇന്ത്യ", slug: "india", count: 3 },
-  { id: "world", label: "ലോകം", slug: "world", count: 3 },
-  { id: "business", label: "ബിസിനസ്", slug: "business", count: 2 },
-  { id: "politics", label: "രാഷ്ട്രീയം", slug: "politics", count: 2 },
-  { id: "cinema", label: "സിനിമ", slug: "cinema", count: 2 },
-  { id: "pravasi", label: "പ്രവാസി", slug: "pravasi", count: 2 },
-  { id: "uae", label: "യുഎഇ", slug: "uae", count: 2 },
-  { id: "football", label: "ഫുട്ബോൾ", slug: "football", count: 2 },
-  { id: "cricket", label: "ക്രിക്കറ്റ്", slug: "cricket", count: 2 },
-  { id: "tech", label: "സാങ്കേതികം", slug: "tech", count: 2 },
-  { id: "property", label: "പ്രോപ്പർട്ടി", slug: "property", count: 2 },
-  { id: "editorial", label: "എഡിറ്റോറിയൽ", slug: "editorial", count: 2 },
-  { id: "health", label: "ആരോഗ്യം", slug: "health", count: 2 },
-  { id: "saudi", label: "സൗദി", slug: "saudi", count: 2 },
-  { id: "qatar", label: "ഖത്തർ", slug: "qatar", count: 2 },
-  { id: "music", label: "സംഗീതം", slug: "music", count: 2 },
-  { id: "television", label: "ടെലിവിഷൻ", slug: "television", count: 2 },
-  { id: "other-sports", label: "മറ്റ് കായികം", slug: "other-sports", count: 2 },
-  { id: "travel", label: "യാത്ര", slug: "travel", count: 2 },
-  { id: "food", label: "ഭക്ഷണം", slug: "food", count: 2 },
-  { id: "photos", label: "ഫോട്ടോകൾ", slug: "photos", count: 2 },
-  { id: "videos", label: "വീഡിയോകൾ", slug: "videos", count: 2 },
-  { id: "audio", label: "ഓഡിയോ", slug: "audio", count: 2 },
-  { id: "veedu-home", label: "വീട്", slug: "veedu-home", count: 2 },
-  { id: "garden", label: "തോട്ടം", slug: "garden", count: 2 },
-  { id: "opinion", label: "അഭിപ്രായം", slug: "opinion", count: 2 },
-  { id: "readers", label: "വായനക്കാർ", slug: "readers", count: 2 },
-  { id: "education", label: "വിദ്യാഭ്യാസം", slug: "education", count: 2 },
 ];
 
 export const menuGroups = [
@@ -600,26 +266,6 @@ export const menuGroups = [
 export const flatMenuItems = menuGroups.flatMap((group) => group.children ? group.children : [group]);
 
 export const trendingTags = ["കേരളം", "മഴ", "പ്രവാസി", "എഐ", "ഫുട്ബോൾ", "സിനിമ", "വീട്"];
-
-// Sync from other tabs via localStorage cross-tab events
-if (typeof window !== "undefined") {
-  window.addEventListener("storage", (e) => {
-    if (e.key === "mm_articles" && e.newValue) {
-      try {
-        const parsed = JSON.parse(e.newValue);
-        fallbackArticles.length = 0;
-        fallbackArticles.push(...parsed);
-      } catch {}
-      window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "articles" } }));
-    } else if (e.key === "mm_ads" && e.newValue) {
-      try { localAds = JSON.parse(e.newValue); } catch {}
-      window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "ads" } }));
-    } else if (e.key === "mm_settings" && e.newValue) {
-      try { localSettings = JSON.parse(e.newValue); } catch {}
-      window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "settings" } }));
-    }
-  });
-}
 
 export const authors = [
   { name: "മലയാളമിത്രം ഡെസ്ക്", role: "ന്യൂസ് ഡെസ്ക്", count: 42 },
