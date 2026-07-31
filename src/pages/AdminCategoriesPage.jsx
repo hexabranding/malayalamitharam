@@ -1,13 +1,27 @@
-import { useState } from "react";
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
-import { menuGroups } from "../services/api.js";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X, Loader2 } from "lucide-react";
+import { loadMenuGroups, createCategory, updateCategory, deleteCategory } from "../services/api.js";
 
 export default function AdminCategoriesPage({ navigate }) {
-  const [categories, setCategories] = useState(menuGroups);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editLabel, setEditLabel] = useState("");
   const [editMl, setEditMl] = useState("");
   const [expandedGroups, setExpandedGroups] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const groups = await loadMenuGroups();
+      setCategories(groups.filter(g => g.slug !== "home"));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    refresh().finally(() => setLoading(false));
+  }, [refresh]);
 
   const toggleGroup = (slug) => {
     setExpandedGroups(prev => ({ ...prev, [slug]: !prev[slug] }));
@@ -25,24 +39,25 @@ export default function AdminCategoriesPage({ navigate }) {
     setEditMl("");
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editLabel.trim()) return;
-    setCategories(prev => prev.map(g => {
-      if (editingId === `group-${g.slug}`) {
-        return { ...g, label: editLabel.trim() };
+    setSaving(true);
+    try {
+      if (editingId.startsWith("group-")) {
+        const slug = editingId.replace("group-", "");
+        await updateCategory(slug, { label: editLabel.trim() });
+      } else if (editingId.startsWith("child-")) {
+        const raw = editingId.replace("child-", "");
+        const sepIdx = raw.indexOf("-");
+        const groupSlug = raw.substring(0, sepIdx);
+        const childSlug = raw.substring(sepIdx + 1);
+        await updateCategory(childSlug, { label: editLabel.trim(), titleMl: editMl.trim() });
       }
-      if (g.children) {
-        return {
-          ...g,
-          children: g.children.map(c =>
-            editingId === `child-${g.slug}-${c.slug}`
-              ? { ...c, label: editLabel.trim(), titleMl: editMl.trim() || c.titleMl }
-              : c
-          )
-        };
-      }
-      return g;
-    }));
+      await refresh();
+    } catch (err) {
+      alert("Error saving: " + err.message);
+    }
+    setSaving(false);
     cancelEdit();
   }
 
@@ -57,48 +72,77 @@ export default function AdminCategoriesPage({ navigate }) {
     startEdit(`child-${groupSlug}-${childSlug}`, c?.label || "", c?.titleMl || "");
   };
 
-  const handleDeleteGroup = (slug) => {
-    if (confirm("Are you sure you want to delete this category group?")) {
-      setCategories(categories.filter(g => g.slug !== slug));
+  const handleDeleteGroup = async (slug) => {
+    if (!confirm("Are you sure you want to delete this category group and all its subcategories?")) return;
+    setSaving(true);
+    try {
+      await deleteCategory(slug);
+      await refresh();
+    } catch (err) {
+      alert("Error deleting: " + err.message);
     }
+    setSaving(false);
   };
 
-  const handleDeleteChild = (groupSlug, childSlug) => {
-    if (confirm("Are you sure you want to delete this subcategory?")) {
-      setCategories(categories.map(g => {
-        if (g.slug === groupSlug && g.children) {
-          return { ...g, children: g.children.filter(c => c.slug !== childSlug) };
-        }
-        return g;
-      }));
+  const handleDeleteChild = async (groupSlug, childSlug) => {
+    if (!confirm("Are you sure you want to delete this subcategory?")) return;
+    setSaving(true);
+    try {
+      await deleteCategory(childSlug);
+      await refresh();
+    } catch (err) {
+      alert("Error deleting: " + err.message);
     }
+    setSaving(false);
   };
 
-  const handleAddSubcategory = (groupSlug) => {
-    const newChild = { label: "New Category", slug: `new-${Date.now()}`, titleMl: "New" };
-    setCategories(categories.map(g => {
-      if (g.slug === groupSlug) return { ...g, children: [...(g.children || []), newChild] };
-      return g;
-    }));
-    setEditingId(`child-${groupSlug}-${newChild.slug}`);
-    setEditLabel("New Category");
-    setEditMl("New");
-    setExpandedGroups(prev => ({ ...prev, [groupSlug]: true }));
+  const handleAddSubcategory = async (groupSlug) => {
+    const slug = `new-${Date.now()}`;
+    const id = slug;
+    setSaving(true);
+    try {
+      await createCategory({ id, label: "New Category", slug, titleMl: "New", parent: groupSlug });
+      await refresh();
+      setEditingId(`child-${groupSlug}-${slug}`);
+      setEditLabel("New Category");
+      setEditMl("New");
+      setExpandedGroups(prev => ({ ...prev, [groupSlug]: true }));
+    } catch (err) {
+      alert("Error adding subcategory: " + err.message);
+    }
+    setSaving(false);
   };
 
-  const handleAddGroup = () => {
-    const newGroup = { label: "New Group", slug: `new-group-${Date.now()}`, children: [] };
-    setCategories([...categories, newGroup]);
-    setEditingId(`group-${newGroup.slug}`);
-    setEditLabel("New Group");
+  const handleAddGroup = async () => {
+    const slug = `new-group-${Date.now()}`;
+    const id = slug;
+    setSaving(true);
+    try {
+      await createCategory({ id, label: "New Group", slug });
+      await refresh();
+      setEditingId(`group-${slug}`);
+      setEditLabel("New Group");
+    } catch (err) {
+      alert("Error adding group: " + err.message);
+    }
+    setSaving(false);
   };
+
+  if (loading) {
+    return (
+      <div className="admin-categories-page" style={{ textAlign: "center", padding: 40 }}>
+        <Loader2 size={32} className="spin" /> <p>Loading categories...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-categories-page">
       <div className="admin-toolbar">
-        <button className="admin-btn primary" onClick={handleAddGroup}>
+        <button className="admin-btn primary" onClick={handleAddGroup} disabled={saving}>
           <Plus size={18} /> Add Category Group
         </button>
+        {saving && <span style={{ marginLeft: 8, color: "#888" }}><Loader2 size={16} className="spin" /> Saving...</span>}
       </div>
 
       <div className="categories-tree">
@@ -108,13 +152,13 @@ export default function AdminCategoriesPage({ navigate }) {
               {editingId === `group-${group.slug}` ? (
                 <div className="crud-edit-row" style={{ flex: 1 }}>
                   <input value={editLabel} onChange={e => setEditLabel(e.target.value)} autoFocus />
-                  <button className="admin-btn-icon edit" onClick={saveEdit}><Check size={16} /></button>
+                  <button className="admin-btn-icon edit" onClick={saveEdit} disabled={saving}><Check size={16} /></button>
                   <button className="admin-btn-icon delete" onClick={cancelEdit}><X size={16} /></button>
                 </div>
               ) : (
                 <>
                   <div className="category-group-info">
-                    {group.children && (
+                    {group.children && group.children.length > 0 && (
                       <button className="expand-btn" onClick={() => toggleGroup(group.slug)}>
                         {expandedGroups[group.slug] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
@@ -123,15 +167,13 @@ export default function AdminCategoriesPage({ navigate }) {
                     <span className="category-slug">/{group.slug}</span>
                   </div>
                   <div className="category-actions">
-                    {group.children && (
-                      <button className="admin-btn-icon" onClick={() => handleAddSubcategory(group.slug)} title="Add Subcategory">
-                        <Plus size={16} />
-                      </button>
-                    )}
+                    <button className="admin-btn-icon" onClick={() => handleAddSubcategory(group.slug)} title="Add Subcategory" disabled={saving}>
+                      <Plus size={16} />
+                    </button>
                     <button className="admin-btn-icon edit" onClick={() => handleEditGroup(group.slug)} title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button className="admin-btn-icon delete" onClick={() => handleDeleteGroup(group.slug)} title="Delete">
+                    <button className="admin-btn-icon delete" onClick={() => handleDeleteGroup(group.slug)} title="Delete" disabled={saving}>
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -147,7 +189,7 @@ export default function AdminCategoriesPage({ navigate }) {
                       <div className="crud-edit-row" style={{ flex: 1, paddingLeft: 32 }}>
                         <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="English" autoFocus />
                         <input value={editMl} onChange={e => setEditMl(e.target.value)} placeholder="Malayalam" />
-                        <button className="admin-btn-icon edit" onClick={saveEdit}><Check size={16} /></button>
+                        <button className="admin-btn-icon edit" onClick={saveEdit} disabled={saving}><Check size={16} /></button>
                         <button className="admin-btn-icon delete" onClick={cancelEdit}><X size={16} /></button>
                       </div>
                     ) : (
@@ -161,7 +203,7 @@ export default function AdminCategoriesPage({ navigate }) {
                           <button className="admin-btn-icon edit" onClick={() => handleEditChild(group.slug, child.slug)} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="admin-btn-icon delete" onClick={() => handleDeleteChild(group.slug, child.slug)} title="Delete">
+                          <button className="admin-btn-icon delete" onClick={() => handleDeleteChild(group.slug, child.slug)} title="Delete" disabled={saving}>
                             <Trash2 size={16} />
                           </button>
                         </div>

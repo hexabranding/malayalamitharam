@@ -1,14 +1,20 @@
 import { Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
 import { useState, useEffect } from "react";
-import { menuGroups, fetchSettings } from "../services/api.js";
+import { loadMenuGroups, fetchSettings } from "../services/api.js";
 
 export default function Footer({ navigate }) {
   const [settings, setSettings] = useState({});
-  const categories = menuGroups.flatMap((group) => group.children || []).slice(0, 8);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    loadMenuGroups().then(groups => {
+      setCategories(groups.flatMap((group) => group.children || []).slice(0, 8));
+    }).catch(() => {});
     fetchSettings().then(setSettings).catch(() => {});
     function refresh() {
+      loadMenuGroups().then(groups => {
+        setCategories(groups.flatMap((group) => group.children || []).slice(0, 8));
+      }).catch(() => {});
       fetchSettings().then(setSettings).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);

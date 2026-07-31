@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import AOS from "aos";
 import Layout from "./components/Layout.jsx";
-import { articles, flatMenuItems } from "./data/news.js";
+import { articles, flatMenuItems as defaultFlatMenuItems } from "./data/news.js";
+import { loadFlatMenuItems } from "./services/api.js";
 import HomePage from "./pages/HomePage.jsx";
 import CategoryPage from "./pages/CategoryPage.jsx";
 import ArticlePage from "./pages/ArticlePage.jsx";
@@ -104,6 +105,17 @@ export default function App() {
     }
   });
 
+  // Dynamic menu items from API
+  const [dynamicFlatItems, setDynamicFlatItems] = useState(defaultFlatMenuItems);
+  useEffect(() => {
+    loadFlatMenuItems().then(setDynamicFlatItems).catch(() => {});
+    function refresh() {
+      loadFlatMenuItems().then(setDynamicFlatItems).catch(() => {});
+    }
+    window.addEventListener("mm-data-updated", refresh);
+    return () => window.removeEventListener("mm-data-updated", refresh);
+  }, []);
+
   function handleLogin(user) {
     setAdminUser(user);
     navigate("/admin");
@@ -190,7 +202,7 @@ export default function App() {
     if (path === "/login") return <AdminLoginPage onLogin={handleLogin} />;
     if (path.startsWith("/category/")) {
       const slug = path.replace("/category/", "");
-      const item = flatMenuItems.find((entry) => entry.slug === slug) || { label: slug, slug, titleMl: slug };
+      const item = dynamicFlatItems.find((entry) => entry.slug === slug) || { label: slug, slug, titleMl: slug };
       if (item.mediaType) return <MediaPage type={item.mediaType} title={item.titleMl} navigate={navigate} />;
       return <CategoryPage categoryItem={item} navigate={navigate} />;
     }
@@ -202,7 +214,7 @@ export default function App() {
     if (path === "/404") return <NotFoundPage navigate={navigate} />;
     if (path.startsWith("/page/")) return <InfoPage title={decodeURIComponent(path.replace("/page/", ""))} navigate={navigate} />;
     return <NotFoundPage navigate={navigate} />;
-  }, [path, adminUser]);
+  }, [path, adminUser, dynamicFlatItems]);
 
   if (isAdmin) {
     return page;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Save, X, Upload } from "lucide-react";
-import { fetchNews, createArticle, updateArticle, menuGroups, uploadImage } from "../services/api.js";
+import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
@@ -31,6 +31,11 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [menuGroupsData, setMenuGroupsData] = useState([]);
+
+  useEffect(() => {
+    loadMenuGroups().then(setMenuGroupsData).catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -73,7 +78,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     load();
   }, [isEditing, newsId]);
 
-  const allCategories = menuGroups.flatMap(group => 
+  const allCategories = menuGroupsData.flatMap(group => 
     group.children ? group.children.map(child => ({
       slug: child.slug,
       label: child.label,

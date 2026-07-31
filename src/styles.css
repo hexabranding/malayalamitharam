@@ -2404,6 +2404,7 @@ a { color: inherit; text-decoration: none; }
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.7s linear infinite; }
 .admin-login-hint {
   text-align: center;
   font-size: 12px;

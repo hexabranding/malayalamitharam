@@ -1,4 +1,4 @@
-const BASE = "https://api.malayalamitharam.in/api";
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 function getToken() {
   try {
@@ -188,7 +188,10 @@ export async function uploadImage(file) {
   const h = {};
   if (token) h["Authorization"] = "Bearer " + token;
   const res = await fetch(BASE + "/upload/image", { method: "POST", headers: h, body: formData });
-  if (!res.ok) throw new Error("Upload failed");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || body.message || "Upload failed");
+  }
   return res.json();
 }
 
@@ -264,6 +267,22 @@ export const menuGroups = [
 ];
 
 export const flatMenuItems = menuGroups.flatMap((group) => group.children ? group.children : [group]);
+
+export async function loadMenuGroups() {
+  try {
+    const data = await fetchCategories();
+    if (Array.isArray(data) && data.length > 0) {
+      const home = { label: "HOME", slug: "home", path: "/" };
+      return [home, ...data];
+    }
+  } catch {}
+  return menuGroups;
+}
+
+export async function loadFlatMenuItems() {
+  const groups = await loadMenuGroups();
+  return groups.flatMap((group) => group.children ? group.children : [group]);
+}
 
 export const trendingTags = ["കേരളം", "മഴ", "പ്രവാസി", "എഐ", "ഫുട്ബോൾ", "സിനിമ", "വീട്"];
 

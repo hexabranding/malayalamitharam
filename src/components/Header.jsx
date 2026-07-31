@@ -1,16 +1,19 @@
 import { ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
 import { useState, useEffect } from "react";
-import { menuGroups, fetchSettings } from "../services/api.js";
+import { loadMenuGroups, fetchSettings } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [settings, setSettings] = useState({});
+  const [navGroups, setNavGroups] = useState([]);
 
   useEffect(() => {
+    loadMenuGroups().then(setNavGroups).catch(() => {});
     fetchSettings().then(setSettings).catch(() => {});
     function refresh() {
+      loadMenuGroups().then(setNavGroups).catch(() => {});
       fetchSettings().then(setSettings).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);
@@ -58,7 +61,7 @@ export default function Header({ navigate, activeSlug }) {
         </div>
       </div>
       <nav className="main-nav"><div className="container nav-scroll">
-        {menuGroups.map((group) => (
+        {navGroups.map((group) => (
           <div 
             className="nav-group" 
             key={group.slug}
@@ -91,7 +94,7 @@ export default function Header({ navigate, activeSlug }) {
       </div></nav>
       {menuOpen && <div className="drawer"><div className="drawer-panel">
         <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="മെനു അടയ്ക്കുക"><X size={22} /></button>
-        {menuGroups.map((group) => <div className="drawer-group" key={group.slug}><button onClick={() => { if (!group.children) { setMenuOpen(false); navigate(openPath(group)); } }}>{group.label}</button>{group.children?.map((child) => <button className="drawer-child" key={child.slug} onClick={() => { setMenuOpen(false); navigate(openPath(child)); }}>{child.label}</button>)}</div>)}
+        {navGroups.map((group) => <div className="drawer-group" key={group.slug}><button onClick={() => { if (!group.children) { setMenuOpen(false); navigate(openPath(group)); } }}>{group.label}</button>{group.children?.map((child) => <button className="drawer-child" key={child.slug} onClick={() => { setMenuOpen(false); navigate(openPath(child)); }}>{child.label}</button>)}</div>)}
       </div></div>}
     </header>
   );
