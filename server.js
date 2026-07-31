@@ -1,3 +1,10 @@
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err.message);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err.message || err);
+});
+
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
@@ -6,7 +13,6 @@ const mongoose = require("mongoose");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://demo.malayalamitharam.in";
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
@@ -34,12 +40,12 @@ app.use("/api/ads", adsRoutes);
 app.use("/api/upload", uploadRoutes);
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "Malayalamithram API", timestamp: new Date().toISOString() });
+  const dbState = mongoose.connection.readyState;
+  res.json({ status: "ok", db: dbState === 1 ? "connected" : "disconnected", timestamp: new Date().toISOString() });
 });
 
 app.get("/api/diag", async (_req, res) => {
   const hasMongoUri = !!process.env.MONGO_URI;
-  const hasJwtSecret = !!process.env.JWT_SECRET;
   const dbState = mongoose.connection.readyState;
   const dbStates = { 0: "disconnected", 1: "connected", 2: "connecting", 3: "disconnecting" };
   let userCount = 0;
@@ -49,34 +55,7 @@ app.get("/api/diag", async (_req, res) => {
       userCount = await User.countDocuments();
     }
   } catch {}
-  res.json({
-    hasMongoUri,
-    hasJwtSecret,
-    mongoUriPreview: hasMongoUri ? process.env.MONGO_URI.substring(0, 30) + "..." : "missing",
-    dbState: dbStates[dbState] || "unknown",
-    nodeEnv: process.env.NODE_ENV || "development",
-    port: PORT,
-    userCount,
-    uptime: process.uptime(),
-  });
-});
-
-app.post("/api/setup/admin", async (req, res) => {
-  try {
-    const bcrypt = require("bcryptjs");
-    const User = require("./backend/models/User");
-    const { username, password, email } = req.body;
-    const uname = username || "admin";
-    const pw = password || "Admin@123";
-    const em = email || "admin@malayalamithram.in";
-    const exists = await User.findOne({ username: uname });
-    if (exists) return res.json({ message: "Admin user already exists", user: { username: exists.username, email: exists.email } });
-    const passwordHash = await bcrypt.hash(pw, 10);
-    const user = await User.create({ username: uname, email: em, passwordHash, role: "admin", name: "Malayalamithram Admin" });
-    res.json({ message: "Admin user created successfully", user: { username: user.username, email: user.email } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json({ hasMongoUri, dbState: dbStates[dbState] || "unknown", port: PORT, userCount, uptime: process.uptime() });
 });
 
 const distPath = path.join(__dirname, "dist");
@@ -85,42 +64,60 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Malayalamithram Backend running on http://localhost:${PORT}`);
-  console.log(`Health: http://localhost:${PORT}/api/health`);
-  console.log(`Diag: http://localhost:${PORT}/api/diag`);
+app.use((_req, res) => {
+  res.status(404).json({ error: "API endpoint not found" });
+});
 
+app.use((err, _req, res, _next) => {
+  console.error("Error:", err.message);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+async function connectDB() {
   const MONGO_URI = process.env.MONGO_URI;
   if (!MONGO_URI) {
     console.log("MONGO_URI not found in .env");
     return;
   }
-
-  mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 })
-    .then(async (conn) => {
-      console.log("MongoDB connected: " + conn.connection.host);
-      try {
-        const bcrypt = require("bcryptjs");
-        const User = require("./backend/models/User");
-        const userExists = await User.findOne({ username: "admin" });
-        if (!userExists) {
-          const passwordHash = await bcrypt.hash("Admin@123", 10);
-          await User.create({
-            username: "admin",
-            email: "admin@malayalamithram.in",
-            passwordHash,
-            role: "admin",
-            name: "Malayalamithram Admin",
-          });
-          console.log("Default admin user created (admin / Admin@123)");
-        } else {
-          console.log("Admin user already exists");
-        }
-      } catch (e) {
-        console.log("Auto-seed skipped:", e.message);
-      }
-    })
-    .catch((err) => {
-      console.error("MongoDB connection failed:", err.message);
+  try {
+    const conn = await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      heartbeatFrequencyMS: 30000,
     });
+    console.log("MongoDB connected: " + conn.connection.host);
+    const User = require("./backend/models/User");
+    const bcrypt = require("bcryptjs");
+    const userExists = await User.findOne({ username: "admin" });
+    if (!userExists) {
+      const passwordHash = await bcrypt.hash("Admin@123", 10);
+      await User.create({
+        username: "admin",
+        email: "admin@malayalamithram.in",
+        passwordHash,
+        role: "admin",
+        name: "Malayalamithram Admin",
+      });
+      console.log("Default admin created (admin / Admin@123)");
+    } else {
+      console.log("Admin user exists");
+    }
+  } catch (err) {
+    console.error("MongoDB error:", err.message);
+    setTimeout(connectDB, 10000);
+  }
+}
+
+mongoose.connection.on("disconnected", () => {
+  console.log("MongoDB disconnected. Reconnecting in 10s...");
+  setTimeout(connectDB, 10000);
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB error:", err.message);
+});
+
+app.listen(PORT, () => {
+  console.log("Backend running on port " + PORT);
+  console.log("Health: http://localhost:" + PORT + "/api/health");
+  connectDB();
 });
