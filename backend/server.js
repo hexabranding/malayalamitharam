@@ -17,7 +17,7 @@ const uploadRoutes = require("./routes/upload");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://demo.malayalamitharam.in";
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -61,10 +61,29 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "Malayalamithram API", timestamp: new Date().toISOString() });
 });
 
-const distPath = path.join(__dirname, "..", "dist");
-app.use(express.static(distPath));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
+app.get("/api/diag", async (_req, res) => {
+  const mongoose = require("mongoose");
+  const hasMongoUri = !!process.env.MONGO_URI;
+  const hasJwtSecret = !!process.env.JWT_SECRET;
+  const dbState = mongoose.connection.readyState;
+  const dbStates = { 0: "disconnected", 1: "connected", 2: "connecting", 3: "disconnecting" };
+  let userCount = 0;
+  try {
+    if (dbState === 1) {
+      const User = require("./models/User");
+      userCount = await User.countDocuments();
+    }
+  } catch {}
+  res.json({
+    hasMongoUri,
+    hasJwtSecret,
+    mongoUriPreview: hasMongoUri ? process.env.MONGO_URI.substring(0, 30) + "..." : "missing",
+    dbState: dbStates[dbState] || "unknown",
+    nodeEnv: process.env.NODE_ENV || "development",
+    port: PORT,
+    userCount,
+    uptime: process.uptime(),
+  });
 });
 
 app.post("/api/setup/admin", async (req, res) => {
@@ -88,6 +107,12 @@ app.post("/api/setup/admin", async (req, res) => {
   }
 });
 
+const distPath = path.join(__dirname, "..", "dist");
+app.use(express.static(distPath));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
+
 app.use((_req, res) => {
   res.status(404).json({ error: "API endpoint not found" });
 });
@@ -97,35 +122,39 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-connectDB().then(async (conn) => {
-  if (conn) {
-    try {
-      const bcrypt = require("bcryptjs");
-      const User = require("./models/User");
-      const userExists = await User.findOne({ username: "admin" });
-      if (!userExists) {
-        const passwordHash = await bcrypt.hash("Admin@123", 10);
-        await User.create({
-          username: "admin",
-          email: "admin@malayalamithram.in",
-          passwordHash,
-          role: "admin",
-          name: "Malayalamithram Admin",
-        });
-        console.log("Default admin user created (admin / Admin@123)");
-      }
-    } catch (e) {
-      console.log("Auto-seed skipped:", e.message);
-    }
-  } else {
-    console.log("Server started WITHOUT MongoDB. API calls requiring DB will fail.");
-    console.log("Visit /api/setup/admin to seed admin once DB is connected.");
-  }
+app.listen(PORT, () => {
+  console.log(`\n Malayalamithram Backend running on http://localhost:${PORT}`);
+  console.log(`   Health: http://localhost:${PORT}/api/health`);
+  console.log(`   Diag:   http://localhost:${PORT}/api/diag`);
+  console.log(`   Setup:  http://localhost:${PORT}/api/setup/admin`);
+  console.log("");
 
-  app.listen(PORT, () => {
-    console.log(`\n Malayalamithram Backend running on http://localhost:${PORT}`);
-    console.log(`   Health: http://localhost:${PORT}/api/health`);
-    if (!conn) console.log(`   Setup: http://localhost:${PORT}/api/setup/admin`);
-    console.log("");
+  connectDB().then(async (conn) => {
+    if (conn) {
+      console.log(" MongoDB connected successfully");
+      try {
+        const bcrypt = require("bcryptjs");
+        const User = require("./models/User");
+        const userExists = await User.findOne({ username: "admin" });
+        if (!userExists) {
+          const passwordHash = await bcrypt.hash("Admin@123", 10);
+          await User.create({
+            username: "admin",
+            email: "admin@malayalamithram.in",
+            passwordHash,
+            role: "admin",
+            name: "Malayalamithram Admin",
+          });
+          console.log(" Default admin user created (admin / Admin@123)");
+        } else {
+          console.log(" Admin user already exists");
+        }
+      } catch (e) {
+        console.log(" Auto-seed skipped:", e.message);
+      }
+    } else {
+      console.log(" ⚠ MongoDB NOT connected. Check MONGO_URI in .env");
+      console.log("   Visit /api/diag to see configuration status");
+    }
   });
 });
