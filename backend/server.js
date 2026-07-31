@@ -67,6 +67,27 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
+app.post("/api/setup/admin", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const User = require("./models/User");
+    const { username, password, email } = req.body;
+    const uname = username || "admin";
+    const pw = password || "Admin@123";
+    const em = email || "admin@malayalamithram.in";
+
+    const exists = await User.findOne({ username: uname });
+    if (exists) return res.json({ message: "Admin user already exists", user: { username: exists.username, email: exists.email } });
+
+    const passwordHash = await bcrypt.hash(pw, 10);
+    const user = await User.create({ username: uname, email: em, passwordHash, role: "admin", name: "Malayalamithram Admin" });
+    res.json({ message: "Admin user created successfully", user: { username: user.username, email: user.email } });
+  } catch (err) {
+    console.error("Setup admin error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use((_req, res) => {
   res.status(404).json({ error: "API endpoint not found" });
 });
@@ -76,28 +97,35 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-connectDB().then(async () => {
-  try {
-    const bcrypt = require("bcryptjs");
-    const User = require("./models/User");
-    const userExists = await User.findOne({ username: "admin" });
-    if (!userExists) {
-      const passwordHash = await bcrypt.hash("Admin@123", 10);
-      await User.create({
-        username: "admin",
-        email: "admin@malayalamithram.in",
-        passwordHash,
-        role: "admin",
-        name: "Malayalamithram Admin",
-      });
-      console.log("Default admin user created (admin / Admin@123)");
+connectDB().then(async (conn) => {
+  if (conn) {
+    try {
+      const bcrypt = require("bcryptjs");
+      const User = require("./models/User");
+      const userExists = await User.findOne({ username: "admin" });
+      if (!userExists) {
+        const passwordHash = await bcrypt.hash("Admin@123", 10);
+        await User.create({
+          username: "admin",
+          email: "admin@malayalamithram.in",
+          passwordHash,
+          role: "admin",
+          name: "Malayalamithram Admin",
+        });
+        console.log("Default admin user created (admin / Admin@123)");
+      }
+    } catch (e) {
+      console.log("Auto-seed skipped:", e.message);
     }
-  } catch (e) {
-    console.log("Auto-seed skipped:", e.message);
+  } else {
+    console.log("Server started WITHOUT MongoDB. API calls requiring DB will fail.");
+    console.log("Visit /api/setup/admin to seed admin once DB is connected.");
   }
 
   app.listen(PORT, () => {
     console.log(`\n Malayalamithram Backend running on http://localhost:${PORT}`);
-    console.log(`   Health: http://localhost:${PORT}/api/health\n`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    if (!conn) console.log(`   Setup: http://localhost:${PORT}/api/setup/admin`);
+    console.log("");
   });
 });

@@ -22,7 +22,11 @@ export default function LoginPage({ onLoginSuccess }) {
       sessionStorage.setItem("mm_admin", JSON.stringify(data));
       onLoginSuccess(data);
     } catch (err) {
-      setError(err.message || "Login failed");
+      if (err.message.includes("fetch") || err.message.includes("network") || err.message.includes("Failed") || err.message.includes("NetworkError")) {
+        setError("Cannot connect to server. Please try again later.");
+      } else {
+        setError(err.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }

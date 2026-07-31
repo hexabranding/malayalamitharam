@@ -22,7 +22,11 @@ export default function AdminLoginPage({ onLogin }) {
       );
       onLogin(data.user);
     } catch (err) {
-      setError("Invalid username or password");
+      if (err.message.includes("fetch") || err.message.includes("network") || err.message.includes("Failed") || err.message.includes("NetworkError")) {
+        setError("Cannot connect to server. Please try again later.");
+      } else {
+        setError(err.message || "Invalid username or password");
+      }
     }
     setLoading(false);
   }
