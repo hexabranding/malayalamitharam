@@ -1,4 +1,4 @@
-const BASE = "/api";
+const BASE = "https://api.malayalamitharam.in/api";
 
 function getToken() {
   try {
