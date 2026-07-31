@@ -19,22 +19,13 @@ const PORT = process.env.PORT || 4000;
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://demo.malayalamitharam.in";
 
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowed = [
-      FRONTEND_URL,
-      process.env.ALLOWED_ORIGIN,
-      "https://demo.malayalamitharam.in",
-      "https://malayalamitharam.in",
-      "https://www.malayalamitharam.in",
-    ].filter(Boolean);
-    if (!origin || allowed.includes(origin) || process.env.NODE_ENV !== "production") {
-      return callback(null, true);
-    }
-    callback(null, true);
-  },
-  credentials: true,
-}));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
