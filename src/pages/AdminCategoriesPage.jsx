@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X, Loader2 } from "lucide-react";
-import { loadMenuGroups, createCategory, updateCategory, deleteCategory } from "../services/api.js";
+import { loadMenuGroups, createCategory, updateCategory, deleteCategory, clearMenuCache } from "../services/api.js";
 
 export default function AdminCategoriesPage({ navigate }) {
   const [categories, setCategories] = useState([]);
@@ -13,8 +13,10 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const refresh = useCallback(async () => {
     try {
+      clearMenuCache();
       const groups = await loadMenuGroups();
       setCategories(groups.filter(g => g.slug !== "home"));
+      window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "categories" } }));
     } catch {}
   }, []);
 

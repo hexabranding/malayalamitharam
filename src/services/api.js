@@ -313,6 +313,10 @@ function setMenuCache(data) {
   } catch {}
 }
 
+export function clearMenuCache() {
+  sessionStorage.removeItem("mm_menu_cache");
+}
+
 export async function loadMenuGroups() {
   const cached = getMenuCache();
   if (cached) return cached;
