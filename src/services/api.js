@@ -151,17 +151,27 @@ export async function deleteAuthor(id) {
 }
 
 // Settings
-let settingsCache = null;
-let settingsCacheTime = 0;
+function getSettingsCache() {
+  try {
+    const raw = sessionStorage.getItem("mm_settings_cache");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.time < 5 * 60 * 1000) return parsed.data;
+  } catch {}
+  return null;
+}
+
+function setSettingsCache(data) {
+  try {
+    sessionStorage.setItem("mm_settings_cache", JSON.stringify({ data, time: Date.now() }));
+  } catch {}
+}
 
 export async function fetchSettings() {
-  const now = Date.now();
-  if (settingsCache && now - settingsCacheTime < MENU_CACHE_DURATION) {
-    return settingsCache;
-  }
+  const cached = getSettingsCache();
+  if (cached) return cached;
   const data = await request("/settings");
-  settingsCache = data;
-  settingsCacheTime = now;
+  setSettingsCache(data);
   return data;
 }
 
@@ -287,22 +297,32 @@ export const menuGroups = [
 
 export const flatMenuItems = menuGroups.flatMap((group) => group.children ? group.children : [group]);
 
-let menuCache = null;
-let menuCacheTime = 0;
-const MENU_CACHE_DURATION = 5 * 60 * 1000;
+function getMenuCache() {
+  try {
+    const raw = sessionStorage.getItem("mm_menu_cache");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.time < 5 * 60 * 1000) return parsed.data;
+  } catch {}
+  return null;
+}
+
+function setMenuCache(data) {
+  try {
+    sessionStorage.setItem("mm_menu_cache", JSON.stringify({ data, time: Date.now() }));
+  } catch {}
+}
 
 export async function loadMenuGroups() {
-  const now = Date.now();
-  if (menuCache && now - menuCacheTime < MENU_CACHE_DURATION) {
-    return menuCache;
-  }
+  const cached = getMenuCache();
+  if (cached) return cached;
   try {
     const data = await fetchCategories();
     if (Array.isArray(data) && data.length > 0) {
       const home = { label: "HOME", slug: "home", path: "/" };
-      menuCache = [home, ...data];
-      menuCacheTime = now;
-      return menuCache;
+      const result = [home, ...data];
+      setMenuCache(result);
+      return result;
     }
   } catch {}
   return menuGroups;
