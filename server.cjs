@@ -14,7 +14,7 @@ const mongoose = require("mongoose");
 const app = express();
 const PORT = process.env.PORT || 4000;
 const isProduction = process.env.NODE_ENV === "production";
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ALLOWED_ORIGIN].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ALLOWED_ORIGIN, "https://malayalamithram.in", "https://demo.malayalamithram.in"].filter(Boolean);
 
 app.use(cors({
   origin(origin, callback) {
@@ -46,6 +46,27 @@ app.use("/api/authors", authorsRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/upload", uploadRoutes);
+
+app.get("/api/setup/admin", async (_req, res) => {
+  try {
+    const User = require("./backend/models/User");
+    const bcrypt = require("bcryptjs");
+    const existing = await User.findOne({ username: "admin" });
+    if (existing) return res.json({ message: "Admin user already exists", username: existing.username });
+    const password = process.env.ADMIN_INITIAL_PASSWORD || "Admin@123";
+    const passwordHash = await bcrypt.hash(password, 10);
+    await User.create({
+      username: "admin",
+      email: "admin@malayalamithram.in",
+      passwordHash,
+      role: "admin",
+      name: "Malayalamithram Admin",
+    });
+    res.json({ message: "Admin user created", username: "admin" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get("/api/health", (_req, res) => {
   const dbState = mongoose.connection.readyState;
