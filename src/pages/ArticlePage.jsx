@@ -42,11 +42,17 @@ export default function ArticlePage({ slug, navigate }) {
     ? related
     : [];
 
+  const articleTitle = (
+    <header className="article-page-title" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
+      <AdSlot slot="article-top" label="Article Top Advertisement (728 x 90)" />
+      <span className="pill" data-aos="fade-up" data-aos-delay="50">{article.categoryMl}</span>
+      <h1 data-aos="fade-left" data-aos-delay="100">{article.title}</h1>
+    </header>
+  );
+
   return (
-    <PageLayout navigate={navigate} className="article-page">
+    <PageLayout navigate={navigate} className="article-page" fullWidthHeader={articleTitle}>
         <article className="article-detail" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
-        <span className="pill" data-aos="fade-up" data-aos-delay="50">{article.categoryMl}</span>
-        <h1 data-aos="fade-left" data-aos-delay="100">{article.title}</h1>
         <Meta article={article} />
 
         <div data-aos="zoom-in" data-aos-delay="120">

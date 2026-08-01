@@ -196,6 +196,7 @@ export async function uploadImage(file) {
 }
 
 export const AD_SLOTS = [
+  { slot: "article-top", label: "Article Top Ad (728 x 90)", title: "Article Top Advertisement" },
   { slot: "top-leaderboard", label: "Top Leaderboard (1280 x 250)", title: "Top Leaderboard" },
   { slot: "mid-leaderboard", label: "Mid Leaderboard (1280 x 250)", title: "Mid Leaderboard" },
   { slot: "bottom-leaderboard", label: "Bottom Leaderboard (1280 x 250)", title: "Bottom Leaderboard" },
