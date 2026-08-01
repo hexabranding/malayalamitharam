@@ -24,11 +24,11 @@ export default function VideoSection({ articles, navigate }) {
   }, []);
 
   const videoArticles = articles.filter((a) => a.media === "video" && a.image);
-  if (videoArticles.length === 0) return null;
+  const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
+  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 4) : [];
+  const embedUrl = useMemo(() => getYoutubeEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
 
-  const mainVideo = selectedVideo || videoArticles[0];
-  const suggestions = videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 4);
-  const embedUrl = useMemo(() => getYoutubeEmbedUrl(mainVideo.videoUrl), [mainVideo.videoUrl]);
+  if (!mainVideo) return null;
 
   const toggleLike = () => {
     setLiked((v) => !v);

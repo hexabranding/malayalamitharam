@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
 
+const API_BASE = (import.meta.env.VITE_API_URL || "https://api.malayalamitharam.in/api").replace(/\/api\/?$/, "");
+
 export function resolveImageUrl(image) {
   if (!image) return null;
-  if (image.startsWith("http") || image.startsWith("/") || image.startsWith("data:")) return image;
+  if (image.startsWith("http") || image.startsWith("data:")) return image;
+  if (image.startsWith("/uploads/") || image.startsWith("uploads/")) {
+    return API_BASE + (image.startsWith("/") ? image : "/" + image);
+  }
+  if (image.startsWith("/")) return image;
   return "/images/" + image;
 }
 

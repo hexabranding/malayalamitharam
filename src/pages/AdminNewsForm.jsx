@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Save, X, Upload } from "lucide-react";
 import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } from "../services/api.js";
+import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
@@ -265,7 +266,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </label>
               {imagePreview && (
                 <div className="image-preview" style={{ marginTop: 8 }}>
-                  <img src={imagePreview.startsWith("http") || imagePreview.startsWith("/") || imagePreview.startsWith("data:") ? imagePreview : "/images/" + imagePreview} alt="Preview" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 4 }} onError={(e) => { e.target.style.display = "none" }} />
+                  <img src={resolveImageUrl(imagePreview) || imagePreview} alt="Preview" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 4 }} onError={(e) => { e.target.style.display = "none" }} />
                   <button type="button" className="remove-image" onClick={() => { setImagePreview(""); setFormData(prev => ({ ...prev, image: "" })); }}><X size={16} /></button>
                 </div>
               )}

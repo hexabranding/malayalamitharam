@@ -12,7 +12,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       "/uploads": {
-        target: "https://api.malayalamitharam.in/api",
+        target: "https://api.malayalamitharam.in",
         changeOrigin: true,
       },
     },

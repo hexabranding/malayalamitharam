@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw } from "lucide-react";
 import { fetchSettingsAll, updateSetting, seedSettings } from "../services/api.js";
+import { resolveImageUrl } from "../services/images.jsx";
 
 export default function AdminSettings({ navigate }) {
   const [settings, setSettings] = useState([]);
@@ -62,7 +63,7 @@ export default function AdminSettings({ navigate }) {
         return (
           <div>
             <input value={val} onChange={e => handleChange(s.key, e.target.value)} />
-            {val && <img src={val} alt="" style={{ maxWidth: 120, maxHeight: 60, marginTop: 8, borderRadius: 4, objectFit: "contain" }} />}
+            {val && <img src={resolveImageUrl(val) || val} alt="" style={{ maxWidth: 120, maxHeight: 60, marginTop: 8, borderRadius: 4, objectFit: "contain" }} />}
           </div>
         );
       default:
