@@ -18,13 +18,21 @@ function headers(extra = {}) {
   return h;
 }
 
-async function request(url, options = {}) {
-  const res = await fetch(BASE + url, options);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error || "Request failed");
+async function request(url, options = {}, timeout = 3000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(BASE + url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(body.error || "Request failed");
+    }
+    return res.json();
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
   }
-  return res.json();
 }
 
 function articlePayload(result) {
@@ -143,8 +151,18 @@ export async function deleteAuthor(id) {
 }
 
 // Settings
+let settingsCache = null;
+let settingsCacheTime = 0;
+
 export async function fetchSettings() {
-  return request("/settings");
+  const now = Date.now();
+  if (settingsCache && now - settingsCacheTime < MENU_CACHE_DURATION) {
+    return settingsCache;
+  }
+  const data = await request("/settings");
+  settingsCache = data;
+  settingsCacheTime = now;
+  return data;
 }
 
 export async function fetchSettingsAll() {
@@ -269,12 +287,22 @@ export const menuGroups = [
 
 export const flatMenuItems = menuGroups.flatMap((group) => group.children ? group.children : [group]);
 
+let menuCache = null;
+let menuCacheTime = 0;
+const MENU_CACHE_DURATION = 5 * 60 * 1000;
+
 export async function loadMenuGroups() {
+  const now = Date.now();
+  if (menuCache && now - menuCacheTime < MENU_CACHE_DURATION) {
+    return menuCache;
+  }
   try {
     const data = await fetchCategories();
     if (Array.isArray(data) && data.length > 0) {
       const home = { label: "HOME", slug: "home", path: "/" };
-      return [home, ...data];
+      menuCache = [home, ...data];
+      menuCacheTime = now;
+      return menuCache;
     }
   } catch {}
   return menuGroups;
