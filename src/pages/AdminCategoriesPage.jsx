@@ -50,9 +50,9 @@ export default function AdminCategoriesPage({ navigate }) {
         await updateCategory(slug, { label: editLabel.trim() });
       } else if (editingId.startsWith("child-")) {
         const raw = editingId.replace("child-", "");
-        const sepIdx = raw.indexOf("-");
+        const sepIdx = raw.indexOf("__");
         const groupSlug = raw.substring(0, sepIdx);
-        const childSlug = raw.substring(sepIdx + 1);
+        const childSlug = raw.substring(sepIdx + 2);
         await updateCategory(childSlug, { label: editLabel.trim(), titleMl: editMl.trim() });
       }
       await refresh();
@@ -71,7 +71,7 @@ export default function AdminCategoriesPage({ navigate }) {
   const handleEditChild = (groupSlug, childSlug) => {
     const g = categories.find(c => c.slug === groupSlug);
     const c = g?.children?.find(ch => ch.slug === childSlug);
-    startEdit(`child-${groupSlug}-${childSlug}`, c?.label || "", c?.titleMl || "");
+    startEdit(`child-${groupSlug}__${childSlug}`, c?.label || "", c?.titleMl || "");
   };
 
   const handleDeleteGroup = async (slug) => {
@@ -105,7 +105,7 @@ export default function AdminCategoriesPage({ navigate }) {
     try {
       await createCategory({ id, label: "New Category", slug, titleMl: "New", parent: groupSlug });
       await refresh();
-      setEditingId(`child-${groupSlug}-${slug}`);
+      setEditingId(`child-${groupSlug}__${slug}`);
       setEditLabel("New Category");
       setEditMl("New");
       setExpandedGroups(prev => ({ ...prev, [groupSlug]: true }));
@@ -187,7 +187,7 @@ export default function AdminCategoriesPage({ navigate }) {
               <div className="category-children">
                 {group.children.map((child) => (
                   <div key={child.slug} className="category-child">
-                    {editingId === `child-${group.slug}-${child.slug}` ? (
+                    {editingId === `child-${group.slug}__${child.slug}` ? (
                       <div className="crud-edit-row" style={{ flex: 1, paddingLeft: 32 }}>
                         <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="English" autoFocus />
                         <input value={editMl} onChange={e => setEditMl(e.target.value)} placeholder="Malayalam" />
