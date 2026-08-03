@@ -67,9 +67,6 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
                 <h2>{article.title}</h2>
               </div>
               <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />
-              <div className="carousel-slide-desc">
-                <p>{article.excerpt}</p>
-              </div>
             </div>
           ))}
         </div>
