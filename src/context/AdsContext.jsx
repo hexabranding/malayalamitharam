@@ -1,26 +1,28 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { fetchAdsBySlots } from "../services/api.js";
 
 const AdsContext = createContext({});
 
-const ALL_AD_SLOTS = [
-  "top-leaderboard", "mid-leaderboard", "bottom-leaderboard",
-  "sidebar", "article", "article-top", "video-top-ad",
-  "home-footer-ad-1", "home-footer-ad-2", "home-footer-ad-3",
-  "search", "search-bottom", "tags", "media", "page", "category"
-];
+async function fetchAllActiveAds() {
+  const res = await fetch("https://api.malayalamitharam.in/api/ads");
+  if (!res.ok) return {};
+  const data = await res.json();
+  if (!Array.isArray(data)) return {};
+  const map = {};
+  data.forEach(a => { if (a.slot && a.active !== false) map[a.slot] = a; });
+  return map;
+}
 
 export function AdsProvider({ children }) {
   const [ads, setAds] = useState({});
 
   useEffect(() => {
-    fetchAdsBySlots(ALL_AD_SLOTS).then(data => {
-      if (data && typeof data === "object" && !Array.isArray(data)) setAds(data);
+    fetchAllActiveAds().then(data => {
+      if (data && typeof data === "object") setAds(data);
     }).catch(() => {});
 
     function refresh() {
-      fetchAdsBySlots(ALL_AD_SLOTS).then(data => {
-        if (data && typeof data === "object" && !Array.isArray(data)) setAds(data);
+      fetchAllActiveAds().then(data => {
+        if (data && typeof data === "object") setAds(data);
       }).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);
