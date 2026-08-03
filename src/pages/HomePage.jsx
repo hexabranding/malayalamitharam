@@ -254,13 +254,13 @@ export default function HomePage({ navigate }) {
         ))}
       </PageLayout>
 
-      {displayMedia.length > 0 && (
-        <section className="multimedia-section" style={{ padding: "32px 0" }} data-aos="fade-up">
-          <div className="container">
-            <div className="multimedia-title" data-aos="fade-left">
-              <span>{"\u0D2E\u0D4D\u0D33\u0D4D\u0D1F\u0D3F\u0D2E\u0D40\u0D21\u0D3F\u0D2F"}</span>
-              <button type="button" onClick={() => navigate("/category/photos")}>View Gallery</button>
-            </div>
+      <section className="multimedia-section" style={{ padding: "32px 0" }} data-aos="fade-up">
+        <div className="container">
+          <div className="multimedia-title" data-aos="fade-left">
+            <span>{"\u0D2E\u0D4D\u0D33\u0D4D\u0D1F\u0D3F\u0D2E\u0D40\u0D21\u0D3F\u0D2F"}</span>
+            <button type="button" onClick={() => navigate("/category/photos")}>View Gallery</button>
+          </div>
+          {displayMedia.length > 0 && (
             <div className="multimedia-grid">
               {displayMedia.map((article, i) => (
                 <div key={article.id} className="multimedia-card clickable" data-aos="zoom-in" data-aos-delay={i * 100} onClick={() => navigate("/post/" + article.id)}>
@@ -272,11 +272,11 @@ export default function HomePage({ navigate }) {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+          <VideoSection articles={articles} navigate={navigate} />
+        </div>
+      </section>
 
-      <VideoSection articles={articles} navigate={navigate} />
       <PhotoGallery articles={articles} navigate={navigate} />
 
       <section className="container section-block" style={{ borderBottom: "none" }} data-aos="fade-up">
