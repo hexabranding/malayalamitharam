@@ -136,6 +136,18 @@ export default function HomePage({ navigate }) {
 
       <NewsCarousel articles={articles} navigate={navigate} latestUpdates={latestUpdates} />
 
+      <section className="container" data-aos="fade-up">
+        <div className="section-block-title">
+          <span>{"\u0D35\u0D3E\u0D2F\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D15"}</span>
+          <button type="button" onClick={() => navigate("/search")}>View All</button>
+        </div>
+        <div className="card-grid">
+          {articles.slice(0, 6).map((article, i) => (
+            <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+          ))}
+        </div>
+      </section>
+
       <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up" style={{ display: "none" }}>
         <div className="latest-strip-title">
           <strong>Latest Updates</strong>

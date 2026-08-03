@@ -39,6 +39,7 @@ export function ArticleImage({ article, className, alt, style }) {
         alt={alt || "No photo"}
         className={className}
         style={style}
+        loading="lazy"
       />
     );
   }

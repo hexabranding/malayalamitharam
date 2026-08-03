@@ -879,11 +879,12 @@ a { color: inherit; text-decoration: none; }
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 420px;
+  height: 380px;
   overflow: hidden;
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e3e9df;
+  margin-bottom: 24px;
 }
 
 .carousel-slide {
@@ -902,10 +903,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .carousel-slide-content {
-  padding: 10px 14px 6px;
+  padding: 6px 14px 4px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .carousel-slide img {
@@ -916,7 +917,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .carousel-slide-desc {
-  padding: 6px 14px 10px;
+  padding: 4px 14px 8px;
+  min-height: 58px;
 }
 
 .carousel-slide-desc p {
@@ -946,7 +948,7 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-slide-content h2 {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1.3;
   font-weight: 900;
   font-family: "Manjari", sans-serif;
@@ -1014,11 +1016,15 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 768px) {
   .carousel-container {
-    height: 320px;
+    height: 300px;
   }
 
   .carousel-slide img {
-    height: 180px;
+    height: 200px;
+  }
+
+  .carousel-slide-desc {
+    min-height: 44px;
   }
 
   .carousel-slide-content h2 {
