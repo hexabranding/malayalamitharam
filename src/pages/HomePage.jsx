@@ -64,10 +64,9 @@ export default function HomePage({ navigate }) {
     const cat = (article.category || "").toLowerCase();
     if (!cat || skipCategories.includes(cat) || seenCats.has(cat)) return;
     seenCats.add(cat);
-    const catArticles = articles.filter((a) => (a.category || "").toLowerCase() === cat);
+    const catArticles = articles.filter((a) => (a.category || "").toLowerCase() === cat).slice(0, 4);
     if (catArticles.length > 0) {
-      const displayName = catArticles.find((a) => a.categoryMl && a.categoryMl !== cat)?.categoryMl || catArticles[0].categoryMl || cat;
-      dynamicSections.push({ title: displayName, slug: cat, articles: catArticles.slice(0, 8) });
+      dynamicSections.push({ title: article.categoryMl || cat, slug: cat, articles: catArticles });
     }
   });
 
