@@ -908,13 +908,14 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-slide img {
   width: 100%;
-  height: 220px;
+  height: 380px;
   object-fit: cover;
   object-position: center;
 }
 
 .carousel-slide-desc {
   padding: 6px 14px 10px;
+  margin-top: auto;
 }
 
 .carousel-slide-desc p {
@@ -1021,6 +1022,10 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 768px) {
   .carousel-container {
     aspect-ratio: 16 / 9;
+  }
+
+  .carousel-slide img {
+    height: 220px;
   }
 
   .carousel-slide-content h2 {
