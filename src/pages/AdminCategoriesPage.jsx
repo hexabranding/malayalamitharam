@@ -166,7 +166,6 @@ export default function AdminCategoriesPage({ navigate }) {
                       </button>
                     )}
                     <span className="category-label">{group.label}</span>
-                    <span className="category-slug">/{group.slug}</span>
                   </div>
                   <div className="category-actions">
                     <button className="admin-btn-icon" onClick={() => handleAddSubcategory(group.slug)} title="Add Subcategory" disabled={saving}>
@@ -199,7 +198,6 @@ export default function AdminCategoriesPage({ navigate }) {
                         <div className="category-child-info">
                           <span className="category-label">{child.label}</span>
                           <span className="category-ml">{child.titleMl}</span>
-                          <span className="category-slug">/{child.slug}</span>
                         </div>
                         <div className="category-actions">
                           <button className="admin-btn-icon edit" onClick={() => handleEditChild(group.slug, child.slug)} title="Edit">
