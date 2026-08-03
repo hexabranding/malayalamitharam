@@ -47,29 +47,21 @@ export default function HomePage({ navigate }) {
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const worldStories = articles.filter((a) => {
+  const filterByCategory = (categories) => articles.filter((a) => {
     const cat = (a.category || "").toLowerCase();
     const catMl = a.categoryMl || "";
-    return cat === "world" || cat === "india" || cat.includes("world") || cat.includes("india") || cat.includes("deshiyam") || cat.includes("anthardeshiyam") || catMl === "ഇന്ത്യ" || catMl === "ലോകം" || catMl.includes("ദേശീയം") || catMl.includes("അന്തർദേശീയം");
-  }).slice(0, 3);
-  const worldFallback = worldStories.length ? worldStories : articles.filter(a => a.id !== leadStory?.id).slice(0, 3);
+    return categories.some(c => cat === c || cat.includes(c) || catMl.includes(c));
+  }).slice(0, 5);
+
+  const deshiyamStories = filterByCategory(["india", "ദേശീയം"]);
+  const anthardeshiyamStories = filterByCategory(["world", "അന്തർദേശീയം"]);
+  const gulfStories = filterByCategory(["gulf", "pravasi", "uae", "ഗൾഫ്", "പ്രവാസി"]);
+  const saudiStories = filterByCategory(["saudi", "സൗദി"]);
+  const sportsStories = filterByCategory(["sports", "football", "cricket", "കായികം", "ഫുട്ബോൾ", "ക്രിക്കറ്റ്"]);
+  const businessStories = filterByCategory(["business", "ബിസിനസ്"]);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
-
-  const skipCategories = ["kerala", "india", "world"];
-  const dynamicSections = [];
-  const seenCats = new Set();
-  articles.forEach((article) => {
-    const cat = (article.category || "").toLowerCase();
-    if (!cat || skipCategories.includes(cat) || seenCats.has(cat)) return;
-    seenCats.add(cat);
-    const catArticles = articles.filter((a) => (a.category || "").toLowerCase() === cat);
-    if (catArticles.length > 0) {
-      const displayName = catArticles.find((a) => a.categoryMl && a.categoryMl !== cat)?.categoryMl || catArticles[0].categoryMl || cat;
-      dynamicSections.push({ title: displayName, slug: cat, articles: catArticles.slice(0, 5) });
-    }
-  });
 
   return (
     <div className="home-page">
@@ -169,29 +161,75 @@ export default function HomePage({ navigate }) {
 
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
-            <span>ദേശീയം &amp; അന്തർദേശീയം</span>
+            <span>ദേശീയം</span>
             <button type="button" onClick={() => navigate("/category/india")}>View All</button>
           </div>
           <div className="card-grid">
-            {worldFallback.map((article, i) => (
+            {deshiyamStories.map((article, i) => (
               <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
             ))}
           </div>
         </section>
 
-        {dynamicSections.map((section, i) => (
-          <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
-            <div className="section-block-title" data-aos="fade-left">
-              <span>{section.title}</span>
-              <button type="button" onClick={() => navigate("/category/" + section.slug)}>View all</button>
-            </div>
-            <div className="card-grid">
-              {section.articles.map((article, j) => (
-                <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={j * 50} />
-              ))}
-            </div>
-          </section>
-        ))}
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>അന്തർദേശീയം</span>
+            <button type="button" onClick={() => navigate("/category/world")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {anthardeshiyamStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
+
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>ഗൾഫ്</span>
+            <button type="button" onClick={() => navigate("/category/gulf")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {gulfStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
+
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>സൗദി അറേബ്യ</span>
+            <button type="button" onClick={() => navigate("/category/saudi")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {saudiStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
+
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>കായികം</span>
+            <button type="button" onClick={() => navigate("/category/sports")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {sportsStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
+
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>ബിസിനസ്</span>
+            <button type="button" onClick={() => navigate("/category/business")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {businessStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
       </PageLayout>
 
       {displayMedia.length > 0 && (
