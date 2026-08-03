@@ -791,7 +791,7 @@ a { color: inherit; text-decoration: none; }
   max-height: 1400px;
 }
 .news-carousel-left { display: grid; gap: 0; }
-.news-carousel-right { display: grid; gap: 0; height: 660px; }
+.news-carousel-right { display: grid; gap: 0; height: 760px; }
 
 .latest-updates-header {
   display: flex;
@@ -880,7 +880,7 @@ a { color: inherit; text-decoration: none; }
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 660px;
+  height: 760px;
   overflow: hidden;
   background: #fff;
   border-radius: 8px;
@@ -913,7 +913,7 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-slide img {
   width: 100%;
-  height: 560px;
+  height: 700px;
   object-fit: cover;
   object-position: center;
 }
@@ -927,13 +927,6 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.carousel-slide img {
-  width: 100%;
-  height: 260px;
-  object-fit: cover;
-  object-position: center;
 }
 
 .carousel-image-placeholder {
@@ -1024,11 +1017,11 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 768px) {
   .carousel-container {
-    height: 480px;
+    height: 500px;
   }
 
   .carousel-slide img {
-    height: 380px;
+    height: 440px;
   }
 
   .carousel-slide-content h2 {
