@@ -893,6 +893,7 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .carousel-slide.active {
@@ -915,7 +916,6 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-slide-desc {
   padding: 6px 14px 10px;
-  margin-top: auto;
 }
 
 .carousel-slide-desc p {
