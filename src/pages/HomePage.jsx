@@ -14,7 +14,7 @@ export default function HomePage({ navigate }) {
 
   useEffect(() => {
     function loadArticles() {
-      fetchNews({ limit: 50 }).then(data => {
+      fetchNews({ limit: 200 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) setArticles(fetched);
       }).catch(() => {});
@@ -25,7 +25,10 @@ export default function HomePage({ navigate }) {
   }, []);
 
   const leadStory = articles.find((article) => article.featured) || articles[0];
-  const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
+  const editorialStories = articles.filter((article) => {
+    const cat = (article.category || "").toLowerCase();
+    return cat === "politics" || cat === "opinion" || cat === "editorial" || cat.includes(" politics") || cat.includes("opinion");
+  }).slice(0, 3);
   const fallbackEditorial = articles.filter((a) => a.id !== leadStory.id).slice(0, 3);
   const leftColumnStories = editorialStories.length ? editorialStories : fallbackEditorial;
 
@@ -36,23 +39,38 @@ export default function HomePage({ navigate }) {
   const breakingStories = articles.filter((a) => a.breaking);
   const tickerStories = breakingStories.length > 0 ? breakingStories : articles.slice(0, 5);
 
-  const keralaStories = articles.filter((a) => a.category === "kerala" || a.categoryMl === "കേരളം");
+  const keralaStories = articles.filter((a) => {
+    const cat = (a.category || "").toLowerCase();
+    const catMl = a.categoryMl || "";
+    return cat === "kerala" || cat.includes("kerala") || catMl === "കേരളം" || catMl.includes("കേരളം");
+  });
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const worldStories = articles.filter((a) => a.category === "world" || a.category === "india" || a.categoryMl === "ഇന്ത്യ" || a.categoryMl === "ലോകം").slice(0, 3);
+  const worldStories = articles.filter((a) => {
+    const cat = (a.category || "").toLowerCase();
+    const catMl = a.categoryMl || "";
+    return cat === "world" || cat === "india" || cat.includes("world") || cat.includes("india") || cat.includes("deshiyam") || cat.includes("anthardeshiyam") || catMl === "ഇന്ത്യ" || catMl === "ലോകം" || catMl.includes("ദേശീയം") || catMl.includes("അന്തർദേശീയം");
+  }).slice(0, 3);
+  const worldFallback = worldStories.length ? worldStories : articles.filter(a => a.id !== leadStory?.id).slice(0, 3);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
+
+  function matchCategory(article, categories) {
+    const cat = (article.category || "").toLowerCase();
+    return categories.some(c => cat === c || cat.includes(c));
+  }
+
   const categorySections = [
-    { title: "Gulf", slug: "pravasi", categories: ["pravasi", "uae", "saudi", "qatar"] },
-    { title: "Sports", slug: "football", categories: ["football", "cricket", "other-sports"] },
-    { title: "Entertainment", slug: "cinema", categories: ["cinema", "music", "television"] },
-    { title: "Business & Tech", slug: "business", categories: ["business", "tech", "education"] },
-  ].map((section) => ({
-    ...section,
-    articles: articles.filter((article) => section.categories.includes(article.category)).slice(0, 4),
-  })).filter((section) => section.articles.length > 0);
+    { title: "Gulf", slug: "pravasi", categories: ["pravasi", "uae", "saudi", "qatar", "gulf", "expat"] },
+    { title: "Sports", slug: "football", categories: ["football", "cricket", "other-sports", "sports", "kabbadi", "athletics"] },
+    { title: "Entertainment", slug: "cinema", categories: ["cinema", "music", "television", "entertainment", "movie"] },
+    { title: "Business & Tech", slug: "business", categories: ["business", "tech", "education", "finance", "startup"] },
+  ].map((section) => {
+    const matched = articles.filter((article) => matchCategory(article, section.categories)).slice(0, 4);
+    return { ...section, articles: matched };
+  });
 
   return (
     <div className="home-page">
@@ -132,7 +150,7 @@ export default function HomePage({ navigate }) {
         <AdSlot slot="mid-leaderboard" label="Mid Leaderboard Ad (1280 x 250)" />
       </div>
 
-      <PageLayout navigate={navigate} className="home-below-fold">
+      <PageLayout navigate={navigate} className="home-below-fold" sidebarArticles={articles}>
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
             <span>കേരളം</span>
@@ -156,7 +174,7 @@ export default function HomePage({ navigate }) {
             <button type="button" onClick={() => navigate("/category/india")}>View All</button>
           </div>
           <div className="card-grid">
-            {worldStories.map((article, i) => (
+            {worldFallback.map((article, i) => (
               <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
             ))}
           </div>
