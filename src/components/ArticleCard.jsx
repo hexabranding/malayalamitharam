@@ -1,5 +1,6 @@
 import Meta from "./Meta.jsx";
 import { ArticleImage } from "../services/images.jsx";
+import { getCategoryName } from "../services/categories.jsx";
 
 export default function ArticleCard({ article, navigate, variant = "default", dataAosDelay }) {
   if (!article) return null;
@@ -12,7 +13,7 @@ export default function ArticleCard({ article, navigate, variant = "default", da
     >
       <div className="image-link">
         <ArticleImage article={article} alt={article.title} />
-        <span>{article.categoryMl}</span>
+        <span>{getCategoryName(article)}</span>
       </div>
       <div className="card-copy">
         <Meta article={article} />
@@ -22,5 +23,3 @@ export default function ArticleCard({ article, navigate, variant = "default", da
     </article>
   );
 }
-
-

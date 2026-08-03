@@ -1,6 +1,7 @@
 import { Clock3, Star } from "lucide-react";
 import { trendingTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
+import { getCategoryName } from "../services/categories.jsx";
 import AdSlot from "./AdSlot.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
@@ -44,7 +45,7 @@ export default function Sidebar({ navigate, articles = [] }) {
           <h2><Star size={18} /> Editor Picks</h2>
           {editorPicks.map((article) => (
             <button key={article.id} type="button" onClick={() => navigate("/post/" + article.id)}>
-              <strong>{article.categoryMl}</strong>
+              <strong>{getCategoryName(article)}</strong>
               <span>{article.title}</span>
             </button>
           ))}

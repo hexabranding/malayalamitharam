@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Facebook, Linkedin, MessageCircle, Send, Twitter } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
+import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import Meta from "../components/Meta.jsx";
@@ -59,7 +60,7 @@ export default function ArticlePage({ slug, navigate }) {
   const articleTitle = (
     <header className="article-page-title" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
       <AdSlot slot="article-top" label="Article Top Advertisement (728 x 90)" />
-      <span className="pill" data-aos="fade-up" data-aos-delay="50">{article.categoryMl}</span>
+      <span className="pill" data-aos="fade-up" data-aos-delay="50">{getCategoryName(article)}</span>
       <h1 data-aos="fade-left" data-aos-delay="100">{article.title}</h1>
     </header>
   );

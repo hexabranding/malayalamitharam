@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
+import { getCategoryName } from "../services/categories.jsx";
 
 function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
@@ -80,7 +81,7 @@ export default function NewsCarousel({ articles, navigate }) {
           >
             <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />
             <div className="carousel-overlay">
-              <span className="carousel-category">{article.categoryMl}</span>
+              <span className="carousel-category">{getCategoryName(article)}</span>
               <h2>{article.title}</h2>
               <p>{article.excerpt}</p>
             </div>

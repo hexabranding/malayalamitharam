@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchNews, fetchCategories } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
+import { getCategoryName, preloadCategories } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
@@ -27,6 +28,7 @@ export default function HomePage({ navigate }) {
   const [categoryGroups, setCategoryGroups] = useState([]);
 
   useEffect(() => {
+    preloadCategories();
     function loadArticles() {
       fetchNews({ limit: 50 }).then(data => {
         const fetched = data.news || [];
@@ -58,17 +60,45 @@ export default function HomePage({ navigate }) {
   const breakingStories = articles.filter((a) => a.breaking);
   const tickerStories = breakingStories.length > 0 ? breakingStories : articles.slice(0, 5);
 
-  const keralaStories = articles.filter((a) => a.category === "kerala" || a.categoryMl === "കേരളം");
+  const allChildSlugs = categoryGroups.flatMap(g => (g.children || []).map(c => c.slug));
+
+  function findChildSlugsByLabel(labels) {
+    const found = [];
+    categoryGroups.forEach(g => {
+      (g.children || []).forEach(c => {
+        if (labels.some(l => c.label?.toLowerCase() === l.toLowerCase())) {
+          found.push(c.slug);
+        }
+      });
+    });
+    return found;
+  }
+
+  const keralaSlugs = findChildSlugsByLabel(["Kerala"]);
+  const indiaSlugs = findChildSlugsByLabel(["India"]);
+  const worldSlugs = findChildSlugsByLabel(["World"]);
+
+  function matchByCategoryOrLabel(article, slugs, labels) {
+    if (slugs.length > 0 && slugs.includes(article.category)) return true;
+    if (labels.some(l => article.categoryMl?.toLowerCase() === l.toLowerCase())) return true;
+    if (labels.some(l => article.category?.toLowerCase() === l.toLowerCase())) return true;
+    return false;
+  }
+
+  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"]));
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const nationalStories = articles.filter((a) => a.category === "india" || a.categoryMl === "ദേശീയം" || a.categoryMl === "ഇന്ത്യ").slice(0, 5);
-  const internationalStories = articles.filter((a) => a.category === "world" || a.categoryMl === "അന്തർദേശീയം" || a.categoryMl === "ലോകം").slice(0, 5);
+  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശീയം", "ഇന്ത്യ"])).slice(0, 5);
+  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശീയം", "ലോകം"])).slice(0, 5);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
-  const handledSlugs = new Set(["kerala", "india", "world"]);
+  const handledSlugs = new Set([
+    ...keralaSlugs, ...indiaSlugs, ...worldSlugs,
+    ...categoryGroups.filter(g => g.label === "NEWS" || g.slug === "news").map(g => g.slug)
+  ]);
   const dynamicCategorySections = categoryGroups
     .filter(group => !handledSlugs.has(group.slug))
     .map((group) => {
@@ -114,7 +144,7 @@ export default function HomePage({ navigate }) {
         <div className="latest-strip-list">
           {latestUpdates.map((article) => (
             <button key={article.id} type="button" onClick={() => navigate("/post/" + article.id)}>
-              <span>{article.categoryMl}</span>
+              <span>{getCategoryName(article)}</span>
               {article.title}
             </button>
           ))}
@@ -126,7 +156,7 @@ export default function HomePage({ navigate }) {
           <aside className="editorial-col">
             {leftColumnStories.map((story) => (
               <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/post/" + story.id)}>
-                <small>{story.categoryMl || "\u0D30\u0D3E\u0D37\u0D4D\u0D3F\u0D2F\u0D02"}</small>
+                <small>{getCategoryName(story) || "\u0D30\u0D3E\u0D37\u0D4D\u0D3F\u0D2F\u0D02"}</small>
                 <h4>{story.title}</h4>
                 <p>{story.excerpt}</p>
               </article>
@@ -137,7 +167,7 @@ export default function HomePage({ navigate }) {
             <article className="newspaper-lead-card clickable" onClick={() => navigate("/post/" + leadStory.id)}>
               <ArticleImage article={leadStory} alt={leadStory.title} />
               <div className="lead-copy">
-                <span className="lead-category">{leadStory.categoryMl}</span>
+                <span className="lead-category">{getCategoryName(leadStory)}</span>
                 <h2>{leadStory.title}</h2>
                 <p>{leadStory.excerpt}</p>
                 <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">{"\u0D35\u0D3F\u0D36\u0D26\u0D2E\u0D3E\u0D2F\u0D3F \u0D35\u0D3E\u0D2F\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D15"}</button>
