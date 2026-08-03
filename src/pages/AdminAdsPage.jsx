@@ -54,6 +54,7 @@ export default function AdminAdsPage() {
     }
     setTimeout(() => setMsg(""), 4000);
     await load();
+    window.dispatchEvent(new Event("mm-data-updated"));
   }
 
   async function handleDelete() {
@@ -63,6 +64,7 @@ export default function AdminAdsPage() {
     setMsg("Ad removed.");
     setTimeout(() => setMsg(""), 2500);
     await load();
+    window.dispatchEvent(new Event("mm-data-updated"));
   }
 
   const slotInfo = AD_SLOTS.find((s) => s.slot === selectedSlot);
