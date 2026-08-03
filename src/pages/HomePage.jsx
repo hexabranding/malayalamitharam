@@ -9,16 +9,18 @@ import NewsCarousel from "../components/NewsCarousel.jsx";
 import PhotoGallery from "../components/PhotoGallery.jsx";
 import VideoSection from "../components/VideoSection.jsx";
 
-const CATEGORY_SECTIONS_MAP = {
-  gulf: { title: "ഗൾഫ്", slug: "gulf" },
-  sports: { title: "കായികം", slug: "sports" },
-  entertainment: { title: "വിനോദം", slug: "entertainment" },
-  "life-style": { title: "ലൈഫ് സ്റ്റൈൽ", slug: "life-style" },
-  "multi-media": { title: "മൾട്ടിമീഡിയ", slug: "multi-media" },
-  veedu: { title: "വീട്", slug: "veedu" },
-  column: { title: "കോളം", slug: "column" },
-  more: { title: "മറ്റുള്ളവ", slug: "more" },
+const SECTION_LABELS = {
+  gulf: "ഗൾഫ്",
+  sports: "കായികം",
+  entertainment: "വിനോദം",
+  "life-style": "ലൈഫ് സ്റ്റൈൽ",
+  "multi-media": "മൾട്ടിമീഡിയ",
+  veedu: "വീട്",
+  column: "കോളം",
+  more: "മറ്റുള്ളവ",
 };
+
+const SKIP_SECTIONS = ["news"];
 
 export default function HomePage({ navigate }) {
   const [articles, setArticles] = useState(fallback);
@@ -39,19 +41,18 @@ export default function HomePage({ navigate }) {
   useEffect(() => {
     fetchCategories().then(data => {
       if (Array.isArray(data)) {
-        const filtered = data.filter(g => g.slug !== "news" && CATEGORY_SECTIONS_MAP[g.slug]);
-        setCategoryGroups(filtered);
+        setCategoryGroups(data.filter(g => !SKIP_SECTIONS.includes(g.slug)));
       }
     }).catch(() => {});
   }, []);
 
   const leadStory = articles.find((article) => article.featured) || articles[0];
   const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
-  const fallbackEditorial = articles.filter((a) => a.id !== leadStory.id).slice(0, 3);
+  const fallbackEditorial = articles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
   const leftColumnStories = editorialStories.length ? editorialStories : fallbackEditorial;
 
-  const selectedMainStories = articles.filter((article) => article.mainNews && article.id !== leadStory.id).slice(0, 4);
-  const briefStories = articles.filter((article) => article.id !== leadStory.id && !leftColumnStories.some((l) => l.id === article.id)).slice(0, 4);
+  const selectedMainStories = articles.filter((article) => article.mainNews && article.id !== leadStory?.id).slice(0, 4);
+  const briefStories = articles.filter((article) => article.id !== leadStory?.id && !leftColumnStories.some((l) => l.id === article.id)).slice(0, 4);
   const rightColumnStories = selectedMainStories.length ? selectedMainStories : briefStories.length ? briefStories : articles.slice(1, 5);
 
   const breakingStories = articles.filter((a) => a.breaking);
@@ -63,20 +64,26 @@ export default function HomePage({ navigate }) {
 
   const nationalStories = articles.filter((a) => a.category === "india" || a.categoryMl === "ദേശീയം" || a.categoryMl === "ഇന്ത്യ").slice(0, 5);
   const internationalStories = articles.filter((a) => a.category === "world" || a.categoryMl === "അന്തർദേശീയം" || a.categoryMl === "ലോകം").slice(0, 5);
-  const worldStories = [...new Map([...nationalStories, ...internationalStories].map(a => [a.id, a])).values()].slice(0, 5);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
-  const dynamicCategorySections = categoryGroups.map((group) => {
-    const childSlugs = (group.children || []).map(c => c.slug);
-    const sectionConfig = CATEGORY_SECTIONS_MAP[group.slug] || {};
-    return {
-      title: sectionConfig.title || group.titleMl || group.label,
-      slug: sectionConfig.slug || group.slug,
-      articles: articles.filter(a => childSlugs.includes(a.category) || a.category === group.slug).slice(0, 4),
-    };
-  }).filter(section => section.articles.length > 0);
+  const handledSlugs = new Set(["kerala", "india", "world"]);
+  const dynamicCategorySections = categoryGroups
+    .filter(group => !handledSlugs.has(group.slug))
+    .map((group) => {
+      const childSlugs = (group.children || []).map(c => c.slug);
+      const sectionArticles = articles.filter(a =>
+        childSlugs.includes(a.category) || a.category === group.slug
+      ).slice(0, 4);
+      if (sectionArticles.length === 0) return null;
+      return {
+        title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
+        slug: group.slug,
+        articles: sectionArticles,
+      };
+    })
+    .filter(Boolean);
 
   return (
     <div className="home-page">
@@ -86,7 +93,7 @@ export default function HomePage({ navigate }) {
           <div className="news-ticker-content">
             {tickerStories.map((story) => (
               <span key={story.id} className={`clickable ${story.breaking ? "breaking-alert" : ""}`} onClick={() => navigate("/post/" + story.id)}>
-                {story.breaking ? "🚨" : "📢"} {story.title} •
+                {story.breaking ? "\u{1F6A8}" : "\u{1F4E2}"} {story.title} \u2022
               </span>
             ))}
           </div>
@@ -119,7 +126,7 @@ export default function HomePage({ navigate }) {
           <aside className="editorial-col">
             {leftColumnStories.map((story) => (
               <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/post/" + story.id)}>
-                <small>{story.categoryMl || "രാഷ്ട്രീയം"}</small>
+                <small>{story.categoryMl || "\u0D30\u0D3E\u0D37\u0D4D\u0D3F\u0D2F\u0D02"}</small>
                 <h4>{story.title}</h4>
                 <p>{story.excerpt}</p>
               </article>
@@ -133,13 +140,13 @@ export default function HomePage({ navigate }) {
                 <span className="lead-category">{leadStory.categoryMl}</span>
                 <h2>{leadStory.title}</h2>
                 <p>{leadStory.excerpt}</p>
-                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">വിശദമായി വായിക്കുക</button>
+                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">{"\u0D35\u0D3F\u0D36\u0D26\u0D2E\u0D3E\u0D2F\u0D3F \u0D35\u0D3E\u0D2F\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D15"}</button>
               </div>
             </article>
           </div>
 
           <aside className="briefs-col" data-aos="fade-up" data-aos-delay="200">
-            <h3 className="column-title">പ്രധാന വാർത്തകൾ</h3>
+            <h3 className="column-title">{"\u0D34\u0D30\u0D4D\u0D27\u0D3E\u0D28 \u0D35\u0D3E\u0D30\u0D4D\u0D24\u0D4D\u0D25\u0D15\u0D3E\u0D33\u0D3E"}</h3>
             {rightColumnStories.map((story) => (
               <div key={story.id} className="brief-story-card clickable" onClick={() => navigate("/post/" + story.id)}>
                 <ArticleImage article={story} alt={story.title} className="brief-story-img" />
@@ -159,7 +166,7 @@ export default function HomePage({ navigate }) {
       <PageLayout navigate={navigate} className="home-below-fold">
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
-            <span>കേരളം</span>
+            <span>{"\u0D15\u0D47\u0D30\u0D33\u0D33"}</span>
             <button type="button" onClick={() => navigate("/category/kerala")}>View All</button>
           </div>
           <div className="news-split-layout">
@@ -174,32 +181,36 @@ export default function HomePage({ navigate }) {
           </div>
         </section>
 
-        <section className="section-block" data-aos="fade-up">
-          <div className="section-block-title" data-aos="fade-left">
-            <span>ദേശീയം</span>
-            <button type="button" onClick={() => navigate("/category/india")}>View All</button>
-          </div>
-          <div className="card-grid">
-            {nationalStories.map((article, i) => (
-              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
-            ))}
-          </div>
-        </section>
+        {nationalStories.length > 0 && (
+          <section className="section-block" data-aos="fade-up">
+            <div className="section-block-title" data-aos="fade-left">
+              <span>{"\u0D26\u0D47\u0D36\u0D40\u0D2F\u0D02"}</span>
+              <button type="button" onClick={() => navigate("/category/india")}>View All</button>
+            </div>
+            <div className="card-grid">
+              {nationalStories.map((article, i) => (
+                <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section className="section-block" data-aos="fade-up">
-          <div className="section-block-title" data-aos="fade-left">
-            <span>അന്തർദേശീയം</span>
-            <button type="button" onClick={() => navigate("/category/world")}>View All</button>
-          </div>
-          <div className="card-grid">
-            {internationalStories.map((article, i) => (
-              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
-            ))}
-          </div>
-        </section>
+        {internationalStories.length > 0 && (
+          <section className="section-block" data-aos="fade-up">
+            <div className="section-block-title" data-aos="fade-left">
+              <span>{"\u0D05\u0D28\u0D4D\u0D24\u0D30\u0D4D\u0D26\u0D40\u0D36\u0D40\u0D2F\u0D02"}</span>
+              <button type="button" onClick={() => navigate("/category/world")}>View All</button>
+            </div>
+            <div className="card-grid">
+              {internationalStories.map((article, i) => (
+                <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {dynamicCategorySections.map((section, i) => (
-          <section className="section-block" key={section.title} data-aos="fade-up" data-aos-delay={i * 50}>
+          <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>
               <button type="button" onClick={() => navigate("/category/" + section.slug)}>View all</button>
@@ -217,7 +228,7 @@ export default function HomePage({ navigate }) {
         <section className="multimedia-section" style={{ padding: "32px 0" }} data-aos="fade-up">
           <div className="container">
             <div className="multimedia-title" data-aos="fade-left">
-              <span>മൾട്ടിമീഡിയ</span>
+              <span>{"\u0D2E\u0D4D\u0D33\u0D4D\u0D1F\u0D3F\u0D2E\u0D40\u0D21\u0D3F\u0D2F"}</span>
               <button type="button" onClick={() => navigate("/category/photos")}>View Gallery</button>
             </div>
             <div className="multimedia-grid">
@@ -240,14 +251,14 @@ export default function HomePage({ navigate }) {
 
       <section className="container section-block" style={{ borderBottom: "none" }} data-aos="fade-up">
         <div className="section-block-title" data-aos="fade-left">
-          <span>കൂടുതൽ വാർത്തകൾ</span>
+          <span>{"\u0D15\u0D42\u0D1F\u0D41\u0D24\u0D32\u0D4D \u0D35\u0D3E\u0D30\u0D4D\u0D24\u0D4D\u0D25\u0D15\u0D3E\u0D33"}</span>
         </div>
         <div className="list-feed">
           {articles.slice(0, 12).map((article, i) => (
             <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={i * 50} />
           ))}
         </div>
-        <div style={{ textAlign: 'center', margin: '20px 0' }}>
+        <div style={{ textAlign: "center", margin: "20px 0" }}>
           <button className="pagination-btn" onClick={() => navigate("/search")}>View All News</button>
         </div>
       </section>
