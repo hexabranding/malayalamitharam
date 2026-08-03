@@ -8,12 +8,12 @@ export function DataProvider({ children }) {
   const [menuGroups, setMenuGroups] = useState([]);
 
   useEffect(() => {
-    fetchSettings().then(setSettings).catch(() => {});
-    loadMenuGroups().then(setMenuGroups).catch(() => {});
+    fetchSettings().then(data => { if (data && typeof data === "object") setSettings(data); }).catch(() => {});
+    loadMenuGroups().then(data => { if (Array.isArray(data)) setMenuGroups(data); }).catch(() => {});
 
     function refresh() {
-      fetchSettings().then(setSettings).catch(() => {});
-      loadMenuGroups().then(setMenuGroups).catch(() => {});
+      fetchSettings().then(data => { if (data && typeof data === "object") setSettings(data); }).catch(() => {});
+      loadMenuGroups().then(data => { if (Array.isArray(data)) setMenuGroups(data); }).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);
     return () => window.removeEventListener("mm-data-updated", refresh);

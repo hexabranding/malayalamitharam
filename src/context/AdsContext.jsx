@@ -14,10 +14,14 @@ export function AdsProvider({ children }) {
   const [ads, setAds] = useState({});
 
   useEffect(() => {
-    fetchAdsBySlots(ALL_AD_SLOTS).then(setAds).catch(() => {});
+    fetchAdsBySlots(ALL_AD_SLOTS).then(data => {
+      if (data && typeof data === "object" && !Array.isArray(data)) setAds(data);
+    }).catch(() => {});
 
     function refresh() {
-      fetchAdsBySlots(ALL_AD_SLOTS).then(setAds).catch(() => {});
+      fetchAdsBySlots(ALL_AD_SLOTS).then(data => {
+        if (data && typeof data === "object" && !Array.isArray(data)) setAds(data);
+      }).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);
     return () => window.removeEventListener("mm-data-updated", refresh);

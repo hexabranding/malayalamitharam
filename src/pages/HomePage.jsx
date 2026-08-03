@@ -61,8 +61,8 @@ export default function HomePage({ navigate }) {
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const nationalStories = articles.filter((a) => a.category === "india" || a.categoryMl === "ദേശീയം").slice(0, 5);
-  const internationalStories = articles.filter((a) => a.category === "world" || a.categoryMl === "അന്തർദേശീയം").slice(0, 5);
+  const nationalStories = articles.filter((a) => a.category === "india" || a.categoryMl === "ദേശീയം" || a.categoryMl === "ഇന്ത്യ").slice(0, 5);
+  const internationalStories = articles.filter((a) => a.category === "world" || a.categoryMl === "അന്തർദേശീയം" || a.categoryMl === "ലോകം").slice(0, 5);
   const worldStories = [...new Map([...nationalStories, ...internationalStories].map(a => [a.id, a])).values()].slice(0, 5);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
