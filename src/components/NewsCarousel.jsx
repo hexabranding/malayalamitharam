@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 
@@ -36,9 +35,8 @@ function CarouselImage({ article, alt, isActive }) {
   );
 }
 
-export default function NewsCarousel({ articles, navigate }) {
+export default function NewsCarousel({ articles, navigate, latestUpdates = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
 
   const displayArticles = useMemo(() => {
     const featured = articles.filter((article) => article.featured).slice(0, 5);
@@ -46,65 +44,52 @@ export default function NewsCarousel({ articles, navigate }) {
   }, [articles]);
 
   useEffect(() => {
-    if (!autoPlay) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % displayArticles.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [autoPlay, displayArticles.length]);
-
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-    setAutoPlay(false);
-  };
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % displayArticles.length);
-    setAutoPlay(false);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + displayArticles.length) % displayArticles.length);
-    setAutoPlay(false);
-  };
+  }, [displayArticles.length]);
 
   if (displayArticles.length === 0) return null;
 
   return (
-    <div className="news-carousel">
-      <div className="carousel-container">
-        {displayArticles.map((article, index) => (
-          <div
-            key={article.id}
-            className={`carousel-slide ${index === currentIndex ? "active" : ""}`}
-            onClick={() => navigate("/post/" + article.id)}
-          >
-            <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />
-            <div className="carousel-overlay">
-              <span className="carousel-category">{getCategoryName(article)}</span>
-              <h2>{article.title}</h2>
-              <p>{article.excerpt}</p>
+    <div className="news-carousel-wrapper container">
+      <div className="news-carousel-left">
+        <div className="carousel-container">
+          {displayArticles.map((article, index) => (
+            <div
+              key={article.id}
+              className={`carousel-slide ${index === currentIndex ? "active" : ""}`}
+              onClick={() => navigate("/post/" + article.id)}
+            >
+              <div className="carousel-slide-content">
+                <span className="carousel-category">{getCategoryName(article)}</span>
+                <h2>{article.title}</h2>
+              </div>
+              <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />
+              <div className="carousel-slide-desc">
+                <p>{article.excerpt}</p>
+              </div>
             </div>
-          </div>
-        ))}
-        
-        <button className="carousel-btn carousel-prev" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
-          <ChevronLeft size={24} />
-        </button>
-        <button className="carousel-btn carousel-next" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
-          <ChevronRight size={24} />
-        </button>
+          ))}
+        </div>
       </div>
 
-      <div className="carousel-dots">
-        {displayArticles.map((_, index) => (
-          <button
-            key={index}
-            className={`carousel-dot ${index === currentIndex ? "active" : ""}`}
-            onClick={() => goToSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+      <div className="news-carousel-right">
+        <div className="latest-updates-header">
+          <strong>Latest Updates</strong>
+          <button type="button" onClick={() => navigate("/search")}>View all</button>
+        </div>
+        <div className="latest-updates-scroll">
+          <div className="latest-updates-track">
+            {[...latestUpdates, ...latestUpdates].map((article, i) => (
+              <button key={article.id + "-" + i} type="button" className="latest-update-item" onClick={() => navigate("/post/" + article.id)}>
+                <span>{getCategoryName(article)}</span>
+                {article.title}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

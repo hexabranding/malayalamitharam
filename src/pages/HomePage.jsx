@@ -134,9 +134,9 @@ export default function HomePage({ navigate }) {
         <AdSlot slot="top-leaderboard" label="Top Leaderboard Ad (1280 x 250)" />
       </div>
 
-      <NewsCarousel articles={articles} navigate={navigate} />
+      <NewsCarousel articles={articles} navigate={navigate} latestUpdates={latestUpdates} />
 
-      <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up">
+      <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up" style={{ display: "none" }}>
         <div className="latest-strip-title">
           <strong>Latest Updates</strong>
           <button type="button" onClick={() => navigate("/search")}>View all</button>
@@ -173,10 +173,22 @@ export default function HomePage({ navigate }) {
                 <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">{"\u0D35\u0D3F\u0D36\u0D26\u0D2E\u0D3E\u0D2F\u0D3F \u0D35\u0D3E\u0D2F\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D15"}</button>
               </div>
             </article>
+            <div className="lead-mini-grid">
+              {(() => {
+                const usedIds = new Set([leadStory?.id, ...leftColumnStories.map(s => s.id), ...rightColumnStories.map(s => s.id)]);
+                const miniNews = articles.filter(a => !usedIds.has(a.id)).slice(0, 4);
+                return miniNews.map((article) => (
+                  <div key={article.id} className="lead-mini-card clickable" onClick={() => navigate("/post/" + article.id)}>
+                    {article.image && <ArticleImage article={article} alt={article.title} />}
+                    <h5>{article.title}</h5>
+                  </div>
+                ));
+              })()}
+            </div>
           </div>
 
           <aside className="briefs-col" data-aos="fade-up" data-aos-delay="200">
-            <h3 className="column-title">{"\u0D34\u0D30\u0D4D\u0D27\u0D3E\u0D28 \u0D35\u0D3E\u0D30\u0D4D\u0D24\u0D4D\u0D25\u0D15\u0D3E\u0D33\u0D3E"}</h3>
+            <h3 className="column-title">പ്രധാന വാർത്തകൾ</h3>
             {rightColumnStories.map((story) => (
               <div key={story.id} className="brief-story-card clickable" onClick={() => navigate("/post/" + story.id)}>
                 <ArticleImage article={story} alt={story.title} className="brief-story-img" />
