@@ -54,22 +54,24 @@ export default function Header({ navigate, activeSlug }) {
           <div 
             className="nav-group" 
             key={group.slug}
-            onMouseEnter={() => group.children && setActiveDropdown(group.slug)}
-            onMouseLeave={() => group.children && setActiveDropdown(null)}
+            onMouseEnter={() => group.children?.length > 1 && setActiveDropdown(group.slug)}
+            onMouseLeave={() => group.children?.length > 1 && setActiveDropdown(null)}
           >
             <button 
               className={activeSlug === group.slug || group.children?.some((child) => child.slug === activeSlug) ? "active" : ""} 
               onClick={() => {
-                if (group.children) {
+                if (group.children?.length > 1) {
                   setActiveDropdown(activeDropdown === group.slug ? null : group.slug);
+                } else if (group.children?.length === 1) {
+                  navigate(openPath(group.children[0]));
                 } else {
                   navigate(openPath(group));
                 }
               }}
             >
-              {group.label}{group.children && <ChevronDown size={14} />}
+              {group.label}{group.children?.length > 1 && <ChevronDown size={14} />}
             </button>
-            {group.children && activeDropdown === group.slug && (
+            {group.children?.length > 1 && activeDropdown === group.slug && (
               <div className="dropdown-menu-custom">
                 {group.children.map((child) => (
                   <button key={child.slug} onClick={() => { setActiveDropdown(null); navigate(openPath(child)); }}>
@@ -83,7 +85,7 @@ export default function Header({ navigate, activeSlug }) {
       </div></nav>
       {menuOpen && <div className="drawer"><div className="drawer-panel">
         <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="മെനു അടയ്ക്കുക"><X size={22} /></button>
-        {navGroups.map((group) => <div className="drawer-group" key={group.slug}><button onClick={() => { if (!group.children) { setMenuOpen(false); navigate(openPath(group)); } }}>{group.label}</button>{group.children?.map((child) => <button className="drawer-child" key={child.slug} onClick={() => { setMenuOpen(false); navigate(openPath(child)); }}>{child.label}</button>)}</div>)}
+        {navGroups.map((group) => <div className="drawer-group" key={group.slug}><button onClick={() => { if (!group.children?.length) { setMenuOpen(false); navigate(openPath(group)); } else if (group.children.length === 1) { setMenuOpen(false); navigate(openPath(group.children[0])); } }}>{group.label}</button>{group.children?.length > 1 && group.children.map((child) => <button className="drawer-child" key={child.slug} onClick={() => { setMenuOpen(false); navigate(openPath(child)); }}>{child.label}</button>)}</div>)}
       </div></div>}
     </header>
   );
