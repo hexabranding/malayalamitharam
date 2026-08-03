@@ -100,7 +100,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setFormData(prev => ({
       ...prev,
       category: e.target.value,
-      categoryMl: selectedCat?.labelMl || selectedCat?.label || ""
+      categoryMl: selectedCat?.labelMl || e.target.value
     }));
   };
 
