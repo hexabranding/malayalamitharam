@@ -57,19 +57,17 @@ export default function HomePage({ navigate }) {
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
-  function matchCategory(article, categories) {
+  const skipCategories = ["kerala", "india", "world"];
+  const dynamicSections = [];
+  const seenCats = new Set();
+  articles.forEach((article) => {
     const cat = (article.category || "").toLowerCase();
-    return categories.some(c => cat === c || cat.includes(c));
-  }
-
-  const categorySections = [
-    { title: "Gulf", slug: "pravasi", categories: ["pravasi", "uae", "saudi", "qatar", "gulf", "expat"] },
-    { title: "Sports", slug: "football", categories: ["football", "cricket", "other-sports", "sports", "kabbadi", "athletics"] },
-    { title: "Entertainment", slug: "cinema", categories: ["cinema", "music", "television", "entertainment", "movie"] },
-    { title: "Business & Tech", slug: "business", categories: ["business", "tech", "education", "finance", "startup"] },
-  ].map((section) => {
-    const matched = articles.filter((article) => matchCategory(article, section.categories)).slice(0, 4);
-    return { ...section, articles: matched };
+    if (!cat || skipCategories.includes(cat) || seenCats.has(cat)) return;
+    seenCats.add(cat);
+    const catArticles = articles.filter((a) => (a.category || "").toLowerCase() === cat).slice(0, 4);
+    if (catArticles.length > 0) {
+      dynamicSections.push({ title: article.categoryMl || cat, slug: cat, articles: catArticles });
+    }
   });
 
   return (
@@ -180,8 +178,8 @@ export default function HomePage({ navigate }) {
           </div>
         </section>
 
-        {categorySections.map((section, i) => (
-          <section className="section-block" key={section.title} data-aos="fade-up" data-aos-delay={i * 50}>
+        {dynamicSections.map((section, i) => (
+          <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>
               <button type="button" onClick={() => navigate("/category/" + section.slug)}>View all</button>
