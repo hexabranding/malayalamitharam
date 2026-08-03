@@ -6,7 +6,8 @@ export function resolveImageUrl(image) {
   if (!image) return null;
   if (image.startsWith("http") || image.startsWith("data:")) return image;
   if (image.startsWith("/uploads/") || image.startsWith("uploads/")) {
-    return API_BASE + (image.startsWith("/") ? image : "/" + image);
+    const path = image.startsWith("/") ? image : "/" + image;
+    return API_BASE + path;
   }
   if (image.startsWith("/")) return image;
   return "/images/" + image;

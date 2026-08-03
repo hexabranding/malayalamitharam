@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
-import { fetchSettings } from "../services/api.js";
+import { useSettings } from "../context/DataContext.jsx";
 
 export default function Layout({ children, navigate, activeSlug }) {
+  const settings = useSettings();
   const [titleBg, setTitleBg] = useState("#bd1d25");
 
   useEffect(() => {
-    fetchSettings().then(s => {
-      if (s.title_bg_color) setTitleBg(s.title_bg_color);
-    }).catch(() => {});
-  }, []);
+    if (settings.title_bg_color) setTitleBg(settings.title_bg_color);
+  }, [settings.title_bg_color]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--title-bg", titleBg);

@@ -1,30 +1,31 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense, lazy } from "react";
 import AOS from "aos";
 import Layout from "./components/Layout.jsx";
 import { articles, flatMenuItems as defaultFlatMenuItems } from "./data/news.js";
 import { loadFlatMenuItems } from "./services/api.js";
-import HomePage from "./pages/HomePage.jsx";
-import CategoryPage from "./pages/CategoryPage.jsx";
-import ArticlePage from "./pages/ArticlePage.jsx";
-import SearchPage from "./pages/SearchPage.jsx";
-import TagsPage from "./pages/TagsPage.jsx";
-import ContactPage from "./pages/ContactPage.jsx";
-import AuthorPage from "./pages/AuthorPage.jsx";
-import MediaPage from "./pages/MediaPage.jsx";
-import InfoPage from "./pages/InfoPage.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
-import AdminLayout from "./components/AdminLayout.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
-import AdminNewsPage from "./pages/AdminNewsPage.jsx";
-import AdminNewsForm from "./pages/AdminNewsForm.jsx";
-import AdminCategoriesPage from "./pages/AdminCategoriesPage.jsx";
-import AdminTagsPage from "./pages/AdminTagsPage.jsx";
-import AdminAuthorsPage from "./pages/AdminAuthorsPage.jsx";
-import AdminPagesPage from "./pages/AdminPagesPage.jsx";
-import AdminSettings from "./pages/AdminSettings.jsx";
-import AdminAdsPage from "./pages/AdminAdsPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import AdminLoginPage from "./pages/AdminLoginPage.jsx";
+
+const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage.jsx"));
+const ArticlePage = lazy(() => import("./pages/ArticlePage.jsx"));
+const SearchPage = lazy(() => import("./pages/SearchPage.jsx"));
+const TagsPage = lazy(() => import("./pages/TagsPage.jsx"));
+const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
+const AuthorPage = lazy(() => import("./pages/AuthorPage.jsx"));
+const MediaPage = lazy(() => import("./pages/MediaPage.jsx"));
+const InfoPage = lazy(() => import("./pages/InfoPage.jsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
+const AdminLayout = lazy(() => import("./components/AdminLayout.jsx"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard.jsx"));
+const AdminNewsPage = lazy(() => import("./pages/AdminNewsPage.jsx"));
+const AdminNewsForm = lazy(() => import("./pages/AdminNewsForm.jsx"));
+const AdminCategoriesPage = lazy(() => import("./pages/AdminCategoriesPage.jsx"));
+const AdminTagsPage = lazy(() => import("./pages/AdminTagsPage.jsx"));
+const AdminAuthorsPage = lazy(() => import("./pages/AdminAuthorsPage.jsx"));
+const AdminPagesPage = lazy(() => import("./pages/AdminPagesPage.jsx"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings.jsx"));
+const AdminAdsPage = lazy(() => import("./pages/AdminAdsPage.jsx"));
+const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));
+const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.jsx"));
 
 const legacyRoutes = {
   "/home_v1.html": "/",
@@ -217,8 +218,8 @@ export default function App() {
   }, [path, adminUser, dynamicFlatItems]);
 
   if (isAdmin) {
-    return page;
+    return <Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}><div>Loading...</div></div>}>{page}</Suspense>;
   }
 
-  return <Layout navigate={navigate} activeSlug={activeSlug}>{page}</Layout>;
+  return <Layout navigate={navigate} activeSlug={activeSlug}><Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}><div>Loading...</div></div>}>{page}</Suspense></Layout>;
 }

@@ -1,24 +1,13 @@
 import { ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
-import { useState, useEffect } from "react";
-import { loadMenuGroups, fetchSettings } from "../services/api.js";
+import { useState } from "react";
+import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [settings, setSettings] = useState({});
-  const [navGroups, setNavGroups] = useState([]);
-
-  useEffect(() => {
-    loadMenuGroups().then(setNavGroups).catch(() => {});
-    fetchSettings().then(setSettings).catch(() => {});
-    function refresh() {
-      loadMenuGroups().then(setNavGroups).catch(() => {});
-      fetchSettings().then(setSettings).catch(() => {});
-    }
-    window.addEventListener("mm-data-updated", refresh);
-    return () => window.removeEventListener("mm-data-updated", refresh);
-  }, []);
+  const settings = useSettings();
+  const navGroups = useMenuGroups();
 
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";

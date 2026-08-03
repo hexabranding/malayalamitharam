@@ -12,6 +12,7 @@ import ArticleCard from "../components/ArticleCard.jsx";
 export default function ArticlePage({ slug, navigate }) {
   const fallbackArticle = fallback.find(a => a.id === slug);
   const [article, setArticle] = useState(fallbackArticle || null);
+  const [loading, setLoading] = useState(!fallbackArticle);
   const [fontSize, setFontSize] = useState(null);
   const [related, setRelated] = useState(() => {
     if (!fallbackArticle) return [];
@@ -31,10 +32,23 @@ export default function ArticlePage({ slug, navigate }) {
         }
       } catch (err) {
         if (!fallbackArticle) setArticle(null);
+      } finally {
+        setLoading(false);
       }
     }
     if (slug) load();
   }, [slug]);
+
+  if (loading) {
+    return (
+      <PageLayout navigate={navigate} className="article-page">
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh", flexDirection: "column", gap: "1rem" }}>
+          <div className="loading-spinner" style={{ width: 40, height: 40, border: "4px solid #eee", borderTopColor: "#c91f26", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+          <p style={{ color: "#666" }}>Article loading...</p>
+        </div>
+      </PageLayout>
+    );
+  }
 
   if (!article) return <NotFoundPage navigate={navigate} />;
 

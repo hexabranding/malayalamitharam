@@ -1,22 +1,9 @@
-import { useState, useEffect } from "react";
 import { Clock3, Star } from "lucide-react";
-import { fetchNews, trendingTags } from "../services/api.js";
+import { trendingTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import AdSlot from "./AdSlot.jsx";
 
-export default function Sidebar({ navigate }) {
-  const [articles, setArticles] = useState([]);
-
-  useEffect(() => {
-    function loadArticles() {
-      fetchNews({ limit: 12 }).then(data => {
-        setArticles(data.news || []);
-      }).catch(() => {});
-    }
-    loadArticles();
-    window.addEventListener("mm-data-updated", loadArticles);
-    return () => window.removeEventListener("mm-data-updated", loadArticles);
-  }, []);
+export default function Sidebar({ navigate, articles = [] }) {
 
   const selectedPopular = articles.filter((article) => article.popular).slice(0, 4);
   const popular = selectedPopular.length

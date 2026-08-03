@@ -1,25 +1,13 @@
 import { Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
-import { useState, useEffect } from "react";
-import { loadMenuGroups, fetchSettings } from "../services/api.js";
+import { useMemo } from "react";
+import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 
 export default function Footer({ navigate }) {
-  const [settings, setSettings] = useState({});
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    loadMenuGroups().then(groups => {
-      setCategories(groups.flatMap((group) => group.children || []).slice(0, 8));
-    }).catch(() => {});
-    fetchSettings().then(setSettings).catch(() => {});
-    function refresh() {
-      loadMenuGroups().then(groups => {
-        setCategories(groups.flatMap((group) => group.children || []).slice(0, 8));
-      }).catch(() => {});
-      fetchSettings().then(setSettings).catch(() => {});
-    }
-    window.addEventListener("mm-data-updated", refresh);
-    return () => window.removeEventListener("mm-data-updated", refresh);
-  }, []);
+  const settings = useSettings();
+  const menuGroups = useMenuGroups();
+  const categories = useMemo(() => {
+    return menuGroups.flatMap((group) => group.children || []).slice(0, 8);
+  }, [menuGroups]);
 
   const social = {
     facebook: settings.facebook_url,

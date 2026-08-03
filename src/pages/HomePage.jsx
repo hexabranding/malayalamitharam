@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchNews } from "../services/api.js";
+import { fetchNews, fetchCategories } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
@@ -9,8 +9,20 @@ import NewsCarousel from "../components/NewsCarousel.jsx";
 import PhotoGallery from "../components/PhotoGallery.jsx";
 import VideoSection from "../components/VideoSection.jsx";
 
+const CATEGORY_SECTIONS_MAP = {
+  gulf: { title: "ഗൾഫ്", slug: "gulf" },
+  sports: { title: "കായികം", slug: "sports" },
+  entertainment: { title: "വിനോദം", slug: "entertainment" },
+  "life-style": { title: "ലൈഫ് സ്റ്റൈൽ", slug: "life-style" },
+  "multi-media": { title: "മൾട്ടിമീഡിയ", slug: "multi-media" },
+  veedu: { title: "വീട്", slug: "veedu" },
+  column: { title: "കോളം", slug: "column" },
+  more: { title: "മറ്റുള്ളവ", slug: "more" },
+};
+
 export default function HomePage({ navigate }) {
   const [articles, setArticles] = useState(fallback);
+  const [categoryGroups, setCategoryGroups] = useState([]);
 
   useEffect(() => {
     function loadArticles() {
@@ -22,6 +34,15 @@ export default function HomePage({ navigate }) {
     loadArticles();
     window.addEventListener("mm-data-updated", loadArticles);
     return () => window.removeEventListener("mm-data-updated", loadArticles);
+  }, []);
+
+  useEffect(() => {
+    fetchCategories().then(data => {
+      if (Array.isArray(data)) {
+        const filtered = data.filter(g => g.slug !== "news" && CATEGORY_SECTIONS_MAP[g.slug]);
+        setCategoryGroups(filtered);
+      }
+    }).catch(() => {});
   }, []);
 
   const leadStory = articles.find((article) => article.featured) || articles[0];
@@ -40,19 +61,22 @@ export default function HomePage({ navigate }) {
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const worldStories = articles.filter((a) => a.category === "world" || a.category === "india" || a.categoryMl === "ദേശീയം" || a.categoryMl === "അന്തർദേശീയം" || a.categoryMl === "ഇന്ത്യ" || a.categoryMl === "ലോകം").slice(0, 5);
+  const nationalStories = articles.filter((a) => a.category === "india" || a.categoryMl === "ദേശീയം").slice(0, 5);
+  const internationalStories = articles.filter((a) => a.category === "world" || a.categoryMl === "അന്തർദേശീയം").slice(0, 5);
+  const worldStories = [...new Map([...nationalStories, ...internationalStories].map(a => [a.id, a])).values()].slice(0, 5);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
-  const categorySections = [
-    { title: "Gulf", slug: "pravasi", categories: ["pravasi", "uae", "saudi", "qatar"] },
-    { title: "Sports", slug: "football", categories: ["football", "cricket", "other-sports"] },
-    { title: "Entertainment", slug: "cinema", categories: ["cinema", "music", "television"] },
-    { title: "Business & Tech", slug: "business", categories: ["business", "tech", "education"] },
-  ].map((section) => ({
-    ...section,
-    articles: articles.filter((article) => section.categories.includes(article.category)).slice(0, 4),
-  })).filter((section) => section.articles.length > 0);
+
+  const dynamicCategorySections = categoryGroups.map((group) => {
+    const childSlugs = (group.children || []).map(c => c.slug);
+    const sectionConfig = CATEGORY_SECTIONS_MAP[group.slug] || {};
+    return {
+      title: sectionConfig.title || group.titleMl || group.label,
+      slug: sectionConfig.slug || group.slug,
+      articles: articles.filter(a => childSlugs.includes(a.category) || a.category === group.slug).slice(0, 4),
+    };
+  }).filter(section => section.articles.length > 0);
 
   return (
     <div className="home-page">
@@ -152,17 +176,29 @@ export default function HomePage({ navigate }) {
 
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
-            <span>ദേശീയം &amp; അന്തർദേശീയം</span>
+            <span>ദേശീയം</span>
             <button type="button" onClick={() => navigate("/category/india")}>View All</button>
           </div>
           <div className="card-grid">
-            {worldStories.map((article, i) => (
+            {nationalStories.map((article, i) => (
               <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
             ))}
           </div>
         </section>
 
-        {categorySections.map((section, i) => (
+        <section className="section-block" data-aos="fade-up">
+          <div className="section-block-title" data-aos="fade-left">
+            <span>അന്തർദേശീയം</span>
+            <button type="button" onClick={() => navigate("/category/world")}>View All</button>
+          </div>
+          <div className="card-grid">
+            {internationalStories.map((article, i) => (
+              <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
+            ))}
+          </div>
+        </section>
+
+        {dynamicCategorySections.map((section, i) => (
           <section className="section-block" key={section.title} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>

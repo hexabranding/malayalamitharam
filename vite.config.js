@@ -4,15 +4,25 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   publicDir: "assets",
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          aos: ["aos"],
+        }
+      }
+    }
+  },
   server: {
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://api.malayalamitharam.in/api",
+        target: "http://localhost:4000",
         changeOrigin: true,
       },
       "/uploads": {
-        target: "https://api.malayalamitharam.in",
+        target: "http://localhost:4000",
         changeOrigin: true,
       },
     },

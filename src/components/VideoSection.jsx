@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { ThumbsUp, Play, Clock, Youtube } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
-import { fetchSettings } from "../services/api.js";
+import { useSettings } from "../context/DataContext.jsx";
 import AdSlot from "./AdSlot.jsx";
 
 function getYoutubeEmbedUrl(url) {
@@ -17,11 +17,8 @@ export default function VideoSection({ articles, navigate }) {
   const [likeCount, setLikeCount] = useState(142);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
-  const [youtubeChannelUrl, setYoutubeChannelUrl] = useState("");
-
-  useEffect(() => {
-    fetchSettings().then(s => setYoutubeChannelUrl(s.youtube_url || "")).catch(() => {});
-  }, []);
+  const settings = useSettings();
+  const youtubeChannelUrl = settings.youtube_url || "";
 
   const videoArticles = articles.filter((a) => a.media === "video" && a.image);
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;

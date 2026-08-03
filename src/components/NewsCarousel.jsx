@@ -6,12 +6,12 @@ function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
   const [src, setSrc] = useState(() => {
     const resolved = resolveImageUrl(article?.image);
-    return resolved ? resolved + (resolved.startsWith("/uploads/") ? "?v=" + Date.now() : "") : "";
+    return resolved || "";
   });
 
   useEffect(() => {
     const resolved = resolveImageUrl(article?.image);
-    setSrc(resolved ? resolved + (resolved.startsWith("/uploads/") ? "?v=" + Date.now() : "") : "");
+    setSrc(resolved || "");
     setMissing(!resolved);
   }, [article?.image]);
 

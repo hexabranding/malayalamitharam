@@ -18,7 +18,7 @@ function headers(extra = {}) {
   return h;
 }
 
-async function request(url, options = {}, timeout = 3000) {
+async function request(url, options = {}, timeout = 15000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
@@ -54,7 +54,8 @@ export async function fetchNews(params = {}) {
 }
 
 export async function fetchArticle(slug) {
-  return request("/news/" + encodeURIComponent(slug));
+  const result = await request("/news/" + encodeURIComponent(slug));
+  return articlePayload(result);
 }
 
 export async function createArticle(data) {
@@ -200,6 +201,10 @@ export async function fetchAdBySlot(slot) {
   return request("/ads/" + encodeURIComponent(slot));
 }
 
+export async function fetchAdsBySlots(slots) {
+  return request("/ads/batch?slots=" + encodeURIComponent(slots.join(",")));
+}
+
 export async function saveAd(data) {
   return request("/ads", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
@@ -246,8 +251,8 @@ export const menuGroups = [
   { label: "HOME", slug: "home", path: "/" },
   { label: "NEWS", slug: "news", children: [
     { label: "Kerala", slug: "kerala", titleMl: "കേരളം" },
-    { label: "India", slug: "india", titleMl: "ഇന്ത്യ" },
-    { label: "World", slug: "world", titleMl: "ലോകം" },
+    { label: "India", slug: "india", titleMl: "ദേശീയം" },
+    { label: "World", slug: "world", titleMl: "അന്തർദേശീയം" },
     { label: "Politics", slug: "politics", titleMl: "രാഷ്ട്രീയം" },
   ]},
   { label: "GULF", slug: "gulf", children: [

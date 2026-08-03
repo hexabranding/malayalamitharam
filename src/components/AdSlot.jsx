@@ -1,23 +1,8 @@
-import { useState, useEffect } from "react";
-import { fetchAdBySlot } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
+import { useAd } from "../context/AdsContext.jsx";
 
 export default function AdSlot({ slot, label = "Advertisement", compact = false }) {
-  const [ad, setAd] = useState(null);
-
-  useEffect(() => {
-    if (!slot) return;
-    fetchAdBySlot(slot).then(setAd).catch(() => setAd(null));
-  }, [slot]);
-
-  useEffect(() => {
-    function refresh() {
-      if (!slot) return;
-      fetchAdBySlot(slot).then(setAd).catch(() => setAd(null));
-    }
-    window.addEventListener("mm-data-updated", refresh);
-    return () => window.removeEventListener("mm-data-updated", refresh);
-  }, [slot]);
+  const ad = useAd(slot);
 
   const imageUrl = resolveImageUrl(ad?.image);
 
