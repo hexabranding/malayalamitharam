@@ -1,4 +1,4 @@
-import { ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
+import { AtSign, ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
 import { useState } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
@@ -22,6 +22,7 @@ export default function Header({ navigate, activeSlug }) {
     whatsapp: settings.whatsapp_url,
     telegram: settings.telegram_url,
     linkedin: settings.linkedin_url,
+    threads: settings.threads_url,
   };
 
   return (
@@ -44,7 +45,8 @@ export default function Header({ navigate, activeSlug }) {
           {social.whatsapp && social.whatsapp !== "#" && <a href={social.whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /></a>}
           {social.telegram && social.telegram !== "#" && <a href={social.telegram} target="_blank" rel="noopener noreferrer"><Send size={18} /></a>}
           {social.linkedin && social.linkedin !== "#" && <a href={social.linkedin} target="_blank" rel="noopener noreferrer"><Linkedin size={18} /></a>}
-          {!social.facebook && !social.youtube && !social.twitter && !social.instagram && !social.whatsapp && !social.telegram && !social.linkedin && (
+          {social.threads && social.threads !== "#" && <a href={social.threads} target="_blank" rel="noopener noreferrer"><AtSign size={18} /></a>}
+          {!social.facebook && !social.youtube && !social.twitter && !social.instagram && !social.whatsapp && !social.telegram && !social.linkedin && !social.threads && (
             <><Facebook size={18} /><Youtube size={19} /><Twitter size={18} /><Instagram size={18} /></>
           )}
         </div>

@@ -85,7 +85,7 @@ export default function AdminSettings({ navigate }) {
   const groups = [
     { icon: Globe, label: "Site Info", keys: ["site_name", "site_tagline"] },
     { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "primary_color", "secondary_color", "title_bg_color", "carousel_category_width"] },
-    { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url"] },
+    { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url", "threads_url"] },
     { icon: Database, label: "Configuration", keys: ["articles_per_page"] },
   ];
 

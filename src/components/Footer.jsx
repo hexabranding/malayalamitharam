@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
 import { useMemo } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 
@@ -17,6 +17,7 @@ export default function Footer({ navigate }) {
     whatsapp: settings.whatsapp_url,
     telegram: settings.telegram_url,
     linkedin: settings.linkedin_url,
+    threads: settings.threads_url,
   };
   
   return (
@@ -37,6 +38,7 @@ export default function Footer({ navigate }) {
             {social.whatsapp && social.whatsapp !== "#" && <a href={social.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><MessageCircle size={18} /></a>}
             {social.telegram && social.telegram !== "#" && <a href={social.telegram} target="_blank" rel="noopener noreferrer" aria-label="Telegram"><Send size={18} /></a>}
             {social.linkedin && social.linkedin !== "#" && <a href={social.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={18} /></a>}
+            {social.threads && social.threads !== "#" && <a href={social.threads} target="_blank" rel="noopener noreferrer" aria-label="Threads"><AtSign size={18} /></a>}
           </div>
         </div>
 
