@@ -39,16 +39,20 @@ export default function AdminAdsPage() {
 
   async function handleSave(e) {
     e.preventDefault();
-    const result = await saveAd({ slot: selectedSlot, ...form });
-    if (result?._storageOk === false) {
-      setMsg("Ad saved for this session, but storage is full — use smaller images to persist on reload.");
-    } else {
-      setMsg("Ad saved! Visible on user site.");
+    try {
+      const result = await saveAd({ slot: selectedSlot, ...form });
+      if (result?._storageOk === false) {
+        setMsg("Ad saved for this session, but storage is full — use smaller images to persist on reload.");
+      } else {
+        setMsg("Ad added! Visible on user site.");
+      }
+      setForm({ title: "", image: "", link: "", active: true, label: AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "" });
+      await load();
+      window.dispatchEvent(new Event("mm-data-updated"));
+    } catch (err) {
+      setMsg("Failed to add ad: " + (err.message || "Unknown error"));
     }
-    setTimeout(() => setMsg(""), 4000);
-    setForm({ title: "", image: "", link: "", active: true, label: AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "" });
-    await load();
-    window.dispatchEvent(new Event("mm-data-updated"));
+    setTimeout(() => setMsg(""), 5000);
   }
 
   function handleClearForm() {
