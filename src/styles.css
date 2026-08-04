@@ -88,6 +88,46 @@ a { color: inherit; text-decoration: none; }
   border-radius: 6px;
 }
 
+.ad-slider {
+  overflow: hidden;
+  border-radius: 8px;
+  min-height: 250px;
+}
+
+.ad-slider .ad-slot-image {
+  animation: adSlideIn 0.5s ease-in-out;
+}
+
+@keyframes adSlideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.ad-slider-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+}
+
+.ad-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease;
+}
+
+.ad-dot.active {
+  background: #bd1d25;
+}
+
 .hero-news { background: #fff; padding: 28px 0; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr); gap: 12px; }
 .hero-lead { position: relative; min-height: 400px; overflow: hidden; border-radius: 8px; background: #15171b; }
@@ -959,7 +999,7 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-excerpt {
   margin: 0 14px 8px;
-  color: #9aaa9d;
+  color: #000;
   font-size: 13px;
   line-height: 1.5;
   display: -webkit-box;

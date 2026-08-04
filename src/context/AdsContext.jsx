@@ -8,7 +8,12 @@ async function fetchAllActiveAds() {
   const data = await res.json();
   if (!Array.isArray(data)) return {};
   const map = {};
-  data.forEach(a => { if (a.slot && a.active !== false) map[a.slot] = a; });
+  data.forEach(a => {
+    if (a.slot && a.active !== false) {
+      if (!map[a.slot]) map[a.slot] = [];
+      map[a.slot].push(a);
+    }
+  });
   return map;
 }
 
@@ -38,5 +43,11 @@ export function AdsProvider({ children }) {
 
 export function useAd(slot) {
   const ads = useContext(AdsContext);
-  return ads[slot] || null;
+  const list = ads[slot];
+  return list ? list[0] : null;
+}
+
+export function useAds(slot) {
+  const ads = useContext(AdsContext);
+  return ads[slot] || [];
 }

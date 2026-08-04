@@ -131,7 +131,7 @@ export default function HomePage({ navigate }) {
       </div>
 
       <div className="container">
-        <AdSlot slot="top-leaderboard" label="Top Leaderboard Ad (1280 x 250)" />
+        <AdSlot slot="top-leaderboard" label="Top Leaderboard Ad (1280 x 250)" slider />
       </div>
 
       <NewsCarousel articles={articles} navigate={navigate} latestUpdates={latestUpdates} />

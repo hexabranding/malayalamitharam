@@ -15,7 +15,7 @@ export default function Sidebar({ navigate, articles = [] }) {
 
   return (
     <aside className="sidebar" data-aos="fade-right">
-      <AdSlot slot="sidebar" label="Sidebar Ad" compact />
+      <AdSlot slot="sidebar" label="Sidebar Ad" compact slider />
 
       <section className="sidebar-block sidebar-latest">
         <h2><Clock3 size={18} /> Latest News</h2>
