@@ -31,14 +31,14 @@ export default function Footer({ navigate }) {
           </button>
           <p>മലയാളം വായനക്കാർക്കായി ഏറ്റവും പുതിയ വാർത്തകൾ, വിശകലനങ്ങൾ, തത്സമയ വിവരങ്ങൾ, ഫോട്ടോകൾ, വീഡിയോകൾ എന്നിവ വേഗതയിലും കൃത്യതയിലും ലഭ്യമാക്കുന്നു.</p>
           <div className="footer-socials">
-            {social.facebook && social.facebook !== "#" && <a href={social.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={18} /></a>}
-            {social.twitter && social.twitter !== "#" && <a href={social.twitter} target="_blank" rel="noopener noreferrer" aria-label="Twitter"><Twitter size={18} /></a>}
-            {social.youtube && social.youtube !== "#" && <a href={social.youtube} target="_blank" rel="noopener noreferrer" aria-label="Youtube"><Youtube size={18} /></a>}
-            {social.instagram && social.instagram !== "#" && <a href={social.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={18} /></a>}
-            {social.whatsapp && social.whatsapp !== "#" && <a href={social.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><MessageCircle size={18} /></a>}
-            {social.telegram && social.telegram !== "#" && <a href={social.telegram} target="_blank" rel="noopener noreferrer" aria-label="Telegram"><Send size={18} /></a>}
-            {social.linkedin && social.linkedin !== "#" && <a href={social.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={18} /></a>}
-            {social.threads && social.threads !== "#" && <a href={social.threads} target="_blank" rel="noopener noreferrer" aria-label="Threads"><AtSign size={18} /></a>}
+            <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined} aria-label="Facebook"><Facebook size={18} /></a>
+            <a href={social.twitter && social.twitter !== "#" ? social.twitter : "#"} target={social.twitter && social.twitter !== "#" ? "_blank" : undefined} rel={social.twitter && social.twitter !== "#" ? "noopener noreferrer" : undefined} aria-label="Twitter"><Twitter size={18} /></a>
+            <a href={social.youtube && social.youtube !== "#" ? social.youtube : "#"} target={social.youtube && social.youtube !== "#" ? "_blank" : undefined} rel={social.youtube && social.youtube !== "#" ? "noopener noreferrer" : undefined} aria-label="Youtube"><Youtube size={18} /></a>
+            <a href={social.instagram && social.instagram !== "#" ? social.instagram : "#"} target={social.instagram && social.instagram !== "#" ? "_blank" : undefined} rel={social.instagram && social.instagram !== "#" ? "noopener noreferrer" : undefined} aria-label="Instagram"><Instagram size={18} /></a>
+            <a href={social.whatsapp && social.whatsapp !== "#" ? social.whatsapp : "#"} target={social.whatsapp && social.whatsapp !== "#" ? "_blank" : undefined} rel={social.whatsapp && social.whatsapp !== "#" ? "noopener noreferrer" : undefined} aria-label="WhatsApp"><MessageCircle size={18} /></a>
+            <a href={social.telegram && social.telegram !== "#" ? social.telegram : "#"} target={social.telegram && social.telegram !== "#" ? "_blank" : undefined} rel={social.telegram && social.telegram !== "#" ? "noopener noreferrer" : undefined} aria-label="Telegram"><Send size={18} /></a>
+            <a href={social.linkedin && social.linkedin !== "#" ? social.linkedin : "#"} target={social.linkedin && social.linkedin !== "#" ? "_blank" : undefined} rel={social.linkedin && social.linkedin !== "#" ? "noopener noreferrer" : undefined} aria-label="LinkedIn"><Linkedin size={18} /></a>
+            <a href={social.threads && social.threads !== "#" ? social.threads : "#"} target={social.threads && social.threads !== "#" ? "_blank" : undefined} rel={social.threads && social.threads !== "#" ? "noopener noreferrer" : undefined} aria-label="Threads"><AtSign size={18} /></a>
           </div>
         </div>
 

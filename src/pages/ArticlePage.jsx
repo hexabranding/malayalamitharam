@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Facebook, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
+import { useSettings } from "../context/DataContext.jsx";
 import AdSlot from "../components/AdSlot.jsx";
 import VisitingCarAd from "../components/VisitingCarAd.jsx";
 import Meta from "../components/Meta.jsx";
@@ -12,6 +13,7 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 
 export default function ArticlePage({ slug, navigate }) {
+  const settings = useSettings();
   const fallbackArticle = fallback.find(a => a.id === slug);
   const [article, setArticle] = useState(fallbackArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle);
@@ -134,6 +136,20 @@ const displayRelated = related.length >= 2
           <div className="author-details">
             <h4>{article.author}</h4>
             <p>മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു.</p>
+          </div>
+        </div>
+
+        <div className="article-follow-social" data-aos="fade-up" data-aos-delay="370" style={{ padding: "16px 0", borderTop: "1px solid #eee", marginTop: "16px" }}>
+          <p style={{ fontWeight: 600, marginBottom: "10px", fontSize: "15px" }}>Follow Us:</p>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {settings.facebook_url && settings.facebook_url !== "#" && <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1877f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Facebook size={16} /> Facebook</a>}
+            {settings.youtube_url && settings.youtube_url !== "#" && <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#ff0000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Youtube size={16} /> YouTube</a>}
+            {settings.twitter_url && settings.twitter_url !== "#" && <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1da1f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Twitter size={16} /> Twitter</a>}
+            {settings.instagram_url && settings.instagram_url !== "#" && <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#e4405f", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Instagram size={16} /> Instagram</a>}
+            {settings.whatsapp_url && settings.whatsapp_url !== "#" && <a href={settings.whatsapp_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#25d366", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><MessageCircle size={16} /> WhatsApp</a>}
+            {settings.telegram_url && settings.telegram_url !== "#" && <a href={settings.telegram_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#0088cc", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Send size={16} /> Telegram</a>}
+            {settings.linkedin_url && settings.linkedin_url !== "#" && <a href={settings.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#0a66c2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Linkedin size={16} /> LinkedIn</a>}
+            {settings.threads_url && settings.threads_url !== "#" && <a href={settings.threads_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><AtSign size={16} /> Threads</a>}
           </div>
         </div>
       </article>
