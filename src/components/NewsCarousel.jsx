@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
+import { useSettings } from "../context/DataContext.jsx";
 
 function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
@@ -36,7 +37,9 @@ function CarouselImage({ article, alt, isActive }) {
 }
 
 export default function NewsCarousel({ articles, navigate, latestUpdates = [] }) {
+  const settings = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const categoryPad = Number(settings.carousel_category_width ?? 5);
 
   const displayArticles = useMemo(() => {
     const featured = articles.filter((article) => article.featured).slice(0, 5);
@@ -63,7 +66,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
               onClick={() => navigate("/post/" + article.id)}
             >
               <div className="carousel-slide-content">
-                <span className="carousel-category">{getCategoryName(article)}</span>
+                <span className="carousel-category" style={{ padding: `2px ${categoryPad}px` }}>{getCategoryName(article)}</span>
                 <h2>{article.title}</h2>
               </div>
               <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />

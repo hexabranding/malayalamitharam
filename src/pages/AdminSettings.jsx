@@ -25,6 +25,17 @@ export default function AdminSettings({ navigate }) {
     return s ? s.value : def;
   }
 
+  const KNOWN = {
+    carousel_category_width: { label: "Carousel Category Badge Width (px)", type: "number", value: 5 },
+  };
+
+  function getMeta(key) {
+    const s = settings.find(s => s.key === key);
+    if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value };
+    const k = KNOWN[key];
+    return k ? { key, label: k.label, type: k.type, value: k.value } : null;
+  }
+
   async function handleSave() {
     for (const key of Object.keys(dirty)) {
       await updateSetting(key, dirty[key]);
@@ -73,7 +84,7 @@ export default function AdminSettings({ navigate }) {
 
   const groups = [
     { icon: Globe, label: "Site Info", keys: ["site_name", "site_tagline"] },
-    { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "primary_color", "secondary_color", "title_bg_color"] },
+    { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "primary_color", "secondary_color", "title_bg_color", "carousel_category_width"] },
     { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url"] },
     { icon: Database, label: "Configuration", keys: ["articles_per_page"] },
   ];
@@ -84,7 +95,7 @@ export default function AdminSettings({ navigate }) {
 
       <div className="settings-grid">
         {groups.map(group => {
-          const groupSettings = settings.filter(s => group.keys.includes(s.key));
+          const groupSettings = group.keys.map(getMeta).filter(Boolean);
           if (groupSettings.length === 0) return null;
           return (
             <div key={group.label} className="settings-section">
