@@ -751,10 +751,16 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.5s ease-in-out;
 }
 
-.visiting-car-card {
-  flex: 0 0 33.33%;
+.visiting-car-slide {
+  flex: 0 0 100%;
+  display: flex;
+  gap: 8px;
   padding: 6px;
-  box-sizing: border-box;
+}
+
+.visiting-car-card {
+  flex: 1;
+  min-width: 0;
 }
 
 .visiting-car-image {
