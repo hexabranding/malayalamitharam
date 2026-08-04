@@ -46,8 +46,13 @@ export default function AdminAdsPage() {
       setMsg("Ad saved! Visible on user site.");
     }
     setTimeout(() => setMsg(""), 4000);
+    setForm({ title: "", image: "", link: "", active: true, label: AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "" });
     await load();
     window.dispatchEvent(new Event("mm-data-updated"));
+  }
+
+  function handleClearForm() {
+    setForm({ title: "", image: "", link: "", active: true, label: AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "" });
   }
 
   async function handleDelete(id) {
@@ -68,7 +73,7 @@ export default function AdminAdsPage() {
       {msg && <div className="admin-notification">{msg}</div>}
 
       <p className="admin-ads-intro">
-        Add ad images here. They will show on all pages on the user site. Popular and main news sections are auto-populated from news articles.
+        Add ad images here. They will show on all pages on the user site. For Top Leaderboard and Sidebar slots, add multiple ads to enable auto-sliding carousel.
       </p>
 
       <div className="admin-ads-layout">
@@ -164,6 +169,9 @@ export default function AdminAdsPage() {
           <div className="admin-form-actions">
             <button type="submit" className="admin-btn primary">
               <Save size={18} /> Add Ad
+            </button>
+            <button type="button" className="admin-btn secondary" onClick={handleClearForm}>
+              Clear Form
             </button>
           </div>
         </form>
