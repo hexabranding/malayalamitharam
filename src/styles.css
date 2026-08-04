@@ -708,6 +708,49 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 22px;
   text-align: left;
 }
+
+.visiting-car-ad {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  margin: 20px 0;
+  border: 1px solid #e3e9df;
+  background: #fff;
+}
+
+.visiting-car-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.visiting-car-part {
+  flex: 0 0 33.33%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.visiting-car-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.visiting-car-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #d4cfc4;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease;
+}
+
+.visiting-car-dot.active {
+  background: #bd1d25;
+}
+
 .article-author-card {
   display: flex;
   align-items: center;
