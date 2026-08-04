@@ -16,7 +16,15 @@ export default function VisitingCarAd() {
     return () => clearInterval(interval);
   }, [allAds.length]);
 
-  if (allAds.length === 0) return null;
+  if (allAds.length === 0) {
+    return (
+      <div className="visiting-car-ad visiting-car-empty">
+        <span>In-Article Ad</span>
+        <strong>Ad Space</strong>
+        <small>300 x 250</small>
+      </div>
+    );
+  }
 
   const currentAd = allAds[activeIndex];
   const imageUrl = resolveImageUrl(currentAd?.image);
