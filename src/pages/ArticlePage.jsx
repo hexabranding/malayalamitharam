@@ -87,7 +87,11 @@ export default function ArticlePage({ slug, navigate }) {
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(article.body || []).map((paragraph, index) => (
             <div key={index}>
-              {index === 1 && <AdSlot slot="article" label="In-Article Advertisement (300 x 250)" compact />}
+              {index === 1 && (
+                <div className="visiting-card-ad">
+                  <AdSlot slot="article" label="In-Article Advertisement (300 x 250)" compact />
+                </div>
+              )}
               <p
                 style={fontSize ? { fontSize: fontSize + "px" } : undefined}
                 onClick={() => setFontSize(prev => Math.min((prev || 22) + 2, 36))}
