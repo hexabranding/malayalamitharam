@@ -78,7 +78,7 @@ export default function AdminAdsPage() {
 
       <p className="admin-ads-intro">
         Add ad images here. They will show on all pages on the user site.
-        <strong> For Top Leaderboard and Sidebar slots, add multiple ads to enable auto-sliding carousel.</strong>
+        <strong> For Top Leaderboard, Sidebar and In-Article slots, add multiple ads to enable auto-sliding carousel.</strong>
       </p>
 
       <div className="admin-ads-layout">
@@ -106,7 +106,7 @@ export default function AdminAdsPage() {
           <h3>{slotInfo?.title}</h3>
           <p className="admin-ads-slot-desc">{slotInfo?.label}</p>
 
-          {(selectedSlot === "top-leaderboard" || selectedSlot === "sidebar") && (
+          {(selectedSlot === "top-leaderboard" || selectedSlot === "sidebar" || selectedSlot.startsWith("article-part")) && (
             <div className="admin-slider-hint">
               <strong>Slide Carousel Mode</strong>
               <p>Add multiple ads for this slot to enable auto-sliding. Each ad will show for 3 seconds.</p>

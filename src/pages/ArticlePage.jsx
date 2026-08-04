@@ -54,7 +54,7 @@ export default function ArticlePage({ slug, navigate }) {
 
   if (!article) return <NotFoundPage navigate={navigate} />;
 
-  const displayRelated = related.length >= 2
+const displayRelated = related.length >= 2
     ? related
     : [];
 
@@ -88,7 +88,13 @@ export default function ArticlePage({ slug, navigate }) {
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(article.body || []).map((paragraph, index) => (
             <div key={index}>
-              {index === 1 && <VisitingCarAd />}
+              {index === 1 && (
+                <div className="in-article-ads">
+                  <VisitingCarAd slot="article-part-1" />
+                  <VisitingCarAd slot="article-part-2" />
+                  <VisitingCarAd slot="article-part-3" />
+                </div>
+              )}
               <p
                 style={fontSize ? { fontSize: fontSize + "px" } : undefined}
                 onClick={() => setFontSize(prev => Math.min((prev || 22) + 2, 36))}

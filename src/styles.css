@@ -709,6 +709,29 @@ a { color: inherit; text-decoration: none; }
   text-align: left;
 }
 
+.in-article-ads {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.in-article-ads .visiting-car-ad {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .in-article-ads {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .in-article-ads {
+    gap: 8px;
+  }
+}
+
 .visiting-car-ad {
   position: relative;
   overflow: hidden;
