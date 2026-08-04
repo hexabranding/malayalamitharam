@@ -67,6 +67,9 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
                 <h2>{article.title}</h2>
               </div>
               <CarouselImage article={article} alt={article.title} isActive={index === currentIndex} />
+              {article.excerpt && (
+                <p className="carousel-excerpt">{article.excerpt}</p>
+              )}
             </div>
           ))}
         </div>

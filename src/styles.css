@@ -957,6 +957,17 @@ a { color: inherit; text-decoration: none; }
 }
 .carousel-slide:hover .carousel-slide-content h2 { color: #bd1d25; }
 
+.carousel-excerpt {
+  margin: 0 14px 8px;
+  color: #9aaa9d;
+  font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .carousel-btn {
   position: absolute;
   top: 50%;
