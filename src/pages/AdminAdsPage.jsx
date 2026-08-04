@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Save, Upload, Trash2 } from "lucide-react";
-import { AD_SLOTS, fetchAdsAll, saveAd, deleteAd, uploadImage } from "../services/api.js";
+import { AD_SLOTS, fetchAdsAll, saveAd, deleteAdById, uploadImage } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 
 export default function AdminAdsPage() {
@@ -13,15 +13,8 @@ export default function AdminAdsPage() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    const existing = ads.find((a) => a.slot === selectedSlot);
-    setForm({
-      title: existing?.title || "",
-      image: existing?.image || "",
-      link: existing?.link || "",
-      active: existing?.active !== false,
-      label: existing?.label || AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "",
-    });
-  }, [selectedSlot, ads]);
+    setForm({ title: "", image: "", link: "", active: true, label: AD_SLOTS.find((s) => s.slot === selectedSlot)?.title || "" });
+  }, [selectedSlot]);
 
   async function load() {
     const data = await fetchAdsAll();
@@ -57,16 +50,16 @@ export default function AdminAdsPage() {
     window.dispatchEvent(new Event("mm-data-updated"));
   }
 
-  async function handleDelete() {
-    if (!confirm("Remove this ad? Placeholder will show on user site.")) return;
-    await deleteAd(selectedSlot);
-    setForm({ title: "", image: "", link: "", active: true, label: "" });
+  async function handleDelete(id) {
+    if (!confirm("Remove this ad?")) return;
+    await deleteAdById(id);
     setMsg("Ad removed.");
     setTimeout(() => setMsg(""), 2500);
     await load();
     window.dispatchEvent(new Event("mm-data-updated"));
   }
 
+  const slotAds = ads.filter((a) => a.slot === selectedSlot);
   const slotInfo = AD_SLOTS.find((s) => s.slot === selectedSlot);
   const previewUrl = resolveImageUrl(form.image);
 
@@ -101,6 +94,21 @@ export default function AdminAdsPage() {
         <form className="admin-ads-form" onSubmit={handleSave}>
           <h3>{slotInfo?.title}</h3>
           <p className="admin-ads-slot-desc">{slotInfo?.label}</p>
+
+          {slotAds.length > 0 && (
+            <div className="admin-existing-ads">
+              <h4>Existing Ads ({slotAds.length})</h4>
+              {slotAds.map((ad) => (
+                <div key={ad._id} className="admin-existing-ad">
+                  <img src={resolveImageUrl(ad.image)} alt={ad.title} />
+                  <span>{ad.title || "No title"}</span>
+                  <button type="button" className="admin-btn danger" onClick={() => handleDelete(ad._id)}>
+                    <Trash2 size={14} /> Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="form-group">
             <label>Ad Title (optional)</label>
@@ -155,10 +163,7 @@ export default function AdminAdsPage() {
 
           <div className="admin-form-actions">
             <button type="submit" className="admin-btn primary">
-              <Save size={18} /> Save Ad
-            </button>
-            <button type="button" className="admin-btn secondary" onClick={handleDelete}>
-              <Trash2 size={16} /> Remove
+              <Save size={18} /> Add Ad
             </button>
           </div>
         </form>

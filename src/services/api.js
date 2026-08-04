@@ -213,6 +213,10 @@ export async function deleteAd(slot) {
   return request("/ads/" + encodeURIComponent(slot), { method: "DELETE", headers: headers() });
 }
 
+export async function deleteAdById(id) {
+  return request("/ads/" + encodeURIComponent(id), { method: "DELETE", headers: headers() });
+}
+
 // Upload
 export async function uploadImage(file) {
   const formData = new FormData();
