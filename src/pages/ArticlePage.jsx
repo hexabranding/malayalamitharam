@@ -5,7 +5,6 @@ import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
-import VisitingCarAd from "../components/VisitingCarAd.jsx";
 import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
@@ -88,7 +87,7 @@ export default function ArticlePage({ slug, navigate }) {
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(article.body || []).map((paragraph, index) => (
             <div key={index}>
-              {index === 1 && <VisitingCarAd />}
+              {index === 1 && <AdSlot slot="article" label="In-Article Advertisement (300 x 250)" compact />}
               <p
                 style={fontSize ? { fontSize: fontSize + "px" } : undefined}
                 onClick={() => setFontSize(prev => Math.min((prev || 22) + 2, 36))}
