@@ -38,6 +38,20 @@ const authorsRoutes = require("./backend/routes/authors");
 const settingsRoutes = require("./backend/routes/settings");
 const adsRoutes = require("./backend/routes/ads");
 const uploadRoutes = require("./backend/routes/upload");
+const Image = require("./backend/models/Image");
+
+// Serve uploaded images from MongoDB if the file is not on disk (survives deploys).
+app.get("/uploads/:filename", async (req, res) => {
+  try {
+    const img = await Image.findOne({ filename: req.params.filename });
+    if (!img || !img.data) return res.status(404).json({ error: "Image not found" });
+    res.set("Content-Type", img.contentType || "application/octet-stream");
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    return res.send(img.data);
+  } catch (err) {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/news", newsRoutes);
