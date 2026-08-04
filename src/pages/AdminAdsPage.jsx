@@ -73,13 +73,15 @@ export default function AdminAdsPage() {
       {msg && <div className="admin-notification">{msg}</div>}
 
       <p className="admin-ads-intro">
-        Add ad images here. They will show on all pages on the user site. For Top Leaderboard and Sidebar slots, add multiple ads to enable auto-sliding carousel.
+        Add ad images here. They will show on all pages on the user site.
+        <strong> For Top Leaderboard and Sidebar slots, add multiple ads to enable auto-sliding carousel.</strong>
       </p>
 
       <div className="admin-ads-layout">
         <aside className="admin-ads-slots">
           <h3>Ad Slots</h3>
           {AD_SLOTS.map((slot) => {
+            const slotAdCount = ads.filter((a) => a.slot === slot.slot).length;
             const hasAd = ads.some((a) => a.slot === slot.slot && a.image);
             return (
               <button
@@ -90,7 +92,7 @@ export default function AdminAdsPage() {
               >
                 <span>{slot.title}</span>
                 <small>{slot.label}</small>
-                {hasAd && <em className="ad-active-dot">●</em>}
+                {slotAdCount > 0 && <em className="ad-active-dot">{slotAdCount}</em>}
               </button>
             );
           })}
@@ -100,9 +102,16 @@ export default function AdminAdsPage() {
           <h3>{slotInfo?.title}</h3>
           <p className="admin-ads-slot-desc">{slotInfo?.label}</p>
 
+          {(selectedSlot === "top-leaderboard" || selectedSlot === "sidebar") && (
+            <div className="admin-slider-hint">
+              <strong>Slide Carousel Mode</strong>
+              <p>Add multiple ads for this slot to enable auto-sliding. Each ad will show for 3 seconds.</p>
+            </div>
+          )}
+
           {slotAds.length > 0 && (
             <div className="admin-existing-ads">
-              <h4>Existing Ads ({slotAds.length})</h4>
+              <h4>Current Ads ({slotAds.length}) — add more below for sliding</h4>
               {slotAds.map((ad) => (
                 <div key={ad._id} className="admin-existing-ad">
                   <img src={resolveImageUrl(ad.image)} alt={ad.title} />
