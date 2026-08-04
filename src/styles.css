@@ -749,7 +749,15 @@ a { color: inherit; text-decoration: none; }
   justify-content: center;
   gap: 4px;
   min-height: 200px;
-  background: #fafaf7;
+  padding: 20px;
+  border: 1px dashed #c2cdbd;
+  background: linear-gradient(180deg, #fbfcf9, #f2f4ee);
+}
+
+.visiting-car-empty-icon {
+  color: #9daf98;
+  stroke-width: 1.5;
+  margin-bottom: 4px;
 }
 
 .visiting-car-empty span {
@@ -778,8 +786,6 @@ a { color: inherit; text-decoration: none; }
 .visiting-car-slide {
   flex: 0 0 100%;
   display: flex;
-  gap: 8px;
-  padding: 6px;
 }
 
 .visiting-car-card {
@@ -789,30 +795,9 @@ a { color: inherit; text-decoration: none; }
 
 .visiting-car-image {
   width: 100%;
+  height: 100%;
   display: block;
-  border-radius: 6px;
-}
-
-.visiting-car-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 0;
-}
-
-.visiting-car-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: #d4cfc4;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.3s ease;
-}
-
-.visiting-car-dot.active {
-  background: #bd1d25;
+  object-fit: cover;
 }
 
 .article-author-card {

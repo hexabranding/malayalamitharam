@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ImageIcon } from "lucide-react";
 import { useAds } from "../context/AdsContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 
@@ -20,6 +21,7 @@ export default function VisitingCarAd({ slot = "article-part-1", label = "In-Art
   if (slides.length === 0) {
     return (
       <div className="visiting-car-ad visiting-car-empty">
+        <ImageIcon className="visiting-car-empty-icon" size={28} />
         <span>{label}</span>
         <strong>Ad Space</strong>
         <small>300 x 250</small>
@@ -49,19 +51,6 @@ export default function VisitingCarAd({ slot = "article-part-1", label = "In-Art
           );
         })}
       </div>
-      {slides.length > 1 && (
-        <div className="visiting-car-dots">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`visiting-car-dot ${i === safeIndex ? "active" : ""}`}
-              onClick={() => setActiveIndex(i)}
-              aria-label={`Ad ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
