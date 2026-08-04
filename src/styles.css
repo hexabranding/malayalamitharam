@@ -786,11 +786,18 @@ a { color: inherit; text-decoration: none; }
 .visiting-car-slide {
   flex: 0 0 100%;
   display: flex;
+  aspect-ratio: 300 / 250;
 }
 
 .visiting-car-card {
   flex: 1;
   min-width: 0;
+  display: flex;
+}
+
+.visiting-car-card a {
+  display: flex;
+  flex: 1;
 }
 
 .visiting-car-image {
