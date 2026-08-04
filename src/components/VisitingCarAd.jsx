@@ -5,7 +5,10 @@ import { resolveImageUrl } from "../services/images.jsx";
 const PART_SLOTS = ["article-part-1", "article-part-2", "article-part-3"];
 
 export default function VisitingCarAd() {
-  const allAds = PART_SLOTS.flatMap((slot) => useAds(slot));
+  const ads1 = useAds("article-part-1");
+  const ads2 = useAds("article-part-2");
+  const ads3 = useAds("article-part-3");
+  const allAds = [...ads1, ...ads2, ...ads3];
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -42,10 +45,22 @@ export default function VisitingCarAd() {
 
   return (
     <div className="visiting-car-ad">
-      <div className="visiting-car-slide">
-        {currentAd?.link ? (
-          <a href={currentAd.link} target="_blank" rel="noopener noreferrer">{content}</a>
-        ) : content}
+      <div className="visiting-car-track" style={{ transform: `translateX(-${activeIndex * 33.33}%)` }}>
+        {allAds.map((ad, i) => {
+          const url = resolveImageUrl(ad?.image);
+          if (!url) return null;
+          return (
+            <div key={i} className="visiting-car-card">
+              {ad.link ? (
+                <a href={ad.link} target="_blank" rel="noopener noreferrer">
+                  <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" loading="lazy" />
+                </a>
+              ) : (
+                <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" loading="lazy" />
+              )}
+            </div>
+          );
+        })}
       </div>
       {allAds.length > 1 && (
         <div className="visiting-car-dots">
