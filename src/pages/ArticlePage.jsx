@@ -89,7 +89,9 @@ export default function ArticlePage({ slug, navigate }) {
             <div key={index}>
               {index === 1 && (
                 <div className="visiting-card-ad">
-                  <AdSlot slot="article" label="In-Article Advertisement (300 x 250)" compact />
+                  <AdSlot slot="article-part-1" label="In-Article Ad 1 (300 x 250)" compact />
+                  <AdSlot slot="article-part-2" label="In-Article Ad 2 (300 x 250)" compact />
+                  <AdSlot slot="article-part-3" label="In-Article Ad 3 (300 x 250)" compact />
                 </div>
               )}
               <p
