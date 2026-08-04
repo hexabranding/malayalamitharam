@@ -10,6 +10,7 @@
 }
 
 * { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
 body { margin: 0; background: #f5f7f2; color: #18201c; font-family: "Noto Sans Malayalam", "Manjari", sans-serif; }
 button, input, textarea { font: inherit; }
 button { border: 0; cursor: pointer; background: transparent; color: inherit; }
@@ -3256,4 +3257,32 @@ a { color: inherit; text-decoration: none; }
 
 .carousel-dot.active {
   animation: pulse 1.5s ease infinite;
+}
+
+/* ===== Mobile Responsiveness Fixes ===== */
+@media (max-width: 1024px) {
+  .news-carousel-right { height: 420px; }
+}
+
+@media (max-width: 768px) {
+  .carousel-slide-content h2 { font-size: 20px; }
+}
+
+@media (max-width: 620px) {
+  .footer-qr {
+    padding-left: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .footer-qr img { margin-inline: auto; }
+}
+
+@media (max-width: 480px) {
+  .brand-logo-img { width: 150px; max-height: 84px; }
+  .lead-mini-grid { grid-template-columns: 1fr; }
+  .section-block-title { flex-wrap: wrap; gap: 8px; }
+  .news-carousel-right { height: 360px; }
+  .carousel-container { height: 380px; }
+  .carousel-slide img { height: 300px; }
+  .latest-update-item { font-size: 13px; padding: 9px 10px; }
 }
