@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Facebook, Linkedin, MessageCircle, Send, Twitter } from "lucide-react";
+import { Facebook, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
@@ -109,6 +109,15 @@ const displayRelated = related.length >= 2
               #{tag}
             </button>
           ))}
+        </div>
+
+        <div className="article-stats" data-aos="fade-up" data-aos-delay="270" style={{ display: "flex", gap: "1.5rem", padding: "12px 0", borderTop: "1px solid #eee", borderBottom: "1px solid #eee", margin: "16px 0" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#555", fontSize: "15px" }}>
+            <ThumbsUp size={18} /> {article.likes || 0} ലൈക്കുകൾ
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#555", fontSize: "15px" }}>
+            <Eye size={18} /> {article.views || 0} വായനകൾ
+          </span>
         </div>
 
         <div className="article-share" data-aos="fade-up" data-aos-delay="300">

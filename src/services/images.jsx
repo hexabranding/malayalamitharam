@@ -39,7 +39,6 @@ export function ArticleImage({ article, className, alt, style }) {
         alt={alt || "No photo"}
         className={className}
         style={style}
-        loading="lazy"
       />
     );
   }
@@ -51,7 +50,6 @@ export function ArticleImage({ article, className, alt, style }) {
       className={className}
       style={style}
       onError={handleError}
-      loading="lazy"
     />
   );
 }

@@ -27,6 +27,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
     body: "",
     tags: "",
     backgroundColor: "",
+    likes: 0,
+    views: 0,
   });
 
   const [imagePreview, setImagePreview] = useState("");
@@ -67,6 +69,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
               body: found.body?.join("\n\n") || "",
               tags: found.tags?.join(", ") || "",
               backgroundColor: found.backgroundColor || "",
+              likes: found.likes || 0,
+              views: found.views || 0,
             });
             setImagePreview(found.image || "");
           }
@@ -135,6 +139,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
       content: derivedContent,
       body: bodyParagraphs,
       tags: formData.tags.split(",").map(tag => tag.trim()).filter(tag => tag),
+      likes: Number(formData.likes) || 0,
+      views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
     };
@@ -370,6 +376,32 @@ export default function AdminNewsForm({ navigate, newsId }) {
                   />
                   Popular
                 </label>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Likes Count</label>
+                <input
+                  type="number"
+                  name="likes"
+                  value={formData.likes}
+                  onChange={handleChange}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Views Count</label>
+                <input
+                  type="number"
+                  name="views"
+                  value={formData.views}
+                  onChange={handleChange}
+                  min="0"
+                  placeholder="0"
+                />
               </div>
             </div>
           </div>

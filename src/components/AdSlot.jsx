@@ -24,7 +24,6 @@ export default function AdSlot({ slot, label = "Advertisement", compact = false,
         src={imageUrl}
         alt={currentAd?.title || label}
         className="ad-slot-image"
-        loading="lazy"
       />
     );
 

@@ -30,7 +30,7 @@ function CarouselImage({ article, alt, isActive }) {
     <img
       src={src}
       alt={alt || ""}
-      loading={isActive ? "eager" : "lazy"}
+      loading="eager"
       fetchpriority={isActive ? "high" : "auto"}
     />
   );
