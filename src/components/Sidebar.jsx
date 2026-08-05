@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Clock3, Star } from "lucide-react";
 import { trendingTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
@@ -5,6 +6,35 @@ import { getCategoryName } from "../services/categories.jsx";
 import AdSlot from "./AdSlot.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const el = sidebarRef.current;
+          if (!el) { ticking = false; return; }
+          const scrollY = window.scrollY;
+          if (scrollY < lastScrollY) {
+            el.classList.add("sidebar-pull");
+            el.classList.remove("sidebar-push");
+          } else if (scrollY > lastScrollY) {
+            el.classList.add("sidebar-push");
+            el.classList.remove("sidebar-pull");
+          }
+          lastScrollY = scrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const selectedPopular = articles.filter((article) => article.popular).slice(0, 4);
   const popular = selectedPopular.length
@@ -14,7 +44,7 @@ export default function Sidebar({ navigate, articles = [] }) {
   const editorPicks = articles.filter((article) => article.featured).slice(0, 3);
 
   return (
-    <aside className="sidebar" data-aos="fade-right">
+    <aside className="sidebar" ref={sidebarRef}>
       <AdSlot slot="sidebar" label="Sidebar Ad" compact slider />
 
       <section className="sidebar-block sidebar-latest">
