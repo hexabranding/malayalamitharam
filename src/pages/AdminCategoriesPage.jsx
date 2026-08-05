@@ -47,7 +47,7 @@ export default function AdminCategoriesPage({ navigate }) {
     try {
       if (editingId.startsWith("group-")) {
         const slug = editingId.replace("group-", "");
-        await updateCategory(slug, { label: editLabel.trim() });
+        await updateCategory(slug, { label: editLabel.trim(), titleMl: editMl.trim() });
       } else if (editingId.startsWith("child-")) {
         const raw = editingId.replace("child-", "");
         const sepIdx = raw.indexOf("__");
@@ -65,7 +65,7 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const handleEditGroup = (slug) => {
     const g = categories.find(c => c.slug === slug);
-    startEdit(`group-${slug}`, g?.label || "", "");
+    startEdit(`group-${slug}`, g?.label || "", g?.titleMl || "");
   };
 
   const handleEditChild = (groupSlug, childSlug) => {
@@ -120,10 +120,11 @@ export default function AdminCategoriesPage({ navigate }) {
     const id = slug;
     setSaving(true);
     try {
-      await createCategory({ id, label: "New Group", slug });
+      await createCategory({ id, label: "New Group", slug, titleMl: "" });
       await refresh();
       setEditingId(`group-${slug}`);
       setEditLabel("New Group");
+      setEditMl("");
     } catch (err) {
       alert("Error adding group: " + err.message);
     }
@@ -144,6 +145,7 @@ export default function AdminCategoriesPage({ navigate }) {
         <button className="admin-btn primary" onClick={handleAddGroup} disabled={saving}>
           <Plus size={18} /> Add Category Group
         </button>
+        <span style={{ fontSize: 12, color: "#888", marginLeft: 8 }}>(English + Malayalam name)</span>
         {saving && <span style={{ marginLeft: 8, color: "#888" }}><Loader2 size={16} className="spin" /> Saving...</span>}
       </div>
 
@@ -153,7 +155,8 @@ export default function AdminCategoriesPage({ navigate }) {
             <div className="category-group-header">
               {editingId === `group-${group.slug}` ? (
                 <div className="crud-edit-row" style={{ flex: 1 }}>
-                  <input value={editLabel} onChange={e => setEditLabel(e.target.value)} autoFocus />
+                  <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="English" autoFocus />
+                  <input value={editMl} onChange={e => setEditMl(e.target.value)} placeholder="Malayalam" />
                   <button className="admin-btn-icon edit" onClick={saveEdit} disabled={saving}><Check size={16} /></button>
                   <button className="admin-btn-icon delete" onClick={cancelEdit}><X size={16} /></button>
                 </div>
@@ -166,6 +169,7 @@ export default function AdminCategoriesPage({ navigate }) {
                       </button>
                     )}
                     <span className="category-label">{group.label}</span>
+                    {group.titleMl && <span className="category-ml">{group.titleMl}</span>}
                     <span className="category-slug">/{group.slug}</span>
                   </div>
                   <div className="category-actions">

@@ -18,7 +18,7 @@ const MALAYALAM_MAP = {
   viral: "വൈറൽ", automobile: "ഓട്ടോബൈൽ", environment: "പരിസ്ഥിതി",
   health: "ആരോഗ്യം", food: "ഭക്ഷണം", travel: "യാത്ര", beauty: "സൗന്ദര്യം",
   "photo gallery": "ഫോട്ടോ ഗാലറി", podcast: "പോഡ്‌കാസ്റ്റ്",
-  onam: "ഓണം", christmas: "ക്രിസ്മസ്", eid: "ഈദ്",
+  onam: "ഓണം", christmas: "ക്രിസ്മസ്", eid: "ঈദ്",
 };
 
 function looksLikeSlug(text) {

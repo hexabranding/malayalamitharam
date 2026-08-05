@@ -156,7 +156,7 @@ export default function HomePage({ navigate }) {
           <aside className="editorial-col">
             {leftColumnStories.map((story) => (
               <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/post/" + story.id)}>
-                <small>{getCategoryName(story) || "\u0D30\u0D3E\u0D37\u0D4D\u0D3F\u0D2F\u0D02"}</small>
+                <small>{getCategoryName(story) || "രാഷ്ട്രീയം"}</small>
                 <h4>{story.title}</h4>
                 <p>{story.excerpt}</p>
               </article>
@@ -170,7 +170,7 @@ export default function HomePage({ navigate }) {
                 <span className="lead-category">{getCategoryName(leadStory)}</span>
                 <h2>{leadStory.title}</h2>
                 <p>{leadStory.excerpt}</p>
-                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">{"\u0D35\u0D3F\u0D36\u0D26\u0D2E\u0D3E\u0D2F\u0D3F \u0D35\u0D3E\u0D2F\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D15"}</button>
+                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">വിശദമായി വായിക്കുക</button>
               </div>
             </article>
             <div className="lead-mini-grid">
@@ -208,7 +208,7 @@ export default function HomePage({ navigate }) {
       <PageLayout navigate={navigate} className="home-below-fold">
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
-            <span>{"\u0D15\u0D47\u0D30\u0D33\u0D33"}</span>
+            <span>കേരളം</span>
             <button type="button" onClick={() => navigate("/category/kerala")}>View All</button>
           </div>
           <div className="news-split-layout">
@@ -226,7 +226,7 @@ export default function HomePage({ navigate }) {
         {nationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>{"\u0D26\u0D47\u0D36\u0D40\u0D2F\u0D02"}</span>
+              <span>ദേശീയം</span>
               <button type="button" onClick={() => navigate("/category/india")}>View All</button>
             </div>
             <div className="card-grid">
@@ -240,7 +240,7 @@ export default function HomePage({ navigate }) {
         {internationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>{"\u0D05\u0D28\u0D4D\u0D24\u0D30\u0D4D\u0D26\u0D40\u0D36\u0D40\u0D2F\u0D02"}</span>
+              <span>അന്തർദേശീയം</span>
               <button type="button" onClick={() => navigate("/category/world")}>View All</button>
             </div>
             <div className="card-grid">
@@ -269,7 +269,7 @@ export default function HomePage({ navigate }) {
       <section className="multimedia-section" style={{ padding: "32px 0" }} data-aos="fade-up">
         <div className="container">
           <div className="multimedia-title" data-aos="fade-left">
-            <span>{"\u0D2E\u0D4D\u0D33\u0D4D\u0D1F\u0D3F\u0D2E\u0D40\u0D21\u0D3F\u0D2F"}</span>
+            <span>മൾട്ടിമീഡിയ</span>
             <button type="button" onClick={() => navigate("/category/photos")}>View Gallery</button>
           </div>
           {displayMedia.length > 0 && (
@@ -293,7 +293,7 @@ export default function HomePage({ navigate }) {
 
       <section className="container section-block" style={{ borderBottom: "none" }} data-aos="fade-up">
         <div className="section-block-title" data-aos="fade-left">
-          <span>{"\u0D15\u0D42\u0D1F\u0D41\u0D24\u0D32\u0D4D \u0D35\u0D3E\u0D30\u0D4D\u0D24\u0D4D\u0D25\u0D15\u0D3E\u0D33"}</span>
+          <span>കൂടുതൽ വാർത്തകൾ</span>
         </div>
         <div className="list-feed">
           {articles.slice(0, 12).map((article, i) => (
