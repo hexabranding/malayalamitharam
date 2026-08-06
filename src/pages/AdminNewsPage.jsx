@@ -23,6 +23,7 @@ export default function AdminNewsPage({ navigate }) {
     loadMenuGroups().then(groups => {
       const map = {};
       groups.forEach(g => {
+        map[g.slug] = g.titleMl || g.label;
         if (g.children) {
           g.children.forEach(c => { map[c.slug] = c.titleMl || c.label; });
         }
@@ -32,7 +33,10 @@ export default function AdminNewsPage({ navigate }) {
   }, []);
 
   function getCategoryName(slug) {
-    return categoryMap[slug] || slug;
+    if (categoryMap[slug]) return categoryMap[slug];
+    const match = newsList.find(n => n.category === slug);
+    if (match?.categoryMl) return match.categoryMl;
+    return slug;
   }
 
   const categories = ["all", ...new Set(newsList.map(a => a.category))];
