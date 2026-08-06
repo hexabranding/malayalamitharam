@@ -77,7 +77,13 @@ export default function HomePage({ navigate }) {
   const keralaSlugs = findChildSlugsByLabel(["Kerala"]);
   const indiaSlugs = findChildSlugsByLabel(["India"]);
   const worldSlugs = findChildSlugsByLabel(["World"]);
-  const gulfSlugs = findChildSlugsByLabel(["Gulf"]);
+
+  const gulfLabels = ["Gulf", "ഗൾഫ്"];
+  let gulfSlugs = findChildSlugsByLabel(gulfLabels);
+  const gulfGroup = categoryGroups.find(g => gulfLabels.some(l => g.label?.toLowerCase() === l.toLowerCase()) || g.slug === "gulf");
+  if (gulfGroup) {
+    gulfSlugs = [gulfGroup.slug, ...(gulfGroup.children || []).map(c => c.slug), ...gulfSlugs];
+  }
 
   function matchByCategoryOrLabel(article, slugs, labels) {
     if (slugs.length > 0 && slugs.includes(article.category)) return true;
@@ -98,7 +104,7 @@ export default function HomePage({ navigate }) {
   const internationalLead = internationalStories[0] || articles[3];
   const internationalSide = internationalStories.slice(1, 4).length ? internationalStories.slice(1, 4) : articles.slice(4, 7);
 
-  const gulfStories = articles.filter(a => matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
+  const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
   const gulfTop = gulfStories.slice(0, 2);
   const gulfBottomLeft = gulfStories.slice(2, 5);
   const gulfBottomRight = gulfStories.slice(5, 8);
