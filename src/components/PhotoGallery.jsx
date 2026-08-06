@@ -2,7 +2,7 @@ import { Camera } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 
 export default function PhotoGallery({ articles, navigate }) {
-  const galleryArticles = articles.filter((a) => a.media === "photo" && a.image).slice(0, 8);
+  const galleryArticles = articles.filter((a) => a.media === "photo" && a.image).slice(0, 4);
 
   if (galleryArticles.length === 0) return null;
 
