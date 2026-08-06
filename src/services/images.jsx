@@ -50,6 +50,7 @@ export function ArticleImage({ article, className, alt, style }) {
       className={className}
       style={style}
       onError={handleError}
+      loading="lazy"
     />
   );
 }

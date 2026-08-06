@@ -38,7 +38,7 @@ export default function VisitingCarAd({ slot = "article-part-1", label = "In-Art
           const url = resolveImageUrl(ad?.image);
           if (!url) return null;
           const image = (
-            <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" />
+            <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" loading="lazy" />
           );
           return (
             <div key={i} className="visiting-car-slide">

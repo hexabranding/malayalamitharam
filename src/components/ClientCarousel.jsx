@@ -65,7 +65,7 @@ export default function ClientCarousel({ slots = ["article-part-1", "article-par
           const url = resolveImageUrl(ad?.image);
           if (!url) return null;
           const image = (
-            <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" />
+            <img src={url} alt={ad.title || "Ad"} className="visiting-car-image" loading="lazy" />
           );
           return (
             <div key={i} className="visiting-car-slide">
