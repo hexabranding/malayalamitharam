@@ -27,10 +27,6 @@ export default function Header({ navigate, activeSlug }) {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (searchQuery.trim().length < 2) {
-      setSuggestions([]);
-      return;
-    }
     debounceRef.current = setTimeout(() => {
       fetchNews({ search: searchQuery.trim(), limit: 6 }).then(data => {
         setSuggestions((data.news || []).slice(0, 6));
@@ -108,7 +104,7 @@ export default function Header({ navigate, activeSlug }) {
                     <Search size={14} /> "{searchQuery}" എല്ലാം കാണുക
                   </button>
                 </>
-              ) : searchQuery.trim().length >= 2 ? (
+              ) : searchQuery.trim().length >= 1 ? (
                 <div className="suggestion-empty">ഫലങ്ങൾ ഒന്നുമില്ല</div>
               ) : (
                 <>
