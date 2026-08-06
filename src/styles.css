@@ -111,6 +111,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .ad-slider .ad-slot-image {
+  height: 120%;
+  transform: translateY(-10%);
   animation: adSlideIn 0.5s ease-in-out;
 }
 
