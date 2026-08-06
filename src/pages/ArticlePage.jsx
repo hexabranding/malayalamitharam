@@ -92,9 +92,9 @@ const displayRelated = related.length >= 2
             <div key={index}>
               {index === 1 && (
                 <div className="in-article-ads">
-                  <VisitingCarAd slot="article-part-1" />
-                  <VisitingCarAd slot="article-part-2" />
-                  <VisitingCarAd slot="article-part-3" />
+                  <div data-aos="fade-right" data-aos-delay="0"><VisitingCarAd slot="article-part-1" /></div>
+                  <div data-aos="fade-up" data-aos-delay="100"><VisitingCarAd slot="article-part-2" /></div>
+                  <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
                 </div>
               )}
               <p
