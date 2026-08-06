@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Edit2, Trash2, Eye, Search, Filter, Plus, X } from "lucide-react";
 import { fetchNews, deleteArticle, loadMenuGroups } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
@@ -12,8 +12,19 @@ export default function AdminNewsPage({ navigate }) {
   const [categoryMap, setCategoryMap] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
 
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     fetchNews({ limit: 200 }).then(data => {
@@ -42,11 +53,19 @@ export default function AdminNewsPage({ navigate }) {
   const categories = ["all", ...new Set(newsList.map(a => a.category))];
 
   const filteredNews = newsList.filter(news => {
-    const matchesSearch = news.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         news.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = !q ||
+      news.title.toLowerCase().includes(q) ||
+      news.excerpt.toLowerCase().includes(q) ||
+      (news.categoryMl && news.categoryMl.toLowerCase().includes(q)) ||
+      (news.author && news.author.toLowerCase().includes(q));
     const matchesCategory = selectedCategory === "all" || news.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
 
   useEffect(() => {
     if (searchTerm.trim().length < 1) {
@@ -95,17 +114,17 @@ export default function AdminNewsPage({ navigate }) {
   return (
     <div className="admin-news-page">
       <div className="admin-toolbar">
-        <div className="admin-search" style={{ position: "relative" }}>
+        <div className="admin-search" ref={searchRef} style={{ position: "relative" }}>
           <Search size={18} />
           <input
             type="text"
             placeholder="Search news..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); }}
-            onFocus={() => setShowSuggestions(true)}
+            onFocus={() => { if (searchTerm.trim()) setShowSuggestions(true); }}
           />
           {searchTerm && (
-            <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "#888" }}>
+            <button onClick={() => { setSearchTerm(""); setSuggestions([]); setShowSuggestions(false); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "#888" }}>
               <X size={16} />
             </button>
           )}
