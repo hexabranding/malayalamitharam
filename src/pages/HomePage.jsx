@@ -48,7 +48,7 @@ export default function HomePage({ navigate }) {
     }).catch(() => {});
   }, []);
 
-  const leadStory = articles.find((article) => article.featured) || articles[0];
+  const leadStory = articles[0];
   const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
   const fallbackEditorial = articles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
   const leftColumnStories = editorialStories.length ? editorialStories : fallbackEditorial;
