@@ -17,7 +17,10 @@ export default function CategoryPage({ categoryItem, navigate }) {
     }).catch(() => {});
   }, [categoryItem.slug]);
 
-  const list = articles.filter((article) => article.category === categoryItem.slug);
+  const list = articles.filter((article) =>
+    article.category === categoryItem.slug ||
+    (article.categories && article.categories.includes(categoryItem.slug))
+  );
   const visible = list.length ? list : articles.slice(0, 6);
 
   // Pagination logic

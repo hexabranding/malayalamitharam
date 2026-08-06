@@ -87,6 +87,7 @@ export default function HomePage({ navigate }) {
 
   function matchByCategoryOrLabel(article, slugs, labels) {
     if (slugs.length > 0 && slugs.includes(article.category)) return true;
+    if (article.categories && article.categories.some(c => slugs.includes(c))) return true;
     if (labels.some(l => article.categoryMl?.toLowerCase() === l.toLowerCase())) return true;
     if (labels.some(l => article.category?.toLowerCase() === l.toLowerCase())) return true;
     return false;
@@ -121,7 +122,8 @@ export default function HomePage({ navigate }) {
     .map((group) => {
       const childSlugs = (group.children || []).map(c => c.slug);
       const sectionArticles = articles.filter(a =>
-        childSlugs.includes(a.category) || a.category === group.slug
+        childSlugs.includes(a.category) || a.category === group.slug ||
+        (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
       ).slice(0, 6);
       if (sectionArticles.length === 0) return null;
       return {

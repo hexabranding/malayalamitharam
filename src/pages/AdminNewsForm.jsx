@@ -11,6 +11,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     title: "",
     excerpt: "",
     category: "",
+    categories: [],
     categoryMl: "",
     author: "",
     date: "",
@@ -53,6 +54,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               title: found.title || "",
               excerpt: found.excerpt || "",
               category: found.category || "",
+              categories: found.categories || (found.category ? [found.category] : []),
               categoryMl: found.categoryMl || "",
               author: found.author || "",
               date: found.date || "",
@@ -108,6 +110,22 @@ export default function AdminNewsForm({ navigate, newsId }) {
     }));
   };
 
+  const handleMultiCategoryToggle = (slug) => {
+    setFormData(prev => {
+      const cats = prev.categories.includes(slug)
+        ? prev.categories.filter(c => c !== slug)
+        : [...prev.categories, slug];
+      const primaryCat = cats.length > 0 ? cats[0] : prev.category;
+      const primaryCatData = allCategories.find(c => c.slug === primaryCat);
+      return {
+        ...prev,
+        categories: cats,
+        category: primaryCat,
+        categoryMl: primaryCatData?.labelMl || primaryCatData?.label || ""
+      };
+    });
+  };
+
   const handleImageUrlChange = (e) => {
     const url = e.target.value;
     setFormData(prev => ({ ...prev, image: url }));
@@ -136,6 +154,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const derivedContent = bodyParagraphs.length > 0 ? bodyParagraphs.join("\n\n") : formData.excerpt;
     const newsData = {
       ...formData,
+      categories: formData.categories.length > 0 ? formData.categories : [formData.category].filter(Boolean),
       content: derivedContent,
       body: bodyParagraphs,
       tags: formData.tags.split(",").map(tag => tag.trim()).filter(tag => tag),
@@ -201,7 +220,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Category</label>
+                <label>Primary Category</label>
                 <select
                   name="category"
                   value={formData.category}
@@ -227,6 +246,22 @@ export default function AdminNewsForm({ navigate, newsId }) {
                   required
                   placeholder="Author name"
                 />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Additional Categories (optional)</label>
+              <div className="category-checkboxes">
+                {allCategories.map(cat => (
+                  <label key={cat.slug} className={`category-checkbox ${formData.categories.includes(cat.slug) ? "selected" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={formData.categories.includes(cat.slug)}
+                      onChange={() => handleMultiCategoryToggle(cat.slug)}
+                    />
+                    <span>{cat.label} ({cat.labelMl})</span>
+                  </label>
+                ))}
               </div>
             </div>
 
