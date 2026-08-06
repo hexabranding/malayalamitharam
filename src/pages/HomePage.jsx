@@ -94,15 +94,15 @@ export default function HomePage({ navigate }) {
 
   const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"]));
   const keralaLead = keralaStories[0] || articles[1];
-  const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
+  const keralaSide = keralaStories.slice(1, 5).length ? keralaStories.slice(1, 5) : articles.slice(2, 6);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 5);
+  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
   const nationalLead = nationalStories[0] || articles[2];
-  const nationalSide = nationalStories.slice(1, 4).length ? nationalStories.slice(1, 4) : articles.slice(3, 6);
+  const nationalSide = nationalStories.slice(1, 5).length ? nationalStories.slice(1, 5) : articles.slice(3, 7);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 5);
+  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
   const internationalLead = internationalStories[0] || articles[3];
-  const internationalSide = internationalStories.slice(1, 4).length ? internationalStories.slice(1, 4) : articles.slice(4, 7);
+  const internationalSide = internationalStories.slice(1, 5).length ? internationalStories.slice(1, 5) : articles.slice(4, 8);
 
   const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
   const gulfTop = gulfStories.slice(0, 2);
@@ -122,14 +122,14 @@ export default function HomePage({ navigate }) {
       const childSlugs = (group.children || []).map(c => c.slug);
       const sectionArticles = articles.filter(a =>
         childSlugs.includes(a.category) || a.category === group.slug
-      ).slice(0, 5);
+      ).slice(0, 6);
       if (sectionArticles.length === 0) return null;
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
         articles: sectionArticles,
         lead: sectionArticles[0],
-        side: sectionArticles.slice(1, 4),
+        side: sectionArticles.slice(1, 5),
       };
     })
     .filter(Boolean);
