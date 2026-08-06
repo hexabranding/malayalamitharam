@@ -6,7 +6,7 @@ import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import { useSettings } from "../context/DataContext.jsx";
 import AdSlot from "../components/AdSlot.jsx";
-import ClientCarousel from "../components/ClientCarousel.jsx";
+import VisitingCarAd from "../components/VisitingCarAd.jsx";
 import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
@@ -92,10 +92,9 @@ const displayRelated = related.length >= 2
             <div key={index}>
               {index === 1 && (
                 <div className="in-article-ads">
-                  <ClientCarousel
-                    slots={["article-part-1", "article-part-2", "article-part-3"]}
-                    label="Sponsored"
-                  />
+                  <VisitingCarAd slot="article-part-1" />
+                  <VisitingCarAd slot="article-part-2" />
+                  <VisitingCarAd slot="article-part-3" />
                 </div>
               )}
               <p
