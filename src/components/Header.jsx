@@ -1,13 +1,57 @@
 import { AtSign, ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
+import { fetchNews } from "../services/api.js";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+  const debounceRef = useRef(null);
   const settings = useSettings();
   const navGroups = useMenuGroups();
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      fetchNews({ search: searchQuery.trim(), limit: 6 }).then(data => {
+        setSuggestions((data.news || []).slice(0, 6));
+      }).catch(() => setSuggestions([]));
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
+
+  function handleSuggestionClick(article) {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    navigate("/post/" + article.id);
+  }
+
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setShowSuggestions(false);
+    navigate("/search?q=" + encodeURIComponent(q));
+  }
 
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";
@@ -34,9 +78,51 @@ export default function Header({ navigate, activeSlug }) {
         <button className="brand" onClick={() => navigate("/")}>
           <img src={logo} alt="മലയാളമിത്രം" className="brand-logo-img" />
         </button>
-        <form className="search-form" onSubmit={(event) => { event.preventDefault(); const query = new FormData(event.currentTarget).get("q"); navigate("/search?q=" + encodeURIComponent(String(query || "").trim())); }}>
-          <button type="submit" className="search-submit" aria-label="Search"><Search size={18} /></button><input name="q" placeholder="വാർത്തകൾ തിരയുക" />
-        </form>
+        <div className="search-wrapper" ref={searchRef}>
+          <form className="search-form" onSubmit={handleSearchSubmit}>
+            <button type="submit" className="search-submit" aria-label="Search"><Search size={18} /></button>
+            <input
+              name="q"
+              placeholder="വാർത്തകൾ തിരയുക"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              autoComplete="off"
+            />
+          </form>
+          {showSuggestions && (
+            <div className="search-suggestions">
+              {suggestions.length > 0 ? (
+                <>
+                  <div className="suggestion-header">ഏറ്റവും പുതിയ വാർത്തകൾ</div>
+                  {suggestions.map((article) => (
+                    <button key={article.id} className="suggestion-item" onClick={() => handleSuggestionClick(article)}>
+                      {article.image && <img src={article.image} alt="" className="suggestion-thumb" />}
+                      <div className="suggestion-text">
+                        <span className="suggestion-title">{article.title}</span>
+                        {article.categoryMl && <span className="suggestion-cat">{article.categoryMl}</span>}
+                      </div>
+                    </button>
+                  ))}
+                  <button className="suggestion-footer" onClick={handleSearchSubmit}>
+                    <Search size={14} /> "{searchQuery}" എല്ലാം കാണുക
+                  </button>
+                </>
+              ) : searchQuery.trim().length >= 2 ? (
+                <div className="suggestion-empty">ഫലങ്ങൾ ഒന്നുമില്ല</div>
+              ) : (
+                <>
+                  <div className="suggestion-header">ട്രെൻഡിംഗ് തിരയലുകൾ</div>
+                  {["കേരളം", "ഇന്ത്യ", "ഗൾഫ്", "സിനിമ", "ഫുട്ബോൾ", "ടെക്"].map((tag) => (
+                    <button key={tag} className="suggestion-item trending" onClick={() => { setSearchQuery(tag); setShowSuggestions(true); }}>
+                      <Search size={14} /> {tag}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <div className="social-links" aria-label="Social links">
           <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined}><Facebook size={18} /></a>
           <a href={social.youtube && social.youtube !== "#" ? social.youtube : "#"} target={social.youtube && social.youtube !== "#" ? "_blank" : undefined} rel={social.youtube && social.youtube !== "#" ? "noopener noreferrer" : undefined}><Youtube size={19} /></a>
