@@ -1,12 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock3, Star } from "lucide-react";
-import { trendingTags } from "../services/api.js";
+import { fetchNews, fetchTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import AdSlot from "./AdSlot.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
   const sidebarRef = useRef(null);
+  const [latestNews, setLatestNews] = useState([]);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -36,12 +38,22 @@ export default function Sidebar({ navigate, articles = [] }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const selectedPopular = articles.filter((article) => article.popular).slice(0, 4);
-  const popular = selectedPopular.length
-    ? selectedPopular
-    : [...articles].sort((a, b) => (b.comments || 0) - (a.comments || 0)).slice(0, 4);
-  const latest = articles.slice(0, 5);
-  const editorPicks = articles.filter((article) => article.featured).slice(0, 3);
+  useEffect(() => {
+    if (articles.length === 0) {
+      fetchNews({ limit: 20 }).then(data => {
+        setLatestNews(data.news || []);
+      }).catch(() => {});
+    }
+    fetchTags().then(data => {
+      if (Array.isArray(data)) setTags(data);
+    }).catch(() => {});
+  }, [articles.length]);
+
+  const displayArticles = articles.length > 0 ? articles : latestNews;
+
+  const popular = [...displayArticles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+  const latest = displayArticles.slice(0, 5);
+  const editorPicks = displayArticles.filter((article) => article.featured).slice(0, 3);
 
   return (
     <aside className="sidebar" ref={sidebarRef}>
@@ -85,7 +97,9 @@ export default function Sidebar({ navigate, articles = [] }) {
       <section className="sidebar-block">
         <h2>Tags</h2>
         <div className="tags">
-          {trendingTags.map((tag) => (
+          {tags.length > 0 ? tags.slice(0, 15).map((tag) => (
+            <button key={tag._id || tag.name} onClick={() => navigate("/tags/" + encodeURIComponent(tag.name))}>{tag.name}</button>
+          )) : ["കേരളം", "ഇന്ത്യ", "ഗൾഫ്", "സിനിമ", "ഫുട്ബോൾ", "ടെക്", "ആരോഗ്യം"].map((tag) => (
             <button key={tag} onClick={() => navigate("/tags/" + encodeURIComponent(tag))}>{tag}</button>
           ))}
         </div>
