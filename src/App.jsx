@@ -88,7 +88,6 @@ export default function App() {
       easing: "ease-out",
       once: true,
       offset: 60,
-      disable: "mobile",
     });
   }, []);
 
