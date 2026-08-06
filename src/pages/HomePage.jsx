@@ -89,8 +89,8 @@ export default function HomePage({ navigate }) {
   const keralaLead = keralaStories[0] || articles[1];
   const keralaSide = keralaStories.slice(1, 4).length ? keralaStories.slice(1, 4) : articles.slice(2, 5);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശീയം", "ഇന്ത്യ"])).slice(0, 5);
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശീയം", "ലോകം"])).slice(0, 5);
+  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 5);
+  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 5);
 
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
@@ -226,7 +226,7 @@ export default function HomePage({ navigate }) {
         {nationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>ദേശീയം</span>
+              <span>ദേശിയം</span>
               <button type="button" onClick={() => navigate("/category/india")}>View All</button>
             </div>
             <div className="card-grid">
@@ -240,7 +240,7 @@ export default function HomePage({ navigate }) {
         {internationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>അന്തർദേശീയം</span>
+              <span>അന്തർദേശിയം</span>
               <button type="button" onClick={() => navigate("/category/world")}>View All</button>
             </div>
             <div className="card-grid">

@@ -257,8 +257,8 @@ export const menuGroups = [
   { label: "HOME", slug: "home", path: "/" },
   { label: "NEWS", slug: "news", children: [
     { label: "Kerala", slug: "kerala", titleMl: "കേരളം" },
-    { label: "India", slug: "india", titleMl: "ദേശീയം" },
-    { label: "World", slug: "world", titleMl: "അന്തർദേശീയം" },
+    { label: "India", slug: "india", titleMl: "ദേശിയം" },
+    { label: "World", slug: "world", titleMl: "അന്തർദേശിയം" },
     { label: "Politics", slug: "politics", titleMl: "രാഷ്ട്രീയം" },
   ]},
   { label: "GULF", slug: "gulf", children: [
