@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Edit2, Trash2, Eye, Search, Filter, Plus } from "lucide-react";
-import { fetchNews, deleteArticle } from "../services/api.js";
+import { Edit2, Trash2, Eye, Search, Filter, Plus, X } from "lucide-react";
+import { fetchNews, deleteArticle, loadMenuGroups } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
 import { ArticleImage } from "../services/images.jsx";
 
@@ -9,6 +9,9 @@ export default function AdminNewsPage({ navigate }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [categoryMap, setCategoryMap] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -17,7 +20,20 @@ export default function AdminNewsPage({ navigate }) {
       const fetched = data.news || [];
       if (fetched.length > 0) setNewsList(fetched);
     }).catch(() => {});
+    loadMenuGroups().then(groups => {
+      const map = {};
+      groups.forEach(g => {
+        if (g.children) {
+          g.children.forEach(c => { map[c.slug] = c.titleMl || c.label; });
+        }
+      });
+      setCategoryMap(map);
+    }).catch(() => {});
   }, []);
+
+  function getCategoryName(slug) {
+    return categoryMap[slug] || slug;
+  }
 
   const categories = ["all", ...new Set(newsList.map(a => a.category))];
 
@@ -27,6 +43,21 @@ export default function AdminNewsPage({ navigate }) {
     const matchesCategory = selectedCategory === "all" || news.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  useEffect(() => {
+    if (searchTerm.trim().length < 1) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const q = searchTerm.toLowerCase();
+      const matches = newsList.filter(n =>
+        n.title.toLowerCase().includes(q) || n.excerpt.toLowerCase().includes(q)
+      ).slice(0, 6);
+      setSuggestions(matches);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm, newsList]);
 
   // Pagination
   const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
@@ -60,14 +91,32 @@ export default function AdminNewsPage({ navigate }) {
   return (
     <div className="admin-news-page">
       <div className="admin-toolbar">
-        <div className="admin-search">
+        <div className="admin-search" style={{ position: "relative" }}>
           <Search size={18} />
           <input
             type="text"
             placeholder="Search news..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
           />
+          {searchTerm && (
+            <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "#888" }}>
+              <X size={16} />
+            </button>
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="admin-search-suggestions">
+              {suggestions.map((article) => (
+                <button key={article.id} className="admin-suggestion-item" onClick={() => { navigate(`/admin/news/edit/${article.id}`); setShowSuggestions(false); }}>
+                  <div className="admin-suggestion-info">
+                    <span className="admin-suggestion-title">{article.title}</span>
+                    <span className="admin-suggestion-cat">{getCategoryName(article.category)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="admin-filters">
@@ -78,7 +127,7 @@ export default function AdminNewsPage({ navigate }) {
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>
-                {cat === "all" ? "All Categories" : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                {cat === "all" ? "All Categories" : getCategoryName(cat)}
               </option>
             ))}
           </select>
