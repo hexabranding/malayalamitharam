@@ -61,7 +61,10 @@ function normalizePath(path) {
 
 function getInitialPath() {
   const hash = window.location.hash.replace("#", "");
-  if (hash) return normalizePath(hash);
+  if (hash && hash !== "/" && hash !== window.location.pathname) {
+    window.location.replace(hash);
+    return "/";
+  }
   const p = window.location.pathname.replace(/\/$/, "") || "/";
   return normalizePath(p);
 }
@@ -70,10 +73,17 @@ function useRoute() {
   const [path, setPath] = useState(getInitialPath());
   const navigate = (nextPath) => {
     const normalized = normalizePath(nextPath);
-    window.location.hash = normalized;
+    window.history.pushState({}, "", normalized);
     setPath(normalized);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  useEffect(() => {
+    function onPop() {
+      setPath(getInitialPath());
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   return { path, navigate };
 }
 
