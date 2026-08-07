@@ -13,10 +13,10 @@ const MALAYALAM_MAP = {
   football: "ഫുട്ബോൾ", olympics: "ഒളിമ്പിക്സ്", europe: "യൂറോപ്പ്",
   uk: "യുകെ", us: "യുഎസ്", community: "കമ്മ്യൂണിറ്റി",
   "editorial choice": "എഡിറ്റോറിയൽ ചോയ്‌സ്", "current affairs": "കറന്റ് അഫയേഴ്സ്",
-  interview: "അഭിമുഖം", lekhanam: "ലേഖനം", cinema: "സിനിമ",
+  interview: "അഭിമുഖം", lekhanam: "ലേഖനം",
   "tv serial": "ടിവി സീരിയൽ", "web series": "വെബ് സീരീസ്", culture: "സംസ്കാരം",
   viral: "വൈറൽ", automobile: "ഓട്ടോബൈൽ", environment: "പരിസ്ഥിതി",
-  health: "ആരോഗ്യം", food: "ഭക്ഷണം", travel: "യാത്ര", beauty: "സൗന്ദര്യം",
+  food: "ഭക്ഷണം", travel: "യാത്ര", beauty: "സൗന്ദര്യം",
   "photo gallery": "ഫോട്ടോ ഗാലറി", podcast: "പോഡ്‌കാസ്റ്റ്",
   onam: "ഓണം", christmas: "ക്രിസ്മസ്", eid: "ঈദ്",
 };
