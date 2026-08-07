@@ -171,12 +171,8 @@ app.get("/post/:slug", async (req, res) => {
 
 app.use(express.static(distPath));
 
-app.get("/{*splat}", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
 app.use((_req, res) => {
-  res.status(404).json({ error: "API endpoint not found" });
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
 app.use((err, _req, res, _next) => {
