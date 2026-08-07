@@ -103,8 +103,58 @@ app.get("/api/diag", async (_req, res) => {
   res.json({ hasMongoUri, dbState: dbStates[dbState] || "unknown", port: PORT, userCount, uptime: process.uptime() });
 });
 
+const fs = require("fs");
 const distPath = path.join(__dirname, "dist");
+const indexHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+
+function resolveImageUrl(image) {
+  if (!image) return null;
+  if (image.startsWith("http") || image.startsWith("data:")) return image;
+  if (image.startsWith("/uploads/") || image.startsWith("uploads/")) {
+    const p = image.startsWith("/") ? image : "/" + image;
+    return (process.env.API_URL || "") + p;
+  }
+  if (image.startsWith("/")) return image;
+  return "/images/" + image;
+}
+
+const CRAWLER_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|slackbot|discordbot|googlebot|bingbot|yandexbot|baiduspider|applebot|pinterestbot|qwantify|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|sogou|exabot|facebot|ia_archiver/i;
+
 app.use(express.static(distPath));
+
+app.get("/post/:slug", async (req, res) => {
+  try {
+    const ua = req.headers["user-agent"] || "";
+    const isBot = CRAWLER_RE.test(ua);
+    const slug = req.params.slug;
+    const Article = require("./backend/models/Article");
+    let article = await Article.findOne({ slug }).lean();
+    if (!article || !article.published) {
+      return res.status(404).send("Not Found");
+    }
+    if (!isBot) {
+      return res.sendFile(path.join(distPath, "index.html"));
+    }
+    const ogTitle = article.title || "Malayala Mitra";
+    const ogDesc = article.excerpt || article.title || "";
+    const ogImage = resolveImageUrl(article.image) || "/images/favicon.png";
+    const siteName = "Malayala Mitra";
+    const ogUrl = req.protocol + "://" + req.get("host") + "/post/" + slug;
+    let html = indexHtml
+      .replace(/<meta property="og:site_name" content="[^"]*"/, `<meta property="og:site_name" content="${siteName}"`)
+      .replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}"`)
+      .replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${ogDesc.replace(/"/g, '&quot;')}"`)
+      .replace(/<meta property="og:image" content="[^"]*"/, `<meta property="og:image" content="${ogImage}"`)
+      .replace(/<meta name="twitter:card" content="[^"]*"/, `<meta name="twitter:card" content="summary_large_image"`)
+      .replace(/<title>[^<]*<\/title>/, `<title>${ogTitle.replace(/</g, '&lt;')} | ${siteName}</title>`);
+    html += `<meta property="og:url" content="${ogUrl}" />`;
+    res.set("Content-Type", "text/html");
+    res.send(html);
+  } catch (err) {
+    res.sendFile(path.join(distPath, "index.html"));
+  }
+});
+
 app.get("/{*splat}", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });

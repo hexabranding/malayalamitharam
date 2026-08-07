@@ -62,7 +62,7 @@ const displayRelated = related.length >= 2
 
   const articleTitle = (
     <header className="article-page-title" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
-      <AdSlot slot="article-top" label="Article Top Advertisement (728 x 90)" />
+      <AdSlot slot="article-top" label="Article Top Advertisement (728 x 90)" slider />
       <span className="pill" data-aos="fade-up" data-aos-delay="50">{getCategoryName(article)}</span>
       <h1 data-aos="fade-left" data-aos-delay="100">{article.title}</h1>
     </header>
