@@ -5,33 +5,37 @@ import { resolveImageUrl } from "../services/images.jsx";
 export default function Meta({ article }) {
   useEffect(() => {
     if (!article) return;
+    const origin = window.location.origin;
     const title = (article.title || "Malayala Mitra") + " | Malayala Mitra";
     const desc = article.excerpt || article.title || "";
-    const image = resolveImageUrl(article.image) || "/images/favicon.png";
+    const rawImage = resolveImageUrl(article.image) || "/images/favicon.png";
+    const image = rawImage.startsWith("http") ? rawImage : origin + rawImage;
     const url = window.location.href;
 
     document.title = title;
 
-    function setMeta(property, content, attr = "property") {
-      let el = document.querySelector(`meta[${attr}="${property}"]`);
-      if (!el) {
+    function setMeta(attr, key, content) {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (el) {
+        el.setAttribute("content", content);
+      } else {
         el = document.createElement("meta");
-        el.setAttribute(attr, property);
+        el.setAttribute(attr, key);
+        el.setAttribute("content", content);
         document.head.appendChild(el);
       }
-      el.setAttribute("content", content);
     }
 
-    setMeta("og:title", title);
-    setMeta("og:description", desc);
-    setMeta("og:image", image);
-    setMeta("og:url", url);
-    setMeta("og:type", "article");
-    setMeta("og:site_name", "Malayala Mitra");
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", title, "name");
-    setMeta("twitter:description", desc, "name");
-    setMeta("twitter:image", image, "name");
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", desc);
+    setMeta("property", "og:image", image);
+    setMeta("property", "og:url", url);
+    setMeta("property", "og:type", "article");
+    setMeta("property", "og:site_name", "Malayala Mitra");
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", desc);
+    setMeta("name", "twitter:image", image);
   }, [article]);
 
   return (

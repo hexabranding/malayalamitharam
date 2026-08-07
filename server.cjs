@@ -138,7 +138,8 @@ app.get("/post/:slug", async (req, res) => {
     const ogTitle = article.title || "Malayala Mitra";
     const ogDesc = article.excerpt || article.title || "";
     const baseUrl = req.protocol + "://" + req.get("host");
-    const ogImage = resolveImageUrl(article.image) ? baseUrl + resolveImageUrl(article.image) : baseUrl + "/images/favicon.png";
+    const resolvedImg = resolveImageUrl(article.image);
+    const ogImage = resolvedImg ? (resolvedImg.startsWith("http") ? resolvedImg : baseUrl + resolvedImg) + "?v=" + Date.now() : baseUrl + "/images/favicon.png";
     const siteName = "Malayala Mitra";
     const ogUrl = baseUrl + "/post/" + slug;
     let html = indexHtml
