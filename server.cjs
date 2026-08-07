@@ -126,12 +126,12 @@ function absoluteUrl(base, relative) {
 
 const CRAWLER_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|slackbot|discordbot|googlebot|bingbot|yandexbot|baiduspider|applebot|pinterestbot|qwantify|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|sogou|exabot|facebot|ia_archiver/i;
 
-app.use(express.static(distPath));
+const SITE_NAME = "Malayala Mitra";
+const SITE_URL = "https://demo.malayalamitharam.in";
+const DEFAULT_OG_IMAGE = SITE_URL + "/images/og-image.jpg";
 
 app.get("/post/:slug", async (req, res) => {
   try {
-    const ua = req.headers["user-agent"] || "";
-    const isBot = CRAWLER_RE.test(ua);
     const slug = req.params.slug;
     const Article = require("./backend/models/Article");
     let article = await Article.findOne({ slug }).lean();
@@ -141,30 +141,35 @@ app.get("/post/:slug", async (req, res) => {
     if (!article || !article.published) {
       return res.status(404).send("Not Found");
     }
+    const ua = req.headers["user-agent"] || "";
+    const isBot = CRAWLER_RE.test(ua);
     if (!isBot) {
       return res.sendFile(path.join(distPath, "index.html"));
     }
-    const ogTitle = article.title || "Malayala Mitra";
-    const ogDesc = article.excerpt || article.title || "";
+    const ogTitle = (article.title || SITE_NAME) + " | " + SITE_NAME;
+    const ogDesc = article.excerpt || article.title || "Malayala Mitra - Malayalam News Portal";
     const baseUrl = req.protocol + "://" + req.get("host");
     const resolvedImg = resolveImageUrl(article.image);
-    const ogImage = (absoluteUrl(baseUrl, resolvedImg) || baseUrl + "/images/favicon.png") + "?v=" + Date.now();
-    const siteName = "Malayala Mitra";
+    const ogImage = absoluteUrl(baseUrl, resolvedImg) || DEFAULT_OG_IMAGE;
     const ogUrl = baseUrl + "/post/" + slug;
     let html = indexHtml
-      .replace(/<meta property="og:site_name" content="[^"]*"/, `<meta property="og:site_name" content="${siteName}"`)
       .replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}"`)
       .replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${ogDesc.replace(/"/g, '&quot;')}"`)
       .replace(/<meta property="og:image" content="[^"]*"/, `<meta property="og:image" content="${ogImage}"`)
+      .replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${ogUrl}"`)
       .replace(/<meta name="twitter:card" content="[^"]*"/, `<meta name="twitter:card" content="summary_large_image"`)
-      .replace(/<title>[^<]*<\/title>/, `<title>${ogTitle.replace(/</g, '&lt;')} | ${siteName}</title>`);
-    html += `<meta property="og:url" content="${ogUrl}" />`;
+      .replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}"`)
+      .replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${ogDesc.replace(/"/g, '&quot;')}"`)
+      .replace(/<meta name="twitter:image" content="[^"]*"/, `<meta name="twitter:image" content="${ogImage}"`)
+      .replace(/<title>[^<]*<\/title>/, `<title>${ogTitle.replace(/</g, '&lt;')}</title>`);
     res.set("Content-Type", "text/html");
     res.send(html);
   } catch (err) {
     res.sendFile(path.join(distPath, "index.html"));
   }
 });
+
+app.use(express.static(distPath));
 
 app.get("/{*splat}", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));

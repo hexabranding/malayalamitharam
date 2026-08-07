@@ -2,14 +2,18 @@ import { useEffect } from "react";
 import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 
+const SITE_NAME = "Malayala Mitra";
+const SITE_URL = "https://demo.malayalamitharam.in";
+const DEFAULT_OG_IMAGE = SITE_URL + "/images/og-image.jpg";
+
 export default function Meta({ article }) {
   useEffect(() => {
     if (!article) return;
     const origin = window.location.origin;
-    const title = (article.title || "Malayala Mitra") + " | Malayala Mitra";
-    const desc = article.excerpt || article.title || "";
-    const rawImage = resolveImageUrl(article.image) || "/images/favicon.png";
-    const image = rawImage.startsWith("http") ? rawImage : origin + rawImage;
+    const title = (article.title || SITE_NAME) + " | " + SITE_NAME;
+    const desc = article.excerpt || article.title || "Malayala Mitra - Malayalam News Portal";
+    const rawImage = resolveImageUrl(article.image);
+    const image = rawImage ? (rawImage.startsWith("http") ? rawImage : origin + rawImage) : DEFAULT_OG_IMAGE;
     const url = window.location.href;
 
     document.title = title;
@@ -26,12 +30,14 @@ export default function Meta({ article }) {
       }
     }
 
+    setMeta("property", "og:type", "article");
+    setMeta("property", "og:site_name", SITE_NAME);
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:image", image);
+    setMeta("property", "og:image:width", "1200");
+    setMeta("property", "og:image:height", "630");
     setMeta("property", "og:url", url);
-    setMeta("property", "og:type", "article");
-    setMeta("property", "og:site_name", "Malayala Mitra");
     setMeta("name", "twitter:card", "summary_large_image");
     setMeta("name", "twitter:title", title);
     setMeta("name", "twitter:description", desc);
