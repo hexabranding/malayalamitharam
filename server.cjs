@@ -118,6 +118,12 @@ function resolveImageUrl(image) {
   return "/images/" + image;
 }
 
+function absoluteUrl(base, relative) {
+  if (!relative) return null;
+  if (relative.startsWith("http")) return relative;
+  return base + relative;
+}
+
 const CRAWLER_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|slackbot|discordbot|googlebot|bingbot|yandexbot|baiduspider|applebot|pinterestbot|qwantify|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|sogou|exabot|facebot|ia_archiver/i;
 
 app.use(express.static(distPath));
@@ -142,7 +148,7 @@ app.get("/post/:slug", async (req, res) => {
     const ogDesc = article.excerpt || article.title || "";
     const baseUrl = req.protocol + "://" + req.get("host");
     const resolvedImg = resolveImageUrl(article.image);
-    const ogImage = resolvedImg ? (resolvedImg.startsWith("http") ? resolvedImg : baseUrl + resolvedImg) + "?v=" + Date.now() : baseUrl + "/images/favicon.png";
+    const ogImage = (absoluteUrl(baseUrl, resolvedImg) || baseUrl + "/images/favicon.png") + "?v=" + Date.now();
     const siteName = "Malayala Mitra";
     const ogUrl = baseUrl + "/post/" + slug;
     let html = indexHtml
