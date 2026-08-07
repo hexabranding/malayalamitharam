@@ -1,9 +1,6 @@
 RewriteEngine On
 
-# Route /post/* to og.php for crawlers (serves modified index.html with article OG tags)
-RewriteRule ^post/([^/]+)$ og.php?slug=$1 [L,QSA]
-
-# SPA fallback - serve index.html for all other non-file routes
+# Redirect all non-existing requests to /index.html for SPA
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [L]
+RewriteRule ^ /index.html [L]

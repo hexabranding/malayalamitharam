@@ -12,8 +12,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "server": "node server.cjs",
     "start": "node server.cjs",
-    "postinstall": "npm run build && cp -r dist/* .",
-    "deploy:hostinger": "cp -r dist/* ."
+    "postinstall": "npm run build",
+    "deploy:hostinger": "npm run build && rm -rf css images js sass vendor index.html robots.txt 404.php && cp -r dist/* ."
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
