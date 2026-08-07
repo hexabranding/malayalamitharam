@@ -129,6 +129,9 @@ app.get("/post/:slug", async (req, res) => {
     const slug = req.params.slug;
     const Article = require("./backend/models/Article");
     let article = await Article.findOne({ slug }).lean();
+    if (!article && slug.match(/^[0-9a-fA-F]{24}$/)) {
+      article = await Article.findById(slug).lean();
+    }
     if (!article || !article.published) {
       return res.status(404).send("Not Found");
     }
