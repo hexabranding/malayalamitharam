@@ -137,9 +137,10 @@ app.get("/post/:slug", async (req, res) => {
     }
     const ogTitle = article.title || "Malayala Mitra";
     const ogDesc = article.excerpt || article.title || "";
-    const ogImage = resolveImageUrl(article.image) || "/images/favicon.png";
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const ogImage = resolveImageUrl(article.image) ? baseUrl + resolveImageUrl(article.image) : baseUrl + "/images/favicon.png";
     const siteName = "Malayala Mitra";
-    const ogUrl = req.protocol + "://" + req.get("host") + "/post/" + slug;
+    const ogUrl = baseUrl + "/post/" + slug;
     let html = indexHtml
       .replace(/<meta property="og:site_name" content="[^"]*"/, `<meta property="og:site_name" content="${siteName}"`)
       .replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}"`)
