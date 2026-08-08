@@ -30,7 +30,7 @@ export default function ContactPage({ navigate }) {
               <MapPin size={20} className="icon" />
               <div>
                 <strong>ഓഫീസ് വിലാസം:</strong>
-                <p>മലയാളമിത്രം മീഡിയ ഹൗസ്, എം.ജി റോഡ്, കൊച്ചി, കേരളം - 682016</p>
+                <p>Reg.No.MSME UDYAM-KL-02-0015921 14/291 K, Suite 15P, Edathala PO, Edappally Pukkattupady road, Cochin-683561, Kerala, India </p>
               </div>
             </div>
 
@@ -38,7 +38,7 @@ export default function ContactPage({ navigate }) {
               <Phone size={20} className="icon" />
               <div>
                 <strong>ഫോൺ നമ്പർ:</strong>
-                <p>+91 484 2345678, +91 9447123456</p>
+                <p>+91 8139800525</p>
               </div>
             </div>
 
