@@ -168,6 +168,12 @@ function setSettingsCache(data) {
   } catch {}
 }
 
+export function clearSettingsCache() {
+  try {
+    sessionStorage.removeItem("mm_settings_cache");
+  } catch {}
+}
+
 export async function fetchSettings() {
   const cached = getSettingsCache();
   if (cached) return cached;

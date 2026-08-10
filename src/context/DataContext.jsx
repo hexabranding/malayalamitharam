@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { fetchSettings, loadMenuGroups } from "../services/api.js";
+import { fetchSettings, clearSettingsCache, loadMenuGroups } from "../services/api.js";
 
 const DataContext = createContext({ settings: {}, menuGroups: [] });
 
@@ -12,6 +12,7 @@ export function DataProvider({ children }) {
     loadMenuGroups().then(data => { if (Array.isArray(data)) setMenuGroups(data); }).catch(() => {});
 
     function refresh() {
+      clearSettingsCache();
       fetchSettings().then(data => { if (data && typeof data === "object") setSettings(data); }).catch(() => {});
       loadMenuGroups().then(data => { if (Array.isArray(data)) setMenuGroups(data); }).catch(() => {});
     }
