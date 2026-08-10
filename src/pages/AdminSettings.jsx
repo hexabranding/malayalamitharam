@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw } from "lucide-react";
-import { fetchSettingsAll, updateSetting, seedSettings } from "../services/api.js";
+import { useState, useEffect, useRef } from "react";
+import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw, Upload } from "lucide-react";
+import { fetchSettingsAll, updateSetting, seedSettings, uploadImage } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 
 export default function AdminSettings({ navigate }) {
@@ -73,8 +73,24 @@ export default function AdminSettings({ navigate }) {
       case "image":
         return (
           <div>
-            <input value={val} onChange={e => handleChange(s.key, e.target.value)} />
-            {val && <img src={resolveImageUrl(val) || val} alt="" style={{ maxWidth: 120, maxHeight: 60, marginTop: 8, borderRadius: 4, objectFit: "contain" }} />}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input value={val} onChange={e => handleChange(s.key, e.target.value)} style={{ flex: 1 }} />
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 12px", background: "#0d4228", color: "#fff", borderRadius: 6, cursor: "pointer", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap" }}>
+                <Upload size={14} /> Upload
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const result = await uploadImage(file);
+                    const url = result.url || result.path || result.imageUrl;
+                    if (url) handleChange(s.key, url);
+                  } catch (err) {
+                    alert("Upload failed: " + err.message);
+                  }
+                }} />
+              </label>
+            </div>
+            {val && <img src={resolveImageUrl(val) || val} alt="" style={{ maxWidth: 200, maxHeight: 80, marginTop: 8, borderRadius: 4, objectFit: "contain", border: "1px solid #e3e9df" }} />}
           </div>
         );
       default:
