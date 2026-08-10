@@ -94,11 +94,17 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
   const visible = list.length > 0 ? list : articles;
 
+  const sortedVisible = [...visible].sort((a, b) => {
+    const dateA = new Date(a.date || a.createdAt || 0);
+    const dateB = new Date(b.date || b.createdAt || 0);
+    return dateB - dateA;
+  });
+
   // Pagination logic
-  const totalPages = Math.ceil(visible.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedVisible.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentArticles = visible.slice(startIndex, endIndex);
+  const currentArticles = sortedVisible.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -155,7 +161,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
       )}
 
       <div className="category-info">
-        <p>Showing {startIndex + 1}-{Math.min(endIndex, visible.length)} of {visible.length} articles</p>
+        <p>Showing {startIndex + 1}-{Math.min(endIndex, sortedVisible.length)} of {sortedVisible.length} articles</p>
       </div>
 
       <AdSlot slot="category" label="Category Leaderboard Ad" />
