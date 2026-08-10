@@ -22,7 +22,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [displayName, setDisplayName] = useState(categoryItem.titleMl || categoryItem.label || "");
+  const [displayName, setDisplayName] = useState("");
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -41,8 +41,8 @@ export default function CategoryPage({ categoryItem, navigate }) {
       if (titleMl) allTitleMls.add(titleMl.toLowerCase());
       if (slug) allSlugs.add(slug);
 
-      let foundTitleMl = titleMl;
-      let foundLabel = label;
+      let foundTitleMl = "";
+      let foundLabel = "";
 
       for (const group of apiCats) {
         const groupLabel = (group.label || "").toLowerCase();
@@ -66,13 +66,13 @@ export default function CategoryPage({ categoryItem, navigate }) {
             allSlugs.add(group.slug);
             allLabels.add((child.label || "").toLowerCase());
             allTitleMls.add((child.titleMl || "").toLowerCase());
-            if (group.titleMl) foundTitleMl = group.titleMl;
-            if (group.label) foundLabel = group.label;
+            if (!foundTitleMl && group.titleMl) foundTitleMl = group.titleMl;
+            if (!foundLabel && group.label) foundLabel = group.label;
           }
         }
       }
 
-      setDisplayName(foundTitleMl || foundLabel || slug);
+      setDisplayName(foundTitleMl || foundLabel || label || slug);
 
       fetchNews({ limit: 500 }).then(data => {
         const fetched = data.news || [];
