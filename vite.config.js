@@ -20,12 +20,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:4000",
+        target: "https://api.malayalamitharam.in",
         changeOrigin: true,
+        secure: true,
       },
       "/uploads": {
-        target: "http://localhost:4000",
+        target: "https://api.malayalamitharam.in",
         changeOrigin: true,
+        secure: true,
       },
     },
   },
