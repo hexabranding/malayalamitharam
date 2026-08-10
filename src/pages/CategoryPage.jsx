@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
-import { fetchNews } from "../services/api.js";
+import { fetchNews, fetchCategories } from "../services/api.js";
 import { articles as fallback, flatMenuItems } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 
-function getChildSlugs(slug) {
-  const group = flatMenuItems.find(g => g.slug === slug);
-  if (group && group.children) {
-    return group.children.map(c => c.slug);
+function flattenApiCategories(categories) {
+  const flat = [];
+  for (const cat of categories) {
+    if (cat.children) {
+      for (const child of cat.children) {
+        flat.push(child);
+      }
+    }
+    flat.push(cat);
   }
-  return [];
+  return flat;
 }
 
 export default function CategoryPage({ categoryItem, navigate }) {
@@ -22,46 +27,60 @@ export default function CategoryPage({ categoryItem, navigate }) {
   useEffect(() => {
     setCurrentPage(1);
     setLoading(true);
-    const slug = categoryItem.slug;
-    const childSlugs = getChildSlugs(slug);
-    const allSlugs = [slug, ...childSlugs];
+    const label = categoryItem.label || "";
     const titleMl = categoryItem.titleMl || "";
 
-    const localArticles = fallback.filter(a => {
-      const cat = (a.category || "").toLowerCase();
-      if (allSlugs.some(s => s.toLowerCase() === cat)) return true;
-      if (a.categories && a.categories.some(c => allSlugs.includes(c.toLowerCase()))) return true;
-      if (titleMl && a.categoryMl === titleMl) return true;
-      return false;
-    });
+    fetchCategories().then(apiCats => {
+      const flatCats = flattenApiCategories(apiCats);
+      const matched = flatCats.find(c => c.label === label || c.titleMl === titleMl);
+      const apiSlug = matched ? matched.slug : null;
 
-    setArticles(localArticles.length > 0 ? localArticles : fallback);
-    setLoading(false);
-
-    // Fetch ALL news (no category filter) and filter client-side
-    fetchNews({ limit: 500 }).then(data => {
-      const fetched = data.news || [];
-      if (fetched.length > 0) {
-        const matched = fetched.filter(a => {
-          const cat = (a.category || "").toLowerCase();
-          if (allSlugs.some(s => s.toLowerCase() === cat)) return true;
-          if (a.categories && a.categories.some(c => allSlugs.includes(c.toLowerCase()))) return true;
+      fetchNews({ limit: 500 }).then(data => {
+        const fetched = data.news || [];
+        const filtered = fetched.filter(a => {
+          if (apiSlug && a.category === apiSlug) return true;
+          if (label && a.category === label) return true;
           if (titleMl && a.categoryMl === titleMl) return true;
           return false;
         });
 
-        if (matched.length > 0) {
-          const ids = new Set(matched.map(a => a.id));
-          const merged = [...matched, ...localArticles.filter(a => !ids.has(a.id))];
-          setArticles(merged);
+        if (filtered.length > 0) {
+          setArticles(filtered);
         } else {
-          const ids = new Set(fetched.map(a => a.id));
-          const merged = [...fetched, ...localArticles.filter(a => !ids.has(a.id))];
-          setArticles(merged);
+          const localFiltered = fallback.filter(a => {
+            const cat = (a.category || "").toLowerCase();
+            if (label && cat === label.toLowerCase()) return true;
+            if (titleMl && a.categoryMl === titleMl) return true;
+            return false;
+          });
+          setArticles(localFiltered.length > 0 ? localFiltered : fallback);
         }
-      }
-    }).catch(() => {});
-  }, [categoryItem.slug, categoryItem.titleMl]);
+        setLoading(false);
+      }).catch(() => {
+        const localFiltered = fallback.filter(a => {
+          const cat = (a.category || "").toLowerCase();
+          if (label && cat === label.toLowerCase()) return true;
+          if (titleMl && a.categoryMl === titleMl) return true;
+          return false;
+        });
+        setArticles(localFiltered.length > 0 ? localFiltered : fallback);
+        setLoading(false);
+      });
+    }).catch(() => {
+      fetchNews({ limit: 500 }).then(data => {
+        const fetched = data.news || [];
+        const filtered = fetched.filter(a => {
+          if (label && a.category === label) return true;
+          if (titleMl && a.categoryMl === titleMl) return true;
+          return false;
+        });
+        setArticles(filtered.length > 0 ? filtered : fallback);
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+    });
+  }, [categoryItem.label, categoryItem.titleMl]);
 
   function parseDate(article) {
     if (article.createdAt) {

@@ -28,7 +28,12 @@ async function request(url, options = {}, timeout = 15000) {
       const body = await res.json().catch(() => ({ error: res.statusText }));
       throw new Error(body.error || "Request failed");
     }
-    return res.json();
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("API is currently unavailable. Please try again later.");
+    }
   } catch (err) {
     clearTimeout(id);
     throw err;
