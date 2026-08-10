@@ -68,7 +68,7 @@ export default function Header({ navigate, activeSlug }) {
   return (
     <header className="site-header">
       <div className="banner-wrap"><img src={banner} alt="മലയാളമിത്രം" /></div>
-      <div className="top-strip"><div className="container strip-inner"><span>{new Date().toLocaleDateString("ml-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><span>{tagline}</span><button onClick={() => navigate("/login")} style={{ background: "#bd1d25", color: "#fff", padding: "2px 12px", borderRadius: 4, fontWeight: 700, fontSize: 12, marginLeft: "auto" }}>Admin</button></div></div>
+      <div className="top-strip"><div className="container strip-inner"><span>{new Date().toLocaleDateString("ml-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><span>{tagline}</span></div></div>
       <div className="container masthead">
         <button className="icon-button mobile-only" onClick={() => setMenuOpen(true)} aria-label="മെനു തുറക്കുക"><Menu size={22} /></button>
         <div className="search-wrapper masthead-search" ref={searchRef}>
