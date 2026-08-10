@@ -29,18 +29,49 @@ export default function CategoryPage({ categoryItem, navigate }) {
     setLoading(true);
     const label = categoryItem.label || "";
     const titleMl = categoryItem.titleMl || "";
+    const slug = categoryItem.slug || "";
 
     fetchCategories().then(apiCats => {
-      const flatCats = flattenApiCategories(apiCats);
-      const matched = flatCats.find(c => c.label === label || c.titleMl === titleMl);
-      const apiSlug = matched ? matched.slug : null;
+      const allSlugs = new Set();
+      const allLabels = new Set();
+      const allTitleMls = new Set();
+
+      if (label) allLabels.add(label.toLowerCase());
+      if (titleMl) allTitleMls.add(titleMl.toLowerCase());
+      if (slug) allSlugs.add(slug);
+
+      for (const group of apiCats) {
+        const groupLabel = (group.label || "").toLowerCase();
+        const groupTitleMl = (group.titleMl || "").toLowerCase();
+        const isMatch = groupLabel === label.toLowerCase() || groupTitleMl === titleMl.toLowerCase() || group.slug === slug;
+
+        if (isMatch) {
+          allSlugs.add(group.slug);
+          for (const child of (group.children || [])) {
+            allSlugs.add(child.slug);
+            allLabels.add((child.label || "").toLowerCase());
+            allTitleMls.add((child.titleMl || "").toLowerCase());
+          }
+        }
+
+        for (const child of (group.children || [])) {
+          if ((child.label || "").toLowerCase() === label.toLowerCase() || (child.titleMl || "").toLowerCase() === titleMl.toLowerCase() || child.slug === slug) {
+            allSlugs.add(child.slug);
+            allSlugs.add(group.slug);
+            allLabels.add((child.label || "").toLowerCase());
+            allTitleMls.add((child.titleMl || "").toLowerCase());
+          }
+        }
+      }
 
       fetchNews({ limit: 500 }).then(data => {
         const fetched = data.news || [];
         const filtered = fetched.filter(a => {
-          if (apiSlug && a.category === apiSlug) return true;
-          if (label && a.category === label) return true;
-          if (titleMl && a.categoryMl === titleMl) return true;
+          if (allSlugs.has(a.category)) return true;
+          if (a.categories && a.categories.some(c => allSlugs.has(c))) return true;
+          if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
+          if (a.category && allLabels.has(a.category.toLowerCase())) return true;
+          if (a.categoryMl && allLabels.has(a.categoryMl.toLowerCase())) return true;
           return false;
         });
 
@@ -49,8 +80,8 @@ export default function CategoryPage({ categoryItem, navigate }) {
         } else {
           const localFiltered = fallback.filter(a => {
             const cat = (a.category || "").toLowerCase();
-            if (label && cat === label.toLowerCase()) return true;
-            if (titleMl && a.categoryMl === titleMl) return true;
+            if (allLabels.has(cat)) return true;
+            if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
             return false;
           });
           setArticles(localFiltered.length > 0 ? localFiltered : fallback);
@@ -59,8 +90,8 @@ export default function CategoryPage({ categoryItem, navigate }) {
       }).catch(() => {
         const localFiltered = fallback.filter(a => {
           const cat = (a.category || "").toLowerCase();
-          if (label && cat === label.toLowerCase()) return true;
-          if (titleMl && a.categoryMl === titleMl) return true;
+          if (allLabels.has(cat)) return true;
+          if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
           return false;
         });
         setArticles(localFiltered.length > 0 ? localFiltered : fallback);
@@ -70,6 +101,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
       fetchNews({ limit: 500 }).then(data => {
         const fetched = data.news || [];
         const filtered = fetched.filter(a => {
+          if (slug && a.category === slug) return true;
           if (label && a.category === label) return true;
           if (titleMl && a.categoryMl === titleMl) return true;
           return false;
@@ -80,7 +112,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
         setLoading(false);
       });
     });
-  }, [categoryItem.label, categoryItem.titleMl]);
+  }, [categoryItem.label, categoryItem.titleMl, categoryItem.slug]);
 
   function parseDate(article) {
     if (article.createdAt) {
