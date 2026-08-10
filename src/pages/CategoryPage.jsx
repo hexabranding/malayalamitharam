@@ -15,11 +15,13 @@ function getChildSlugs(slug) {
 
 export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
+    setLoading(true);
     const slug = categoryItem.slug;
     const childSlugs = getChildSlugs(slug);
     const allSlugs = [slug, ...childSlugs];
@@ -34,18 +36,32 @@ export default function CategoryPage({ categoryItem, navigate }) {
     });
 
     setArticles(localArticles.length > 0 ? localArticles : fallback);
+    setLoading(false);
 
-    fetchNews({ category: slug, limit: 200 }).then(data => {
+    // Fetch ALL news (no category filter) and filter client-side
+    fetchNews({ limit: 500 }).then(data => {
       const fetched = data.news || [];
       if (fetched.length > 0) {
-        setArticles(prev => {
-          const ids = new Set(prev.map(a => a.id));
-          const newOnes = fetched.filter(a => !ids.has(a.id));
-          return newOnes.length > 0 ? [...fetched, ...prev.filter(a => !ids.has(a.id))] : prev;
+        const matched = fetched.filter(a => {
+          const cat = (a.category || "").toLowerCase();
+          if (allSlugs.some(s => s.toLowerCase() === cat)) return true;
+          if (a.categories && a.categories.some(c => allSlugs.includes(c.toLowerCase()))) return true;
+          if (titleMl && a.categoryMl === titleMl) return true;
+          return false;
         });
+
+        if (matched.length > 0) {
+          const ids = new Set(matched.map(a => a.id));
+          const merged = [...matched, ...localArticles.filter(a => !ids.has(a.id))];
+          setArticles(merged);
+        } else {
+          const ids = new Set(fetched.map(a => a.id));
+          const merged = [...fetched, ...localArticles.filter(a => !ids.has(a.id))];
+          setArticles(merged);
+        }
       }
     }).catch(() => {});
-  }, [categoryItem.slug]);
+  }, [categoryItem.slug, categoryItem.titleMl]);
 
   function parseDate(article) {
     if (article.createdAt) {
@@ -78,37 +94,45 @@ export default function CategoryPage({ categoryItem, navigate }) {
         <h1>{categoryItem.titleMl || categoryItem.label}</h1>
       </div>
 
-      <div className="list-feed">
-        {currentArticles.map((article, i) => (
-          <ArticleCard
-            key={article.id}
-            article={article}
-            navigate={navigate}
-            variant="horizontal"
-            dataAosDelay={i * 50}
-          />
-        ))}
-      </div>
-
-      {currentArticles.length === 0 && (
+      {loading ? (
         <div style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
-          <p>ഈ വിഭാഗത്തിൽ ഇപ്പോൾ വാർത്തകൾ ഇല്ല</p>
+          <p>Loading...</p>
         </div>
-      )}
+      ) : (
+        <>
+          <div className="list-feed">
+            {currentArticles.map((article, i) => (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                navigate={navigate}
+                variant="horizontal"
+                dataAosDelay={i * 50}
+              />
+            ))}
+          </div>
 
-      {totalPages > 1 && (
-        <div className="pagination" data-aos="zoom-in">
-          <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
-          ))}
-          <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
-        </div>
-      )}
+          {currentArticles.length === 0 && (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
+              <p>ഈ വിഭാഗത്തിൽ ഇപ്പോൾ വാർത്തകൾ ഇല്ല</p>
+            </div>
+          )}
 
-      <div className="category-info">
-        <p>Showing {sortedVisible.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, sortedVisible.length)} of {sortedVisible.length} articles</p>
-      </div>
+          {totalPages > 1 && (
+            <div className="pagination" data-aos="zoom-in">
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
+              ))}
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+            </div>
+          )}
+
+          <div className="category-info">
+            <p>Showing {sortedVisible.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, sortedVisible.length)} of {sortedVisible.length} articles</p>
+          </div>
+        </>
+      )}
 
       <AdSlot slot="category" label="Category Leaderboard Ad" />
     </PageLayout>
