@@ -13,15 +13,6 @@ function getChildSlugs(slug) {
   return [];
 }
 
-function matchArticle(article, slug, childSlugs, titleMl) {
-  const cat = (article.category || "").toLowerCase();
-  const allSlugs = [slug, ...childSlugs];
-  if (allSlugs.some(s => s.toLowerCase() === cat)) return true;
-  if (article.categories && article.categories.some(c => allSlugs.includes(c.toLowerCase()))) return true;
-  if (titleMl && article.categoryMl === titleMl) return true;
-  return false;
-}
-
 export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,53 +22,44 @@ export default function CategoryPage({ categoryItem, navigate }) {
     setCurrentPage(1);
     const slug = categoryItem.slug;
     const childSlugs = getChildSlugs(slug);
+    const allSlugs = [slug, ...childSlugs];
     const titleMl = categoryItem.titleMl || "";
 
-    const localArticles = fallback.filter(a => matchArticle(a, slug, childSlugs, titleMl));
-    setArticles(localArticles);
+    const localArticles = fallback.filter(a => {
+      const cat = (a.category || "").toLowerCase();
+      if (allSlugs.some(s => s.toLowerCase() === cat)) return true;
+      if (a.categories && a.categories.some(c => allSlugs.includes(c.toLowerCase()))) return true;
+      if (titleMl && a.categoryMl === titleMl) return true;
+      return false;
+    });
+
+    setArticles(localArticles.length > 0 ? localArticles : fallback);
 
     fetchNews({ category: slug, limit: 200 }).then(data => {
       const fetched = data.news || [];
       if (fetched.length > 0) {
         setArticles(prev => {
           const ids = new Set(prev.map(a => a.id));
-          return [...prev, ...fetched.filter(a => !ids.has(a.id))];
+          const newOnes = fetched.filter(a => !ids.has(a.id));
+          return newOnes.length > 0 ? [...fetched, ...prev.filter(a => !ids.has(a.id))] : prev;
         });
       }
     }).catch(() => {});
-
-    childSlugs.forEach(childSlug => {
-      fetchNews({ category: childSlug, limit: 100 }).then(data => {
-        const extra = data.news || [];
-        if (extra.length > 0) {
-          setArticles(prev => {
-            const ids = new Set(prev.map(a => a.id));
-            return [...prev, ...extra.filter(a => !ids.has(a.id))];
-          });
-        }
-      }).catch(() => {});
-    });
   }, [categoryItem.slug]);
 
   function parseDate(article) {
-    if (article.createdAt) return new Date(article.createdAt).getTime() || 0;
-    if (article.updatedAt) return new Date(article.updatedAt).getTime() || 0;
-    if (article.date) {
-      const parsed = new Date(article.date);
-      if (!isNaN(parsed.getTime())) return parsed.getTime();
+    if (article.createdAt) {
+      const t = new Date(article.createdAt).getTime();
+      if (!isNaN(t)) return t;
     }
-    if (article.id && typeof article.id === "string" && /^\d+$/.test(article.id)) {
-      return parseInt(article.id, 10);
+    if (article.date) {
+      const t = new Date(article.date).getTime();
+      if (!isNaN(t)) return t;
     }
     return 0;
   }
 
-  const sortedVisible = [...articles].sort((a, b) => {
-    const dateA = parseDate(a);
-    const dateB = parseDate(b);
-    if (dateA !== dateB) return dateB - dateA;
-    return articles.indexOf(b) - articles.indexOf(a);
-  });
+  const sortedVisible = [...articles].sort((a, b) => parseDate(b) - parseDate(a));
 
   const totalPages = Math.ceil(sortedVisible.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -116,31 +98,11 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
       {totalPages > 1 && (
         <div className="pagination" data-aos="zoom-in">
-          <button
-            className="pagination-btn"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-
+          <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
           {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`}
-              onClick={() => handlePageChange(i + 1)}
-            >
-              {i + 1}
-            </button>
+            <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
           ))}
-
-          <button
-            className="pagination-btn"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
+          <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
         </div>
       )}
 
