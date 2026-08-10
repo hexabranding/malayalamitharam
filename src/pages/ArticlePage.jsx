@@ -17,7 +17,6 @@ export default function ArticlePage({ slug, navigate }) {
   const fallbackArticle = fallback.find(a => a.id === slug);
   const [article, setArticle] = useState(fallbackArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle);
-  const [fontSize, setFontSize] = useState(null);
   const [related, setRelated] = useState(() => {
     if (!fallbackArticle) return [];
     return fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3);
@@ -81,8 +80,6 @@ const displayRelated = related.length >= 2
           className="article-lead-blockquote"
           data-aos="fade-up"
           data-aos-delay="150"
-          style={fontSize ? { fontSize: fontSize + "px" } : undefined}
-          onClick={() => setFontSize(prev => Math.min((prev || 23) + 2, 36))}
         >
           {article.excerpt}
         </blockquote>
@@ -97,10 +94,7 @@ const displayRelated = related.length >= 2
                   <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
                 </div>
               )}
-              <p
-                style={fontSize ? { fontSize: fontSize + "px" } : undefined}
-                onClick={() => setFontSize(prev => Math.min((prev || 22) + 2, 36))}
-              >{paragraph}</p>
+              <p>{paragraph}</p>
             </div>
           ))}
         </div>

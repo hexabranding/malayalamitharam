@@ -6,22 +6,47 @@ import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 
 export default function CategoryPage({ categoryItem, navigate }) {
-  const [articles, setArticles] = useState(() => fallback.filter(a => a.category === categoryItem.slug));
+  const [articles, setArticles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchNews({ category: categoryItem.slug, limit: 50 }).then(data => {
+    setCurrentPage(1);
+    fetchNews({ category: categoryItem.slug, limit: 200 }).then(data => {
       const fetched = data.news || [];
-      if (fetched.length > 0) setArticles(fetched);
-    }).catch(() => {});
+      if (fetched.length > 0) {
+        setArticles(fetched);
+      } else {
+        setArticles(fallback.filter(a =>
+          a.category === categoryItem.slug ||
+          (a.categories && a.categories.includes(categoryItem.slug))
+        ));
+      }
+    }).catch(() => {
+      setArticles(fallback.filter(a =>
+        a.category === categoryItem.slug ||
+        (a.categories && a.categories.includes(categoryItem.slug))
+      ));
+    });
   }, [categoryItem.slug]);
 
-  const list = articles.filter((article) =>
-    article.category === categoryItem.slug ||
-    (article.categories && article.categories.includes(categoryItem.slug))
-  );
-  const visible = list.length ? list : articles.slice(0, 6);
+  const slugLower = categoryItem.slug?.toLowerCase() || "";
+  const labelLower = categoryItem.label?.toLowerCase() || "";
+  const titleMl = categoryItem.titleMl || "";
+
+  const list = articles.filter((article) => {
+    const cat = article.category?.toLowerCase() || "";
+    if (cat === slugLower || cat === labelLower) return true;
+    if (article.categories && article.categories.some(c => c.toLowerCase() === slugLower)) return true;
+    if (article.categoryMl && titleMl && article.categoryMl === titleMl) return true;
+    if (article.categoryMl && ["കേരളം", "ഇന്ത്യ", "ലോകം", "ഗൾഫ്", "സിനിമ", "ടെക്", "കായികം"].includes(article.categoryMl)) {
+      const labelMap = { "കേരളം": "kerala", "ഇന്ത്യ": "india", "ലോകം": "world", "ഗൾഫ്": "gulf", "സിനിമ": "cinema", "ടെക്": "tech", "കായികം": "sports" };
+      if (labelMap[article.categoryMl] === slugLower) return true;
+    }
+    return false;
+  });
+
+  const visible = list.length > 0 ? list : articles;
 
   // Pagination logic
   const totalPages = Math.ceil(visible.length / itemsPerPage);

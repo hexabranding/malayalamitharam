@@ -30,7 +30,7 @@ export default function ContactPage({ navigate }) {
               <MapPin size={20} className="icon" />
               <div>
                 <strong>ഓഫീസ് വിലാസം:</strong>
-                <p>Reg.No.MSME UDYAM-KL-02-0015921 14/291 K, Suite 15P, Edathala PO, Edappally Pukkattupady road, Cochin-683561, Kerala, India </p>
+                <p>Reg.No.MSME UDYAM-KL-02-0015921 14/291 K, Suite 15P, Edathala PO, Edappally Pukkattupady road, Cochin-683561, Kerala, India  </p>
               </div>
             </div>
 
@@ -54,7 +54,7 @@ export default function ContactPage({ navigate }) {
               <Globe size={20} className="icon" />
               <div>
                 <strong>വെബ്‌സൈറ്റ്:</strong>
-                <p>www.malayalamitra.com</p>
+                <p>www.malayalamitram.in</p>
               </div>
             </div>
           </div>
