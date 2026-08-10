@@ -1,47 +1,93 @@
 import { useState, useEffect } from "react";
-import { fetchNews } from "../services/api.js";
+import { fetchNews, fetchCategories } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 
+const MALAYALAM_MAP = {
+  "kerala": ["കേരളം", "Kerala"],
+  "india": ["ഇന്ത്യ", "India", "ദേശിയം"],
+  "world": ["ലോകം", "World", "അന്തർദേശിയം"],
+  "gulf": ["ഗൾഫ്", "Gulf"],
+  "cinema": ["സിനിമ", "Cinema"],
+  "tech": ["ടെക്", "Tech"],
+  "sports": ["കായികം", "Sports"],
+  "football": ["ഫുട്ബോൾ", "Football"],
+  "cricket": ["ക്രിക്കറ്റ്", "Cricket"],
+  "health": ["ആരോഗ്യം", "Health"],
+  "travel": ["യാത്ര", "Travel"],
+  "food": ["ഭക്ഷണം", "Food"],
+  "politics": ["രാഷ്ട്രീയം", "Politics"],
+  "opinion": ["അഭിപ്രായം", "Opinion"],
+  "education": ["വിദ്യാഭ്യാസം", "Education"],
+  "business": ["ബിസിനസ്", "Business"],
+};
+
 export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
+    fetchCategories().then(data => {
+      if (Array.isArray(data)) setAllCategories(data);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     setCurrentPage(1);
-    fetchNews({ category: categoryItem.slug, limit: 200 }).then(data => {
+    const slug = categoryItem.slug;
+
+    fetchNews({ category: slug, limit: 200 }).then(data => {
       const fetched = data.news || [];
       if (fetched.length > 0) {
         setArticles(fetched);
       } else {
-        setArticles(fallback.filter(a =>
-          a.category === categoryItem.slug ||
-          (a.categories && a.categories.includes(categoryItem.slug))
-        ));
+        const local = fallback.filter(a =>
+          a.category === slug ||
+          (a.categories && a.categories.includes(slug))
+        );
+        setArticles(local);
       }
     }).catch(() => {
       setArticles(fallback.filter(a =>
-        a.category === categoryItem.slug ||
-        (a.categories && a.categories.includes(categoryItem.slug))
+        a.category === slug ||
+        (a.categories && a.categories.includes(slug))
       ));
     });
-  }, [categoryItem.slug]);
+
+    const group = allCategories.find(g => g.slug === slug);
+    if (group && group.children && group.children.length > 0) {
+      group.children.forEach(child => {
+        fetchNews({ category: child.slug, limit: 100 }).then(data => {
+          const extra = data.news || [];
+          if (extra.length > 0) {
+            setArticles(prev => {
+              const ids = new Set(prev.map(a => a.id));
+              const newArticles = extra.filter(a => !ids.has(a.id));
+              return [...prev, ...newArticles];
+            });
+          }
+        }).catch(() => {});
+      });
+    }
+  }, [categoryItem.slug, allCategories]);
 
   const slugLower = categoryItem.slug?.toLowerCase() || "";
   const labelLower = categoryItem.label?.toLowerCase() || "";
   const titleMl = categoryItem.titleMl || "";
+  const malayalamLabels = MALAYALAM_MAP[slugLower] || [];
 
   const list = articles.filter((article) => {
     const cat = article.category?.toLowerCase() || "";
     if (cat === slugLower || cat === labelLower) return true;
     if (article.categories && article.categories.some(c => c.toLowerCase() === slugLower)) return true;
-    if (article.categoryMl && titleMl && article.categoryMl === titleMl) return true;
-    if (article.categoryMl && ["കേരളം", "ഇന്ത്യ", "ലോകം", "ഗൾഫ്", "സിനിമ", "ടെക്", "കായികം"].includes(article.categoryMl)) {
-      const labelMap = { "കേരളം": "kerala", "ഇന്ത്യ": "india", "ലോകം": "world", "ഗൾഫ്": "gulf", "സിനിമ": "cinema", "ടെക്": "tech", "കായികം": "sports" };
-      if (labelMap[article.categoryMl] === slugLower) return true;
+    if (titleMl && article.categoryMl === titleMl) return true;
+    if (malayalamLabels.length > 0) {
+      if (malayalamLabels.some(l => article.categoryMl === l)) return true;
+      if (malayalamLabels.some(l => article.category?.toLowerCase() === l.toLowerCase())) return true;
     }
     return false;
   });
