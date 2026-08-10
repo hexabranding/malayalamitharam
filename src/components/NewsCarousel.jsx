@@ -81,7 +81,6 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
       <div className="news-carousel-right">
         <div className="latest-updates-header">
           <strong>Latest Updates</strong>
-          <button type="button" onClick={() => navigate("/search")}>View all</button>
         </div>
         <div className="latest-updates-scroll">
           <div className="latest-updates-track">

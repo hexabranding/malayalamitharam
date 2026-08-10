@@ -160,7 +160,6 @@ export default function HomePage({ navigate }) {
       <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up" style={{ display: "none" }}>
         <div className="latest-strip-title">
           <strong>Latest Updates</strong>
-          <button type="button" onClick={() => navigate("/search")}>View all</button>
         </div>
         <div className="latest-strip-list">
           {latestUpdates.map((article) => (
@@ -230,7 +229,6 @@ export default function HomePage({ navigate }) {
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
             <span>കേരളം</span>
-            <button type="button" onClick={() => navigate("/category/kerala")}>View All</button>
           </div>
           <div className="news-split-layout">
             <div className="news-split-main">
@@ -248,7 +246,6 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ദേശിയം</span>
-              <button type="button" onClick={() => navigate("/category/india")}>View All</button>
             </div>
             <div className="news-split-layout reversed">
               <div className="news-split-main">
@@ -267,7 +264,6 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>അന്തർദേശിയം</span>
-              <button type="button" onClick={() => navigate("/category/world")}>View All</button>
             </div>
             <div className="news-split-layout">
               <div className="news-split-main">
@@ -286,7 +282,6 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ഗൾഫ്</span>
-              <button type="button" onClick={() => navigate("/category/gulf")}>View All</button>
             </div>
             {gulfTop.length > 0 && (
               <div className="gulf-top-row">
@@ -318,7 +313,6 @@ export default function HomePage({ navigate }) {
           <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>
-              <button type="button" onClick={() => navigate("/category/" + section.slug)}>View all</button>
             </div>
             <div className={`news-split-layout${i % 2 === 0 ? "" : " reversed"}`}>
               <div className="news-split-main">
@@ -338,7 +332,6 @@ export default function HomePage({ navigate }) {
         <div className="container">
           <div className="multimedia-title" data-aos="fade-left">
             <span>മൾട്ടിമീഡിയ</span>
-            <button type="button" onClick={() => navigate("/category/photos")}>View Gallery</button>
           </div>
           {displayMedia.length > 0 && (
             <div className="multimedia-grid">
@@ -367,9 +360,6 @@ export default function HomePage({ navigate }) {
           {articles.slice(0, 12).map((article, i) => (
             <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={i * 50} />
           ))}
-        </div>
-        <div style={{ textAlign: "center", margin: "20px 0" }}>
-          <button className="pagination-btn" onClick={() => navigate("/search")}>View All News</button>
         </div>
       </section>
 
