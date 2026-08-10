@@ -22,6 +22,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [displayName, setDisplayName] = useState(categoryItem.titleMl || categoryItem.label || "");
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -40,6 +41,9 @@ export default function CategoryPage({ categoryItem, navigate }) {
       if (titleMl) allTitleMls.add(titleMl.toLowerCase());
       if (slug) allSlugs.add(slug);
 
+      let foundTitleMl = titleMl;
+      let foundLabel = label;
+
       for (const group of apiCats) {
         const groupLabel = (group.label || "").toLowerCase();
         const groupTitleMl = (group.titleMl || "").toLowerCase();
@@ -47,6 +51,8 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
         if (isMatch) {
           allSlugs.add(group.slug);
+          if (group.titleMl) foundTitleMl = group.titleMl;
+          if (group.label) foundLabel = group.label;
           for (const child of (group.children || [])) {
             allSlugs.add(child.slug);
             allLabels.add((child.label || "").toLowerCase());
@@ -60,9 +66,13 @@ export default function CategoryPage({ categoryItem, navigate }) {
             allSlugs.add(group.slug);
             allLabels.add((child.label || "").toLowerCase());
             allTitleMls.add((child.titleMl || "").toLowerCase());
+            if (group.titleMl) foundTitleMl = group.titleMl;
+            if (group.label) foundLabel = group.label;
           }
         }
       }
+
+      setDisplayName(foundTitleMl || foundLabel || slug);
 
       fetchNews({ limit: 500 }).then(data => {
         const fetched = data.news || [];
@@ -142,7 +152,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
     <PageLayout navigate={navigate}>
       <div className="page-title" data-aos="fade-up">
         <span>വിഭാഗം</span>
-        <h1>{categoryItem.titleMl || categoryItem.label}</h1>
+        <h1>{displayName}</h1>
       </div>
 
       {loading ? (
