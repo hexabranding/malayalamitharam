@@ -59,10 +59,24 @@ export default function CategoryPage({ categoryItem, navigate }) {
     });
   }, [categoryItem.slug]);
 
+  function parseDate(article) {
+    if (article.createdAt) return new Date(article.createdAt).getTime() || 0;
+    if (article.updatedAt) return new Date(article.updatedAt).getTime() || 0;
+    if (article.date) {
+      const parsed = new Date(article.date);
+      if (!isNaN(parsed.getTime())) return parsed.getTime();
+    }
+    if (article.id && typeof article.id === "string" && /^\d+$/.test(article.id)) {
+      return parseInt(article.id, 10);
+    }
+    return 0;
+  }
+
   const sortedVisible = [...articles].sort((a, b) => {
-    const dateA = new Date(a.date || a.createdAt || 0);
-    const dateB = new Date(b.date || b.createdAt || 0);
-    return dateB - dateA;
+    const dateA = parseDate(a);
+    const dateB = parseDate(b);
+    if (dateA !== dateB) return dateB - dateA;
+    return articles.indexOf(b) - articles.indexOf(a);
   });
 
   const totalPages = Math.ceil(sortedVisible.length / itemsPerPage);
