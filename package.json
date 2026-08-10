@@ -12,7 +12,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "server": "node server.cjs",
     "start": "node server.cjs",
-    "postinstall": "npm run build",
+    "postinstall": "cd backend && npm install --omit=dev && cd .. && npm run build",
     "deploy:hostinger": "npm run build && rm -rf css images js sass vendor index.html robots.txt 404.php && cp -r dist/* ."
   },
   "dependencies": {

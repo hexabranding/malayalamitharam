@@ -119,7 +119,7 @@ app.get("/search", spa);
 app.get("/news", spa);
 app.get("/login", spa);
 app.get("/admin", spa);
-app.get("/admin/*", spa);
+app.get("/admin/{*splat}", spa);
 
 app.use(spa);
 
