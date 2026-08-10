@@ -71,10 +71,7 @@ export default function Header({ navigate, activeSlug }) {
       <div className="top-strip"><div className="container strip-inner"><span>{new Date().toLocaleDateString("ml-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><span>{tagline}</span><button onClick={() => navigate("/login")} style={{ background: "#bd1d25", color: "#fff", padding: "2px 12px", borderRadius: 4, fontWeight: 700, fontSize: 12, marginLeft: "auto" }}>Admin</button></div></div>
       <div className="container masthead">
         <button className="icon-button mobile-only" onClick={() => setMenuOpen(true)} aria-label="മെനു തുറക്കുക"><Menu size={22} /></button>
-        <button className="brand" onClick={() => navigate("/")}>
-          <img src={logo} alt="മലയാളമിത്രം" className="brand-logo-img" />
-        </button>
-        <div className="search-wrapper" ref={searchRef}>
+        <div className="search-wrapper masthead-search" ref={searchRef}>
           <form className="search-form" onSubmit={handleSearchSubmit}>
             <button type="submit" className="search-submit" aria-label="Search"><Search size={18} /></button>
             <input
@@ -119,6 +116,9 @@ export default function Header({ navigate, activeSlug }) {
             </div>
           )}
         </div>
+        <button className="brand" onClick={() => navigate("/")}>
+          <img src={logo} alt="മലയാളമിത്രം" className="brand-logo-img" />
+        </button>
         <div className="social-links" aria-label="Social links">
           <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined}><Facebook size={18} /></a>
           <a href={social.youtube && social.youtube !== "#" ? social.youtube : "#"} target={social.youtube && social.youtube !== "#" ? "_blank" : undefined} rel={social.youtube && social.youtube !== "#" ? "noopener noreferrer" : undefined}><Youtube size={19} /></a>
