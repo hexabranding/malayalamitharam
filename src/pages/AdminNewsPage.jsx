@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Edit2, Trash2, Eye, Search, Filter, Plus, X } from "lucide-react";
+import AdminPagination from "../components/AdminPagination.jsx";
 import { fetchNews, deleteArticle, loadMenuGroups } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
 import { ArticleImage } from "../services/images.jsx";
@@ -195,33 +196,11 @@ export default function AdminNewsPage({ navigate }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="admin-pagination">
-          <button
-            className="admin-pagination-btn"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              className={`admin-pagination-btn ${currentPage === i + 1 ? "active" : ""}`}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-          
-          <button
-            className="admin-pagination-btn"
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
+        <AdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       <div className="admin-stats">

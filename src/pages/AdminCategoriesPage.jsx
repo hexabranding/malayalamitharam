@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X, Loader2 } from "lucide-react";
 import { loadMenuGroups, createCategory, updateCategory, deleteCategory, clearMenuCache } from "../services/api.js";
+import AdminPagination from "../components/AdminPagination.jsx";
 
 export default function AdminCategoriesPage({ navigate }) {
   const [categories, setCategories] = useState([]);
@@ -10,6 +11,8 @@ export default function AdminCategoriesPage({ navigate }) {
   const [editMl, setEditMl] = useState("");
   const [expandedGroups, setExpandedGroups] = useState({});
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const refresh = useCallback(async () => {
     try {
@@ -131,6 +134,10 @@ export default function AdminCategoriesPage({ navigate }) {
     setSaving(false);
   };
 
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCategories = categories.slice(startIndex, startIndex + itemsPerPage);
+
   if (loading) {
     return (
       <div className="admin-categories-page" style={{ textAlign: "center", padding: 40 }}>
@@ -150,7 +157,7 @@ export default function AdminCategoriesPage({ navigate }) {
       </div>
 
       <div className="categories-tree">
-        {categories.map((group) => (
+        {paginatedCategories.map((group) => (
           <div key={group.slug} className="category-group">
             <div className="category-group-header">
               {editingId === `group-${group.slug}` ? (
@@ -222,6 +229,14 @@ export default function AdminCategoriesPage({ navigate }) {
           </div>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <AdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       <div className="admin-stats">
         <div className="stat-card">
