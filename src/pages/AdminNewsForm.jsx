@@ -454,6 +454,9 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 rows={10}
                 placeholder="Write the full news content here (leave empty to use excerpt as content)"
               />
+              <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 13, lineHeight: 1.5 }}>
+                Add clickable links: <code>[link text](https://example.com)</code> — Example: "കൂടുതൽ വായിക്കൂ <code>[ഇവിടെ](https://example.com)</code>" will show as a clickable link.
+              </small>
           </div>
 
           <div className="form-group">

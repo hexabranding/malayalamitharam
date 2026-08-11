@@ -5,6 +5,7 @@ import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import { useSettings } from "../context/DataContext.jsx";
+import { parseLinks } from "../services/parseLinks.jsx";
 import AdSlot from "../components/AdSlot.jsx";
 import VisitingCarAd from "../components/VisitingCarAd.jsx";
 import Meta from "../components/Meta.jsx";
@@ -94,7 +95,7 @@ const displayRelated = related.length >= 2
                   <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
                 </div>
               )}
-              <p>{paragraph}</p>
+              <p>{parseLinks(paragraph)}</p>
             </div>
           ))}
         </div>
