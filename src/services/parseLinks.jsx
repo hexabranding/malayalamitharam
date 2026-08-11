@@ -1,6 +1,6 @@
 import React from "react";
 
-const LINK_REGEX = /\[([^\]]+)\]\(([^)]+)\)/g;
+const LINK_REGEX = /([^(]+)\((https?:\/\/[^)]+)\)/g;
 
 export function parseLinks(text) {
   if (!text) return text;
@@ -14,7 +14,7 @@ export function parseLinks(text) {
       parts.push(<span key={`t-${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>);
     }
 
-    const linkText = match[1];
+    const linkText = match[1].trim();
     const linkUrl = match[2].trim();
 
     parts.push(

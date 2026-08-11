@@ -1,10 +1,12 @@
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, Youtube } from "lucide-react";
 import { useMemo } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
+import { resolveImageUrl } from "../services/images.jsx";
 
 export default function Footer({ navigate }) {
   const settings = useSettings();
   const menuGroups = useMenuGroups();
+  const logo = resolveImageUrl(settings.site_logo) || "/images/malayalamithram-logo.png";
   const categories = useMemo(() => {
     return menuGroups.flatMap((group) => group.children || []).slice(0, 8);
   }, [menuGroups]);
@@ -27,7 +29,7 @@ export default function Footer({ navigate }) {
         {/* About & Branding Column */}
         <div className="footer-col about">
           <button className="footer-brand-logo" type="button" onClick={() => navigate("/")}>
-            <img src="/images/malayalamithram-logo.png" alt="Malayalamithram Logo" />
+            <img src={logo} alt="Malayalamithram Logo" />
           </button>
           <p>മലയാളം വായനക്കാർക്കായി ഏറ്റവും പുതിയ വാർത്തകൾ, വിശകലനങ്ങൾ, തത്സമയ വിവരങ്ങൾ, ഫോട്ടോകൾ, വീഡിയോകൾ എന്നിവ വേഗതയിലും കൃത്യതയിലും ലഭ്യമാക്കുന്നു.</p>
           <div className="footer-socials">
