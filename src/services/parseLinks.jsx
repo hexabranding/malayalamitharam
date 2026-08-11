@@ -21,8 +21,6 @@ export function parseLinks(text) {
       <a
         key={`l-${lastIndex}`}
         href={linkUrl}
-        target="_blank"
-        rel="noopener noreferrer"
         className="article-inline-link"
       >
         {linkText}

@@ -105,6 +105,19 @@ export default function App() {
     AOS.refresh();
   }, [path]);
 
+  useEffect(() => {
+    function handleClick(e) {
+      const link = e.target.closest("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("#")) return;
+      e.preventDefault();
+      navigate(href);
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [navigate]);
+
   // Auth state — check sessionStorage on mount
   const [adminUser, setAdminUser] = useState(() => {
     try {
