@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
-import { ArticleImage } from "../services/images.jsx";
+import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import { useSettings } from "../context/DataContext.jsx";
@@ -135,7 +135,7 @@ const displayRelated = related.length >= 1
                       onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
                     >
                       <div className="article-video-thumb">
-                        {(article.image || article.thumbnail) && <img src={article.image || article.thumbnail} alt={article.title} />}
+                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
                         <div className="article-video-play"><Play size={24} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{article.title}</span>
@@ -148,7 +148,7 @@ const displayRelated = related.length >= 1
                       onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
                     >
                       <div className="article-video-thumb">
-                        {video.thumbnail && <img src={video.thumbnail} alt={video.title} />}
+                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
                         <div className="article-video-play"><Play size={24} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
