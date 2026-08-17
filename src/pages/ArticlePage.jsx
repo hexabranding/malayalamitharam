@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
@@ -13,11 +13,21 @@ import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 
+function getYoutubeEmbedUrl(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (match) return `https://www.youtube.com/embed/${match[1]}`;
+  if (url.includes("facebook.com") || url.includes("instagram.com")) return url;
+  return url;
+}
+
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
   const fallbackArticle = fallback.find(a => a.id === slug);
   const [article, setArticle] = useState(fallbackArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [showVideo, setShowVideo] = useState(false);
   const [related, setRelated] = useState(() => {
     if (!fallbackArticle) return [];
     return fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3);
@@ -99,6 +109,54 @@ const displayRelated = related.length >= 2
             </div>
           ))}
         </div>
+
+        {(article.relatedVideos?.length > 0 || article.videoUrl) && (
+          <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
+            <h4 className="article-video-title">
+              <Play size={18} /> വീഡിയോകൾ (Videos)
+            </h4>
+            <div className="article-video-container">
+              {showVideo && selectedVideo ? (
+                <div className="article-video-player">
+                  <iframe
+                    src={getYoutubeEmbedUrl(selectedVideo.videoUrl)}
+                    title={selectedVideo.title}
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
+                </div>
+              ) : (
+                <div className="article-video-grid">
+                  {article.videoUrl && (
+                    <div
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
+                    >
+                      <div className="article-video-thumb">
+                        <div className="article-video-play"><Play size={24} fill="#fff" /></div>
+                      </div>
+                      <span className="article-video-label">{article.title}</span>
+                    </div>
+                  )}
+                  {(article.relatedVideos || []).map((video, index) => (
+                    <div
+                      key={index}
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
+                    >
+                      <div className="article-video-thumb">
+                        <div className="article-video-play"><Play size={24} fill="#fff" /></div>
+                      </div>
+                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="tags" data-aos="fade-up" data-aos-delay="250">
           {(article.tags || []).map((tag) => (

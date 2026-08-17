@@ -23,6 +23,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "hijri-js": "^1.0.25",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.468.0",
     "mongoose": "^9.9.0",

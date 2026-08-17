@@ -22,7 +22,7 @@ export default function VideoSection({ articles, navigate }) {
 
   const videoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
-  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 4) : [];
+  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : [];
   const embedUrl = useMemo(() => getYoutubeEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;
@@ -91,7 +91,7 @@ export default function VideoSection({ articles, navigate }) {
 
               <aside className="video-suggestions">
                 <h4>Suggestions</h4>
-                {suggestions.slice(0, 1).map((video) => (
+                {suggestions.map((video) => (
                   <div
                     key={video.id}
                     className="suggestion-card clickable"

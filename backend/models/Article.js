@@ -19,6 +19,11 @@ const articleSchema = new mongoose.Schema({
   published: { type: Boolean, default: true, index: true },
   media: { type: String, default: "standard" },
   videoUrl: { type: String, default: "" },
+  relatedVideos: [{
+    title: { type: String, default: "" },
+    videoUrl: { type: String, required: true },
+    thumbnail: { type: String, default: "" }
+  }],
   views: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },
   comments: { type: Number, default: 0 },

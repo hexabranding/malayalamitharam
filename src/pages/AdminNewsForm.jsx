@@ -24,6 +24,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     popular: false,
     media: "standard",
     videoUrl: "",
+    relatedVideos: [],
     content: "",
     body: "",
     tags: "",
@@ -36,6 +37,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [menuGroupsData, setMenuGroupsData] = useState([]);
+  const [newVideoTitle, setNewVideoTitle] = useState("");
+  const [newVideoUrl, setNewVideoUrl] = useState("");
 
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
@@ -67,6 +70,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               popular: found.popular || false,
               media: found.media || "standard",
               videoUrl: found.videoUrl || "",
+              relatedVideos: found.relatedVideos || [],
               content: found.content || "",
               body: found.body?.join("\n\n") || "",
               tags: found.tags?.join(", ") || "",
@@ -143,6 +147,23 @@ export default function AdminNewsForm({ navigate, newsId }) {
       alert("Image upload failed: " + err.message);
     }
     e.target.value = "";
+  };
+
+  const addRelatedVideo = () => {
+    if (!newVideoUrl.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      relatedVideos: [...prev.relatedVideos, { title: newVideoTitle.trim(), videoUrl: newVideoUrl.trim(), thumbnail: "" }]
+    }));
+    setNewVideoTitle("");
+    setNewVideoUrl("");
+  };
+
+  const removeRelatedVideo = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      relatedVideos: prev.relatedVideos.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -338,7 +359,39 @@ export default function AdminNewsForm({ navigate, newsId }) {
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
               </div>
+            </div>
 
+            <div className="form-group">
+              <label>Related Videos (shown on detail page)</label>
+              <div className="related-videos-list">
+                {formData.relatedVideos.map((video, index) => (
+                  <div key={index} className="related-video-item">
+                    <span className="related-video-title">{video.title || "Untitled"}</span>
+                    <span className="related-video-url">{video.videoUrl}</span>
+                    <button type="button" className="btn-remove" onClick={() => removeRelatedVideo(index)}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="add-related-video">
+                <input
+                  type="text"
+                  placeholder="Video title (optional)"
+                  value={newVideoTitle}
+                  onChange={(e) => setNewVideoTitle(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="YouTube URL or embed link"
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                />
+                <button type="button" className="btn-add" onClick={addRelatedVideo}>+ Add</button>
+              </div>
+            </div>
+
+            <div className="form-row">
               <div className="form-group checkbox-group">
                 <label>
                   <input
