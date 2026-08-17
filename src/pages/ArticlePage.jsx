@@ -66,7 +66,7 @@ export default function ArticlePage({ slug, navigate }) {
 
   if (!article) return <NotFoundPage navigate={navigate} />;
 
-const displayRelated = related.length >= 2
+const displayRelated = related.length >= 1
     ? related
     : [];
 
@@ -135,6 +135,7 @@ const displayRelated = related.length >= 2
                       onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
                     >
                       <div className="article-video-thumb">
+                        {(article.image || article.thumbnail) && <img src={article.image || article.thumbnail} alt={article.title} />}
                         <div className="article-video-play"><Play size={24} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{article.title}</span>
@@ -147,6 +148,7 @@ const displayRelated = related.length >= 2
                       onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
                     >
                       <div className="article-video-thumb">
+                        {video.thumbnail && <img src={video.thumbnail} alt={video.title} />}
                         <div className="article-video-play"><Play size={24} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
