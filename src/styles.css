@@ -36,9 +36,9 @@ a { color: inherit; text-decoration: none; }
 .site-header { background: #fff; }
 .banner-wrap { background: #0c271b; border-bottom: 3px solid #e6b313; }
 .banner-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 auto; }
-.banner-date { color: #e6b313; font-size: 13px; font-weight: 600; white-space: nowrap; padding-right: 12px; }
-.banner-time { color: #e6b313; font-size: 13px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; padding-left: 12px; }
-.banner-wrap img { width: 95%; margin: 0 auto; max-height: 184px; object-fit: cover; }
+.banner-date { color: #e6b313; font-size: 13px; font-weight: 600; padding: 0 16px 0 24px; word-break: break-word; white-space: normal; }
+.banner-time { color: #e6b313; font-size: 13px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; padding: 0 16px; }
+.banner-wrap img { width: 97%; margin: 0 auto 0 -20px; max-height: 184px; object-fit: cover; }
 .top-strip { background: #0d2b1f; color: #fff; font-size: 13px; }
 .strip-inner, .masthead, .nav-scroll, .meta, .section-head, .tags { display: flex; align-items: center; }
 .strip-inner { justify-content: space-between; min-height: 34px; }
@@ -396,7 +396,8 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 900px) {
   .banner-inner { flex-direction: column; gap: 0; }
-  .banner-date, .banner-time { display: none; }
+  .banner-date { display: block; text-align: center; padding: 4px 16px; }
+  .banner-time { display: none; }
   .banner-wrap img { max-height: 130px; width: min(1180px, calc(100% - 32px)); }
   .date-display { flex-wrap: wrap; gap: 4px 8px; justify-content: center; }
   .social-links, .main-nav { display: none; }
@@ -418,7 +419,8 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 620px) {
   .container { width: min(100% - 22px, 1180px); }
   .banner-inner { flex-direction: column; gap: 0; }
-  .banner-date, .banner-time { display: none; }
+  .banner-date { display: block; text-align: center; padding: 4px 16px; }
+  .banner-time { display: none; }
   .banner-wrap img { max-height: 86px; width: min(100% - 22px, 1180px); }
   .strip-inner { justify-content: center; flex-wrap: wrap; }
   .date-display { flex-wrap: wrap; gap: 2px 6px; justify-content: center; font-size: 11px; }
