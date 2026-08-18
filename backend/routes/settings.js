@@ -44,7 +44,7 @@ router.post("/seed", authMiddleware, async (req, res) => {
       { key: "site_tagline", value: "മലയാളികളുടെ വാർത്താ കൂട്ടുകാരൻ", label: "Tagline", type: "text" },
       { key: "site_logo", value: "/images/malayalamithram-logo.png", label: "Logo URL", type: "image" },
       { key: "site_banner", value: "/images/malayala-mitra-banner.jpeg", label: "Banner URL", type: "image" },
-      { key: "footer_logo", value: "/images/footer-circular-logo.png", label: "Footer Logo", type: "image" },
+      { key: "footer_logo", value: "/images/footer%20logo.png", label: "Footer Logo", type: "image" },
       { key: "facebook_url", value: "https://www.facebook.com/malayalamithramonline/", label: "Facebook URL", type: "text" },
       { key: "youtube_url", value: "#", label: "Youtube URL", type: "text" },
       { key: "twitter_url", value: "#", label: "Twitter URL", type: "text" },

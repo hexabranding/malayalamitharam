@@ -6,7 +6,7 @@ import { resolveImageUrl } from "../services/images.jsx";
 export default function Footer({ navigate }) {
   const settings = useSettings();
   const menuGroups = useMenuGroups();
-  const logo = resolveImageUrl(settings.footer_logo) || "/images/footer-circular-logo.png";
+  const logo = resolveImageUrl(settings.footer_logo) || "/images/footer%20logo.png";
   const categories = useMemo(() => {
     return menuGroups.flatMap((group) => group.children || []).slice(0, 8);
   }, [menuGroups]);
