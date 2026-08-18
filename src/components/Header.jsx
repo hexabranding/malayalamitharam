@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 import { fetchNews } from "../services/api.js";
-import { getKollavarsham, getHijriDate, getGregorianDate } from "../utils/calendars.js";
+import { getKollavarsham, getHijriDate } from "../utils/calendars.js";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -81,7 +81,7 @@ export default function Header({ navigate, activeSlug }) {
           <span className="banner-time">{currentTime.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
         </div>
       </div>
-      <div className="top-strip"><div className="container strip-inner"><div className="date-display"><span className="date-item">{getKollavarsham().formatted}</span><span className="date-sep">|</span><span className="date-item">{getHijriDate().formatted}</span></div><span>{tagline}</span></div></div>
+      <div className="top-strip"><div className="container strip-inner"><div className="date-display"><span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span><span className="date-sep">|</span><span className="date-item">{getHijriDate().formatted}</span></div><span>{tagline}</span></div></div>
       <div className="container masthead">
         <button className="icon-button mobile-only" onClick={() => setMenuOpen(true)} aria-label="മെനു തുറക്കുക"><Menu size={22} /></button>
         <div className="search-wrapper masthead-search" ref={searchRef}>

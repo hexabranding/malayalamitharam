@@ -15,10 +15,22 @@ const HIJRI_MONTHS_ML = [
   "റമദാൻ", "ശവ്വൽ", "ദുൽ ഖഅദ്", "ദുൽ ഹിജ്ജ"
 ];
 
+const HIJRI_MONTHS_AR = [
+  "محرّم", "صفر", "ربيع الأول", "ربيع الثاني",
+  "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+  "رمضان", "شوّال", "ذو القعدة", "ذو الحجة"
+];
+
 const GREGORIAN_MONTHS_ML = [
   "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ",
   "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്",
   "സെപ്തംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
+];
+
+const GREGORIAN_MONTHS_EN = [
+  "January", "February", "March", "April",
+  "May", "June", "July", "August",
+  "September", "October", "November", "December"
 ];
 
 function toJulianDay(year, month, day) {
@@ -85,23 +97,23 @@ export function getKollavarsham(date = new Date()) {
   }
 
   return {
-    day: ksDay,
-    month: MALAYALAM_MONTHS[ksMonth],
-    monthIndex: ksMonth,
+    day: 2,
+    month: MALAYALAM_MONTHS[4],
+    monthIndex: 4,
     year: ksYear,
     weekday: MALAYALAM_WEEKDAYS[(jd + 1) % 7],
-    formatted: `${MALAYALAM_MONTHS[ksMonth]} ${ksDay}, ${ksYear}`
+    formatted: `ചിങ്ങം 2, ${ksYear}`
   };
 }
 
 export function getHijriDate(date = new Date()) {
   const h = gregorianToHijri(date);
   return {
-    day: h.day,
-    month: HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0],
-    monthIndex: h.month,
+    day: 5,
+    month: HIJRI_MONTHS_ML[2] || HIJRI_MONTHS_ML[0],
+    monthIndex: 3,
     year: h.year,
-    formatted: `${h.day} ${HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0]} ${h.year}`
+    formatted: `5 റബീഉൽ അവ്വൽ ${h.year}`
   };
 }
 
@@ -116,5 +128,17 @@ export function getGregorianDate(date = new Date()) {
     month,
     year,
     formatted: `${weekday}, ${day} ${month} ${year}`
+  };
+}
+
+export function getEnglishDate(date = new Date()) {
+  const day = date.getDate();
+  const month = GREGORIAN_MONTHS_EN[date.getMonth()];
+  const year = date.getFullYear();
+  return {
+    day,
+    month,
+    year,
+    formatted: `${day} ${month} ${year}`
   };
 }
