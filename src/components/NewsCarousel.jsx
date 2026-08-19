@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { useSettings } from "../context/DataContext.jsx";
+import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 
 function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
@@ -47,6 +48,11 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
   }, [articles]);
 
   useEffect(() => {
+    registerArticles(displayArticles);
+    registerArticles(latestUpdates);
+  }, [displayArticles, latestUpdates]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % displayArticles.length);
     }, 5000);
@@ -63,7 +69,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
             <div
               key={article.id}
               className={`carousel-slide ${index === currentIndex ? "active" : ""}`}
-              onClick={() => navigate("/post/" + article.id)}
+              onClick={() => navigate("/post/" + getTitleSlug(article))}
             >
               <div className="carousel-slide-content">
                 <span className="carousel-category" style={{ padding: `2px ${categoryPad}px` }}>{getCategoryName(article)}</span>
@@ -85,7 +91,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
         <div className="latest-updates-scroll">
           <div className="latest-updates-track">
             {[...latestUpdates, ...latestUpdates].map((article, i) => (
-              <button key={article.id + "-" + i} type="button" className="latest-update-item" onClick={() => navigate("/post/" + article.id)}>
+              <button key={article.id + "-" + i} type="button" className="latest-update-item" onClick={() => navigate("/post/" + getTitleSlug(article))}>
                 <span>{getCategoryName(article)}</span>
                 {article.title}
               </button>

@@ -4,6 +4,7 @@ import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 import { fetchNews } from "../services/api.js";
 import { getKollavarsham, getHijriDate } from "../utils/calendars.js";
+import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,7 +37,9 @@ export default function Header({ navigate, activeSlug }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       fetchNews({ search: searchQuery.trim(), limit: 6 }).then(data => {
-        setSuggestions((data.news || []).slice(0, 6));
+        const results = (data.news || []).slice(0, 6);
+        setSuggestions(results);
+        registerArticles(results);
       }).catch(() => setSuggestions([]));
     }, 300);
     return () => clearTimeout(debounceRef.current);
@@ -45,7 +48,7 @@ export default function Header({ navigate, activeSlug }) {
   function handleSuggestionClick(article) {
     setShowSuggestions(false);
     setSearchQuery("");
-    navigate("/post/" + article.id);
+    navigate("/post/" + getTitleSlug(article));
   }
 
   function handleSearchSubmit(e) {
@@ -54,6 +57,12 @@ export default function Header({ navigate, activeSlug }) {
     if (!q) return;
     setShowSuggestions(false);
     navigate("/search?q=" + encodeURIComponent(q));
+  }
+
+  const ML_WEEKDAYS = ["ഞായർ", "തിങ്കൾ", "ചൊവ്വ", "ബുധൻ", "വ്യാഴം", "വെള്ളി", "ശനി"];
+  const ML_MONTHS = ["ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്തംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"];
+  function formatBannerDate(d) {
+    return ML_WEEKDAYS[d.getDay()] + ", " + d.getDate() + " " + ML_MONTHS[d.getMonth()] + " " + d.getFullYear();
   }
 
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
@@ -76,7 +85,7 @@ export default function Header({ navigate, activeSlug }) {
     <header className="site-header">
       <div className="banner-wrap">
         <div className="banner-inner">
-          <span className="banner-date">{currentTime.toLocaleDateString("ml-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+          <span className="banner-date">{formatBannerDate(currentTime)}</span>
           <img src={banner} alt="മലയാളമിത്രം" />
           <span className="banner-time">{currentTime.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
         </div>

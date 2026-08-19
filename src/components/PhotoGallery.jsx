@@ -1,5 +1,6 @@
 import { Camera } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
+import { getTitleSlug } from "../utils/articleStore.js";
 
 export default function PhotoGallery({ articles, navigate }) {
   const galleryArticles = articles.filter((a) => a.image).slice(0, 4);
@@ -22,7 +23,7 @@ export default function PhotoGallery({ articles, navigate }) {
             <div
               key={article.id}
               className={`photo-card ${index === 0 ? "featured" : ""}`}
-              onClick={() => navigate("/post/" + article.id)}
+              onClick={() => navigate("/post/" + getTitleSlug(article))}
             >
               <div className="photo-wrapper">
                 <ArticleImage article={article} alt={article.title} className="photo-wrapper-img" />

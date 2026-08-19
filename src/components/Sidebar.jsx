@@ -3,6 +3,7 @@ import { Clock3, Star } from "lucide-react";
 import { fetchNews, fetchTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
+import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 import AdSlot from "./AdSlot.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
@@ -41,8 +42,12 @@ export default function Sidebar({ navigate, articles = [] }) {
   useEffect(() => {
     if (articles.length === 0) {
       fetchNews({ limit: 20 }).then(data => {
-        setLatestNews(data.news || []);
+        const results = data.news || [];
+        setLatestNews(results);
+        registerArticles(results);
       }).catch(() => {});
+    } else {
+      registerArticles(articles);
     }
     fetchTags().then(data => {
       if (Array.isArray(data)) setTags(data);
@@ -62,7 +67,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       <section className="sidebar-block sidebar-latest">
         <h2><Clock3 size={18} /> Latest News</h2>
         {latest.map((article, index) => (
-          <button className="headline-link" key={article.id} onClick={() => navigate("/post/" + article.id)}>
+          <button className="headline-link" key={article.id} onClick={() => navigate("/post/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="headline-link-img" />
             <span>
               <em>{String(index + 1).padStart(2, "0")}</em>
@@ -75,7 +80,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       <section className="sidebar-block">
         <h2>Popular</h2>
         {popular.map((article) => (
-          <button className="mini-story" key={article.id} onClick={() => navigate("/post/" + article.id)}>
+          <button className="mini-story" key={article.id} onClick={() => navigate("/post/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="mini-story-img" />
             <span>{article.title}</span>
           </button>
@@ -86,7 +91,7 @@ export default function Sidebar({ navigate, articles = [] }) {
         <section className="sidebar-block editor-picks">
           <h2><Star size={18} /> Editor Picks</h2>
           {editorPicks.map((article) => (
-            <button key={article.id} type="button" onClick={() => navigate("/post/" + article.id)}>
+            <button key={article.id} type="button" onClick={() => navigate("/post/" + getTitleSlug(article))}>
               <strong>{getCategoryName(article)}</strong>
               <span>{article.title}</span>
             </button>

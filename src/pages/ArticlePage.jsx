@@ -12,6 +12,7 @@ import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
+import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null;
@@ -23,29 +24,38 @@ function getYoutubeEmbedUrl(url) {
 
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
-  const fallbackArticle = fallback.find(a => a.id === slug);
-  const [article, setArticle] = useState(fallbackArticle || null);
-  const [loading, setLoading] = useState(!fallbackArticle);
+
+  const fallbackByTitleSlug = fallback.find(a => getTitleSlug(a) === slug);
+  const fallbackById = fallback.find(a => a.id === slug);
+  const fallbackArticle = fallbackByTitleSlug || fallbackById;
+
+  const cachedArticle = !fallbackArticle ? getArticleByTitleSlug(slug) : null;
+
+  const [article, setArticle] = useState(fallbackArticle || cachedArticle || null);
+  const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
   const [related, setRelated] = useState(() => {
-    if (!fallbackArticle) return [];
-    return fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3);
+    const base = fallbackArticle || cachedArticle;
+    if (!base) return [];
+    return fallback.filter(a => a.category === base.category && a.id !== base.id).slice(0, 3);
   });
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await fetchArticle(slug);
-        if (data) setArticle(data);
+        const apiSlug = getApiSlug(slug);
+        const data = await fetchArticle(apiSlug);
         if (data) {
-          incrementView(slug).catch(() => {});
+          setArticle(data);
+          registerArticle(data);
+          incrementView(apiSlug).catch(() => {});
           const relatedData = await fetchNews({ category: data.category, limit: 5 });
           const r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
           if (r.length > 0) setRelated(r);
         }
       } catch (err) {
-        if (!fallbackArticle) setArticle(null);
+        if (!fallbackArticle && !cachedArticle) setArticle(null);
       } finally {
         setLoading(false);
       }
@@ -179,11 +189,21 @@ const displayRelated = related.length >= 1
 
         <div className="article-share" data-aos="fade-up" data-aos-delay="300">
           <span>Share:</span>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-          <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
-          <a href={`https://wa.me/?text=${encodeURIComponent(article.title + " " + window.location.href)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
+          {(() => {
+            const shareUrl = window.location.href;
+            const shareTitle = article.title;
+            const shareImage = resolveImageUrl(article.image || article.thumbnail) || "";
+            const shareText = shareImage ? `${shareTitle}\n\n${shareImage}` : shareTitle;
+            return (
+              <>
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}&media=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
+                <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
+                <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
+              </>
+            );
+          })()}
         </div>
 
         <div className="article-author-card" data-aos="fade-up" data-aos-delay="350">

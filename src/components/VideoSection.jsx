@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { ThumbsUp, Play, Clock, Youtube } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 import { useSettings } from "../context/DataContext.jsx";
+import { getTitleSlug } from "../utils/articleStore.js";
 import AdSlot from "./AdSlot.jsx";
 
 function getYoutubeEmbedUrl(url) {
@@ -68,7 +69,7 @@ export default function VideoSection({ articles, navigate }) {
                     className="video-player clickable"
                     onClick={() => {
                       if (embedUrl) setShowVideo(true);
-                      else navigate("/post/" + mainVideo.id);
+                      else navigate("/post/" + getTitleSlug(mainVideo));
                     }}
                   >
                     <ArticleImage article={mainVideo} alt={mainVideo.title} className="video-thumbnail" />
