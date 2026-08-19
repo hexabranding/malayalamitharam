@@ -147,8 +147,8 @@ export default function HomePage({ navigate }) {
         <span className="news-ticker-label">BREAKING NEWS</span>
         <div className="news-ticker-text">
           <div className="news-ticker-content">
-            {tickerStories.map((story) => (
-              <span key={story.id} className={`clickable ${story.breaking ? "breaking-alert" : ""}`} onClick={() => navigate("/post/" + getTitleSlug(story))}>
+            {[...tickerStories, ...tickerStories].map((story, i) => (
+              <span key={`${story.id}-${i}`} className={`clickable ${story.breaking ? "breaking-alert" : ""}`} onClick={() => navigate("/post/" + getTitleSlug(story))}>
                 {story.breaking ? "\u{1F6A8}" : "\u{1F4E2}"} {story.title} \u2022
               </span>
             ))}
