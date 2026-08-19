@@ -76,7 +76,7 @@ export function getKollavarsham(date = new Date()) {
   const isAfterVishu = currentJD >= vishuCurrentJD;
   const ksYear = isAfterVishu ? gy - 824 : gy - 825;
 
-  const monthLengths = [31, 31, 32, 29, 30, 30, 29, 29, 30, 30, 29, 30];
+  const monthLengths = [31, 31, 32, 30, 30, 30, 29, 29, 30, 30, 29, 30];
   let ksMonth = 0;
   let ksDay = 1;
   let daysSinceVishu = currentJD - vishuCurrentJD;
@@ -97,23 +97,24 @@ export function getKollavarsham(date = new Date()) {
   }
 
   return {
-    day: 2,
-    month: MALAYALAM_MONTHS[4],
-    monthIndex: 4,
+    day: ksDay,
+    month: MALAYALAM_MONTHS[ksMonth],
+    monthIndex: ksMonth,
     year: ksYear,
     weekday: MALAYALAM_WEEKDAYS[(jd + 1) % 7],
-    formatted: `ചിങ്ങം 2, ${ksYear}`
+    formatted: `${MALAYALAM_MONTHS[ksMonth]} ${ksDay}, ${ksYear}`
   };
 }
 
 export function getHijriDate(date = new Date()) {
   const h = gregorianToHijri(date);
+  const hijriDay = h.day + 1;
   return {
-    day: 5,
-    month: HIJRI_MONTHS_ML[2] || HIJRI_MONTHS_ML[0],
-    monthIndex: 3,
+    day: hijriDay,
+    month: HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0],
+    monthIndex: h.month - 1,
     year: h.year,
-    formatted: `5 റബീഉൽ അവ്വൽ ${h.year}`
+    formatted: `${hijriDay} ${HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0]} ${h.year}`
   };
 }
 
