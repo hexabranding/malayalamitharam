@@ -36,9 +36,15 @@ function setArticlesCache(articles) {
   } catch {}
 }
 
+function makeTitleSlug(article) {
+  const cat = article.category || "news";
+  const titleSlug = slugify(article.title);
+  return titleSlug ? cat + "-" + titleSlug : (article.slug || article.id || "");
+}
+
 export function registerArticle(article) {
   if (!article || !article.title) return;
-  const titleSlug = slugify(article.title);
+  const titleSlug = makeTitleSlug(article);
   if (!titleSlug) return;
 
   const map = getSlugMap();
@@ -77,5 +83,5 @@ export function getApiSlug(titleSlug) {
 
 export function getTitleSlug(article) {
   if (!article || !article.title) return article?.slug || article?.id || "";
-  return slugify(article.title);
+  return makeTitleSlug(article);
 }
