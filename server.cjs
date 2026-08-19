@@ -19,8 +19,8 @@ const distPath = path.join(__dirname, "dist");
 const indexPath = path.join(distPath, "index.html");
 const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
-const API_BASE = process.env.VITE_API_URL || "https://api.malayalamitharam.in/api";
-const SITE_URL = process.env.SITE_URL || "https://malayalamitharam.in";
+const API_BASE = process.env.BACKEND_API_URL || "https://api.malayalamitharam.in/api";
+const SITE_URL = process.env.SITE_URL || "https://demo.malayalamitharam.in";
 
 const CRAWLER_RE = /facebookexternalhit|twitterbot|whatsapp|telegrambot|slackbot|linkedinbot|pinterest|applebot|bingbot|googlebot|yandexbot|duckduckbot/i;
 
@@ -44,21 +44,35 @@ function isCrawler(req) {
   return CRAWLER_RE.test(ua);
 }
 
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function injectMeta(html, title, description, image, url) {
   let result = html;
-  result = result.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
-  result = result.replace(/<meta[^>]*name="description"[^>]*>/, `<meta name="description" content="${description}" />`);
+  const safeTitle = esc(title);
+  const safeDesc = esc(description);
+  const safeImage = esc(image);
+  const safeUrl = esc(url);
+  result = result.replace(/<title>[^<]*<\/title>/, `<title>${safeTitle}</title>`);
+  result = result.replace(/<meta[^>]*name="description"[^>]*>/, `<meta name="description" content="${safeDesc}" />`);
+  result = result.replace(/<meta[^>]*property="og:[^"]*"[^>]*>/g, "");
+  result = result.replace(/<meta[^>]*name="twitter:[^"]*"[^>]*>/g, "");
   const ogTags = `
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Malayala Mitra" />
-    <meta property="og:title" content="${title}" />
-    <meta property="og:description" content="${description}" />
-    <meta property="og:url" content="${url}" />
-    <meta property="og:image" content="${image}" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:url" content="${safeUrl}" />
+    <meta property="og:image" content="${safeImage}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${image}" />`;
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
+    <meta name="twitter:image" content="${safeImage}" />`;
   result = result.replace("</head>", ogTags + "\n  </head>");
   return result;
 }
@@ -127,7 +141,7 @@ function makeArticleSlug(article) {
 
 async function findArticleByTitleSlug(titleSlug) {
   try {
-    const res = await fetch(`${API_BASE}/news?limit=100`, {
+    const res = await fetch(`${API_BASE}/news?limit=500`, {
       headers: { "Content-Type": "application/json" },
       signal: AbortSignal.timeout(10000),
     });
