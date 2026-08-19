@@ -77,7 +77,17 @@ export function getArticleByTitleSlug(titleSlug) {
 
 export function getApiSlug(titleSlug) {
   const map = getSlugMap();
-  return map[titleSlug] || titleSlug;
+  if (map[titleSlug]) return map[titleSlug];
+
+  const cache = getArticlesCache();
+  for (const a of cache) {
+    if (slugify(a.title) === titleSlug) {
+      map[titleSlug] = a.slug || a.id;
+      setSlugMap(map);
+      return a.slug || a.id;
+    }
+  }
+  return titleSlug;
 }
 
 export function getTitleSlug(article) {

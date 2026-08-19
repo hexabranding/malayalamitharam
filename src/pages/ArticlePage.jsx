@@ -13,6 +13,7 @@ import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
+import { slugify } from "../utils/slugify.js";
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null;
@@ -44,12 +45,17 @@ export default function ArticlePage({ slug, navigate }) {
   useEffect(() => {
     async function load() {
       try {
-        const apiSlug = getApiSlug(slug);
-        const data = await fetchArticle(apiSlug);
+        let apiSlug = getApiSlug(slug);
+        let data = await fetchArticle(apiSlug);
+        if (!data) {
+          const searchResult = await fetchNews({ limit: 500 });
+          const allArticles = searchResult.news || searchResult.articles || [];
+          data = allArticles.find(a => slugify(a.title) === slug) || null;
+        }
         if (data) {
           setArticle(data);
           registerArticle(data);
-          incrementView(apiSlug).catch(() => {});
+          incrementView(data.slug || data.id).catch(() => {});
           const relatedData = await fetchNews({ category: data.category, limit: 5 });
           const r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
           if (r.length > 0) setRelated(r);

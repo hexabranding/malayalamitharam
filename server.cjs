@@ -131,6 +131,12 @@ app.get("/post/:slug", async (req, res) => {
   if (!article) {
     article = await findArticleByTitleSlug(req.params.slug);
   }
+  if (!article) {
+    const stripped = req.params.slug.replace(/^[a-z]+-\d+-/, "");
+    if (stripped !== req.params.slug) {
+      article = await findArticleByTitleSlug(stripped);
+    }
+  }
   if (!article) return spa(req, res);
   const title = (article.title || "Malayala Mitra") + " | Malayala Mitra";
   const description = article.excerpt || article.title || "Malayala Mitra - Malayalam News Portal";
