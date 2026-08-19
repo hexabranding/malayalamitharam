@@ -484,7 +484,7 @@ a { color: inherit; text-decoration: none; }
 .home-below-fold { padding-top: 0; }
 
 .news-ticker-text span { margin-right: 40px; }
-.news-ticker-text .breaking-alert { color: #bd1d25; font-weight: 900; }
+.news-ticker-text .breaking-alert { color: #fff; font-weight: 900; }
 
 .newspaper-front {
   display: grid;
