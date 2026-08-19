@@ -103,9 +103,8 @@ function slugify(text) {
 }
 
 function makeArticleSlug(article) {
-  const cat = article.category || "news";
   const titleSlug = slugify(article.title);
-  return titleSlug ? cat + "-" + titleSlug : (article.slug || article.id || "");
+  return titleSlug || (article.slug || article.id || "");
 }
 
 async function findArticleByTitleSlug(titleSlug) {

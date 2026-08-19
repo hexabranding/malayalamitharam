@@ -37,9 +37,8 @@ function setArticlesCache(articles) {
 }
 
 function makeTitleSlug(article) {
-  const cat = article.category || "news";
   const titleSlug = slugify(article.title);
-  return titleSlug ? cat + "-" + titleSlug : (article.slug || article.id || "");
+  return titleSlug || (article.slug || article.id || "");
 }
 
 export function registerArticle(article) {
