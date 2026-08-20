@@ -241,7 +241,7 @@ function injectMeta(html, meta) {
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:url" content="${safeUrl}" />
     <meta property="og:image" content="${safeImage}" />${publishedTag}
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:image" content="${safeImage}" />
