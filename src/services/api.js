@@ -63,6 +63,11 @@ export async function fetchArticle(slug) {
   return articlePayload(result);
 }
 
+export async function fetchArticleByTitleSlug(titleSlug) {
+  const result = await request("/news/title-slug/" + encodeURIComponent(titleSlug));
+  return articlePayload(result);
+}
+
 export async function createArticle(data) {
   return request("/news", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }

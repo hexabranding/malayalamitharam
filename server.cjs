@@ -77,7 +77,7 @@ function injectMeta(html, title, description, image, url) {
   return result;
 }
 
-async function fetchArticleForCrawler(slug) {
+async function fetchArticleBySlug(slug) {
   try {
     const res = await fetch(`${API_BASE}/news/${encodeURIComponent(slug)}`, {
       headers: { "Content-Type": "application/json" },
@@ -92,32 +92,16 @@ async function fetchArticleForCrawler(slug) {
   }
 }
 
-function slugify(text) {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s\u0D00-\u0D7F-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function makeArticleSlug(article) {
-  const titleSlug = slugify(article.title);
-  return titleSlug || (article.slug || article.id || "");
-}
-
-async function findArticleByTitleSlug(titleSlug) {
+async function fetchArticleByTitleSlug(titleSlug) {
   try {
-    const res = await fetch(`${API_BASE}/news?limit=500`, {
+    const res = await fetch(`${API_BASE}/news/title-slug/${encodeURIComponent(titleSlug)}`, {
       headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const text = await res.text();
     const data = JSON.parse(text);
-    const articles = data?.news || data?.articles || [];
-    return articles.find(a => makeArticleSlug(a) === titleSlug) || null;
+    return data?.article || data?.news || data?.data || data;
   } catch {
     return null;
   }
@@ -127,14 +111,14 @@ const spa = (_req, res) => res.sendFile(indexPath);
 
 app.get("/post/:slug", async (req, res) => {
   if (!isCrawler(req)) return spa(req, res);
-  let article = await fetchArticleForCrawler(req.params.slug);
+  let article = await fetchArticleBySlug(req.params.slug);
   if (!article) {
-    article = await findArticleByTitleSlug(req.params.slug);
+    article = await fetchArticleByTitleSlug(req.params.slug);
   }
   if (!article) {
     const stripped = req.params.slug.replace(/^[a-z]+-\d+-/, "");
     if (stripped !== req.params.slug) {
-      article = await findArticleByTitleSlug(stripped);
+      article = await fetchArticleByTitleSlug(stripped);
     }
   }
   if (!article) return spa(req, res);

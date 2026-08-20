@@ -18,6 +18,29 @@ function slugify(text) {
     .slice(0, 60);
 }
 
+router.get("/title-slug/:slug", async (req, res) => {
+  try {
+    const titleSlug = req.params.slug.toLowerCase();
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
+    const filter = isAdmin ? {} : { published: true };
+
+    const articles = await Article.find(filter).limit(500).sort({ createdAt: -1 });
+    const match = articles.find(a => {
+      const t = (a.title || "").toLowerCase()
+        .replace(/[^\w\s\u0D00-\u0D7F-]/g, "")
+        .replace(/[\s_]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return t === titleSlug;
+    });
+
+    if (!match) return res.status(404).json({ error: "Article not found" });
+    res.json(match.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, breaking, limit = 50, page = 1, search } = req.query;
