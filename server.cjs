@@ -252,7 +252,6 @@ function injectMeta(html, meta) {
 const spa = (_req, res) => res.sendFile(indexPath);
 
 const articlePageHandler = async (req, res) => {
-  if (!isCrawler(req)) return spa(req, res);
   const slug = req.params.slug || "";
   if (!slug) return spa(req, res);
 
