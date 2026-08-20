@@ -34,10 +34,22 @@ export default function Meta({ article }) {
     setMeta("property", "og:description", desc);
     setMeta("property", "og:url", url);
     setMeta("property", "og:image", image);
+    setMeta("property", "article:published_time", article.createdAt || article.date || "");
     setMeta("name", "twitter:card", image ? "summary_large_image" : "summary");
     setMeta("name", "twitter:title", title);
     setMeta("name", "twitter:description", desc);
     setMeta("name", "twitter:image", image);
+    setMeta("name", "twitter:url", url);
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute("href", url);
+    } else {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      canonical.setAttribute("href", url);
+      document.head.appendChild(canonical);
+    }
   }, [article]);
 
   return (

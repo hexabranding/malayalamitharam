@@ -7,11 +7,9 @@ import { DataProvider } from "./context/DataContext.jsx";
 import { AdsProvider } from "./context/AdsContext.jsx";
 
 createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <DataProvider>
-      <AdsProvider>
-        <App />
-      </AdsProvider>
-    </DataProvider>
-  </React.StrictMode>
+  <DataProvider>
+    <AdsProvider>
+      <App />
+    </AdsProvider>
+  </DataProvider>
 );

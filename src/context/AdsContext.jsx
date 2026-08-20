@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE } from "../services/api.js";
 
 const AdsContext = createContext({});
 
 async function fetchAllActiveAds() {
-  const res = await fetch("https://api.malayalamitharam.in/api/ads");
+  const res = await fetch(API_BASE + "/ads");
   if (!res.ok) return {};
   const data = await res.json();
   if (!Array.isArray(data)) return {};

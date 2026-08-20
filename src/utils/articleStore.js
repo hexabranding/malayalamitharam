@@ -91,6 +91,9 @@ export function getApiSlug(titleSlug) {
 }
 
 export function getTitleSlug(article) {
-  if (!article || !article.title) return article?.slug || article?.id || "";
+  if (!article) return "";
+  const cleanSlug = article.slug || "";
+  if (cleanSlug && !/new-/.test(cleanSlug)) return cleanSlug;
+  if (!article.title) return article.id || "";
   return makeTitleSlug(article);
 }

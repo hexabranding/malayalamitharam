@@ -15,25 +15,32 @@ function slugify(text) {
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .slice(0, 60);
+}
+
+// Normalize an article title the same way the frontend does, keeping Malayalam
+// (U+0D00-U+0D7F) characters intact so Malayalam title-slugs resolve correctly.
+function titleSlugOf(article) {
+  return (article.title || "")
+    .toLowerCase()
+    .replace(/[^\w\s\u0D00-\u0D7F-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function findArticleByTitleSlug(titleSlug, isAdmin) {
+  const filter = isAdmin ? {} : { published: true };
+  const articles = await Article.find(filter).limit(500).sort({ createdAt: -1 });
+  return articles.find(a => titleSlugOf(a) === String(titleSlug).toLowerCase()) || null;
 }
 
 router.get("/title-slug/:slug", async (req, res) => {
   try {
-    const titleSlug = req.params.slug.toLowerCase();
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
-    const filter = isAdmin ? {} : { published: true };
-
-    const articles = await Article.find(filter).limit(500).sort({ createdAt: -1 });
-    const match = articles.find(a => {
-      const t = (a.title || "").toLowerCase()
-        .replace(/[^\w\s\u0D00-\u0D7F-]/g, "")
-        .replace(/[\s_]+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      return t === titleSlug;
-    });
-
+    const match = await findArticleByTitleSlug(req.params.slug, isAdmin);
     if (!match) return res.status(404).json({ error: "Article not found" });
     res.json(match.toJSON());
   } catch (err) {
@@ -47,7 +54,7 @@ router.get("/", async (req, res) => {
     const filter = {};
 
     if (category) {
-      filter.$or = [{ category: category }, { categories: category }];
+      filter.$or = [{ category: category }, { categories: category }, { categoryMl: category }];
     }
     if (subcategory) filter.subcategory = subcategory;
     if (featured !== undefined) filter.featured = featured === "true";
@@ -80,16 +87,21 @@ router.get("/", async (req, res) => {
 
 router.get("/:slug", async (req, res) => {
   try {
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
     let article = await Article.findOne({ slug: req.params.slug });
     if (!article) {
       if (req.params.slug.match(/^[0-9a-fA-F]{24}$/)) {
         article = await Article.findById(req.params.slug);
       }
-      if (!article) return res.status(404).json({ error: "Article not found" });
+      if (!article) {
+        // Also resolve human-readable (often Malayalam) title-slugs here so
+        // the frontend does not need a separate 404-failing request first.
+        article = await findArticleByTitleSlug(req.params.slug, isAdmin);
+      }
     }
-    if (!article.published) {
-      const isAdmin = req.headers.authorization?.startsWith("Bearer ");
-      if (!isAdmin) return res.status(404).json({ error: "Article not found" });
+    if (!article) return res.status(404).json({ error: "Article not found" });
+    if (!article.published && !isAdmin) {
+      return res.status(404).json({ error: "Article not found" });
     }
     res.json(article.toJSON());
   } catch (err) {
@@ -104,7 +116,8 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "title, category, and content are required" });
     }
 
-    const slug = slugify(category) + "-" + slugify(titleEn || title) + "-" + Date.now().toString(36);
+    const titlePart = slugify(titleEn || title) || "post";
+    const slug = slugify(category) + "-" + titlePart + "-" + Date.now().toString(36);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({

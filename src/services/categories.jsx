@@ -1,3 +1,5 @@
+import { API_BASE } from "./api.js";
+
 let cachedCategories = null;
 let cachePromise = null;
 let slugToName = {};
@@ -45,7 +47,7 @@ function buildSlugMap(groups) {
 async function fetchAll() {
   if (cachedCategories) return cachedCategories;
   if (cachePromise) return cachePromise;
-  cachePromise = fetch("https://api.malayalamitharam.in/api/categories")
+  cachePromise = fetch(API_BASE + "/categories")
     .then(r => r.ok ? r.json() : [])
     .then(data => {
       cachedCategories = Array.isArray(data) ? data : [];

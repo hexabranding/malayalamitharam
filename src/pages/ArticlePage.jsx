@@ -45,6 +45,10 @@ export default function ArticlePage({ slug, navigate }) {
   useEffect(() => {
     async function load() {
       try {
+        if (fallbackArticle) {
+          setRelated(fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3));
+          return;
+        }
         let apiSlug = getApiSlug(slug);
         let data = await fetchArticle(apiSlug);
         if (!data) {

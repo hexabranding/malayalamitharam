@@ -87,12 +87,16 @@ function useRoute() {
   return { path, navigate };
 }
 
+let aosInitialized = false;
+
 export default function App() {
   const { path, navigate } = useRoute();
   const activeSlug = path.startsWith("/category/") ? path.replace("/category/", "") : "home";
   const isAdmin = path.startsWith("/admin");
 
   useEffect(() => {
+    if (aosInitialized) return;
+    aosInitialized = true;
     AOS.init({
       duration: 700,
       easing: "ease-out",
@@ -102,7 +106,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    AOS.refresh();
+    const id = requestAnimationFrame(() => AOS.refreshHard());
+    return () => cancelAnimationFrame(id);
   }, [path]);
 
   useEffect(() => {
@@ -230,6 +235,7 @@ export default function App() {
       return <CategoryPage categoryItem={item} navigate={navigate} />;
     }
     if (path.startsWith("/post/")) return <ArticlePage slug={path.replace("/post/", "")} navigate={navigate} />;
+    if (path.startsWith("/news/")) return <ArticlePage slug={path.replace("/news/", "")} navigate={navigate} />;
     if (path.startsWith("/search")) return <SearchPage path={path} navigate={navigate} />;
     if (path.startsWith("/tags/")) return <TagsPage tag={decodeURIComponent(path.replace("/tags/", ""))} navigate={navigate} />;
     if (path === "/contact") return <ContactPage navigate={navigate} />;
