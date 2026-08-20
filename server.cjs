@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 4000;
 const distPath = path.join(__dirname, "dist");
 const indexPath = path.join(distPath, "index.html");
 const indexHtml = fs.readFileSync(indexPath, "utf-8");
+const hasOgImage = indexHtml.includes('og:image');
+console.log("Loaded index.html, has og:image tag:", hasOgImage);
 
 const API_BASE = process.env.BACKEND_API_URL || "https://api.malayalamitharam.in/api";
 const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
@@ -264,12 +266,21 @@ const articlePageHandler = async (req, res) => {
   }
   if (!article) {
     try {
-      const allArticles = await fetchArticleJson(`${API_BASE}/news?limit=500`);
-      const articles = allArticles.news || allArticles.articles || [];
-      article = articles.find(a => toEnglishSlug(a.title) === slug.toLowerCase()) || null;
+      const raw = await httpGetJson(`${API_BASE}/news?limit=500`);
+      const articles = raw?.news || raw?.articles || [];
+      article = articles.find(a => {
+        const storedSlug = (a.slug || "").toLowerCase();
+        const engSlug = (a.engSlug || "").toLowerCase();
+        const titleEng = toEnglishSlug(a.title || "").toLowerCase();
+        const target = slug.toLowerCase();
+        return storedSlug === target || engSlug === target || titleEng === target;
+      }) || null;
     } catch {}
   }
-  if (!article) return spa(req, res);
+  if (!article) {
+    console.error("OG preview: article not found for slug:", slug);
+    return spa(req, res);
+  }
 
   const meta = buildArticleMeta(article, slug);
   res.type("html");
