@@ -44,6 +44,14 @@ function articlePayload(result) {
   return result?.article || result?.news || result?.data || result;
 }
 
+function safeEncode(str) {
+  try {
+    return encodeURIComponent(decodeURIComponent(str));
+  } catch {
+    return encodeURIComponent(str);
+  }
+}
+
 // News / Articles
 export async function fetchNews(params = {}) {
   const q = new URLSearchParams();
@@ -59,12 +67,12 @@ export async function fetchNews(params = {}) {
 }
 
 export async function fetchArticle(slug) {
-  const result = await request("/news/" + encodeURIComponent(slug));
+  const result = await request("/news/" + safeEncode(slug));
   return articlePayload(result);
 }
 
 export async function fetchArticleByTitleSlug(titleSlug) {
-  const result = await request("/news/title-slug/" + encodeURIComponent(titleSlug));
+  const result = await request("/news/title-slug/" + safeEncode(titleSlug));
   return articlePayload(result);
 }
 
@@ -73,15 +81,15 @@ export async function createArticle(data) {
 }
 
 export async function updateArticle(slug, data) {
-  return request("/news/" + encodeURIComponent(slug), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
+  return request("/news/" + safeEncode(slug), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
 export async function incrementView(slug) {
-  return request("/news/" + encodeURIComponent(slug) + "/view", { method: "PATCH" });
+  return request("/news/" + safeEncode(slug) + "/view", { method: "PATCH" });
 }
 
 export async function deleteArticle(slug) {
-  return request("/news/" + encodeURIComponent(slug), { method: "DELETE", headers: headers() });
+  return request("/news/" + safeEncode(slug), { method: "DELETE", headers: headers() });
 }
 
 // Categories
