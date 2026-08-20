@@ -10,7 +10,10 @@ export default function Meta({ article }) {
     if (!article) return;
     const title = (article.title || SITE_NAME) + " | " + SITE_NAME;
     const desc = article.excerpt || article.title || "Malayala Mitra - Malayalam News Portal";
-    const image = resolveImageUrl(article.image || article.thumbnail) || "";
+    let image = resolveImageUrl(article.image || article.thumbnail) || "";
+    if (image && !image.startsWith("http")) {
+      image = window.location.origin + image;
+    }
     const url = window.location.href;
 
     document.title = title;

@@ -214,12 +214,16 @@ const displayRelated = related.length >= 1
             const origin = window.location.origin;
             const shareUrl = `${origin}/post/${shareSlug}`;
             const shareTitle = article.title;
-            const shareImage = resolveImageUrl(article.image || article.thumbnail) || "";
+            const rawImage = article.image || article.thumbnail || "";
+            let shareImage = resolveImageUrl(rawImage) || "";
+            if (shareImage && !shareImage.startsWith("http")) {
+              shareImage = origin + shareImage;
+            }
             const shareText = `${shareTitle}\n\n${shareUrl}`;
             return (
               <>
                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}&media=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
                 <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
                 <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
                 <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
