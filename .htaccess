@@ -1,6 +1,10 @@
 RewriteEngine On
 
-# Redirect all non-existing requests to /index.html for SPA
+# Do NOT rewrite /post/ or /news/ paths — let Node.js server.cjs handle them for OG meta tags
+RewriteCond %{REQUEST_URI} !^/post/
+RewriteCond %{REQUEST_URI} !^/news/
+
+# Redirect all other non-existing requests to /index.html for SPA
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]
