@@ -11,8 +11,20 @@ const compression = require("compression");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const http = require("http");
-const https = require("https");
+const mongoose = require("mongoose");
+
+const ArticleSchema = new mongoose.Schema({
+  slug: { type: String },
+  engSlug: { type: String, default: "" },
+  title: { type: String, required: true },
+  category: { type: String },
+  image: { type: String, default: "" },
+  excerpt: { type: String, default: "" },
+  published: { type: Boolean, default: true },
+  createdAt: { type: Date },
+}, { timestamps: true, collection: "articles" });
+
+const Article = mongoose.model("Article", ArticleSchema);
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -20,20 +32,10 @@ const PORT = process.env.PORT || 4000;
 const distPath = path.join(__dirname, "dist");
 const indexPath = path.join(distPath, "index.html");
 const indexHtml = fs.readFileSync(indexPath, "utf-8");
-const hasOgImage = indexHtml.includes('og:image');
-console.log("Loaded index.html, has og:image tag:", hasOgImage);
 
-const API_BASE = process.env.BACKEND_API_URL || "https://api.malayalamitharam.in/api";
-const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 const SITE_URL = (process.env.SITE_URL || "https://demo.malayalamitharam.in").replace(/\/+$/, "");
 const SITE_NAME = process.env.SITE_NAME || "Malayalamitram";
-const SITE_DESCRIPTION =
-  process.env.SITE_DESCRIPTION ||
-  "Malayalamitram - Malayalam News Portal. Breaking News, Kerala, India, World, Gulf, Sports, Business, Entertainment and Technology.";
 const DEFAULT_IMAGE = SITE_URL + "/images/malayalamithram-logo.png";
-
-const CRAWLER_RE =
-  /facebookexternalhit|facebot|meta-externalagent|twitterbot|whatsapp|telegrambot|telegram-sandbox|slackbot|slack-imgproxy|linkedinbot|pinterest|applebot|bingbot|bingpreview|googlebot|yandexbot|duckduckbot|discordbot|viber|skypeuripreview|skype\b|line-preview|mixi-bot|mixi\b|naver|daum|vkshare|redditbot|cocoon|clck|quora|feedbot|outbrain|mediapartners|adsbot|facebookcatalog|mastodon|gotosocial|semrushbot|ahrefsbot|mj12bot|petalbot|gptbot|openai|embed|previewbot|crawler|spider|favicon|preview/i;
 
 const ML_MAP = {
   "\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii",
@@ -82,11 +84,6 @@ app.use(cors({
 
 app.use(express.static(distPath, { index: false }));
 
-function isCrawler(req) {
-  const ua = req.headers["user-agent"] || "";
-  return CRAWLER_RE.test(ua);
-}
-
 function esc(str) {
   return String(str || "")
     .replace(/&/g, "&amp;")
@@ -104,8 +101,6 @@ function isPrivateHost(hostname) {
   return false;
 }
 
-// Produce an absolute HTTPS (publicly reachable) or handled image URL.
-// Never returns empty and never returns localhost/private-IP hosts.
 function resolveAbsoluteImage(image) {
   if (!image || typeof image !== "string") return DEFAULT_IMAGE;
   let value = image.trim();
@@ -120,7 +115,6 @@ function resolveAbsoluteImage(image) {
     }
   }
   if (value.startsWith("//")) value = "https:" + value;
-  if (value.startsWith("/uploads/")) return API_ORIGIN + value;
   const prefixed = value.startsWith("/") ? value : "/" + value;
   return SITE_URL + prefixed;
 }
@@ -132,71 +126,14 @@ function toIso(value) {
   return parsed.toISOString();
 }
 
-function httpGetJson(url, timeoutMs = 5000) {
-  return new Promise((resolve, reject) => {
-    const lib = url.startsWith("https:") ? https : http;
-    const req = lib.get(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; Malayalamitram Social Preview; +https://malayalamithram.in)",
-      },
-      timeout: timeoutMs,
-    }, (res) => {
-      let body = "";
-      res.setEncoding("utf8");
-      res.on("data", (chunk) => {
-        body += chunk;
-        if (body.length > 5 * 1024 * 1024) req.destroy(new Error("Response too large"));
-      });
-      res.on("end", () => {
-        if (res.statusCode !== 200) return reject(new Error("HTTP " + res.statusCode));
-        try {
-          resolve(JSON.parse(body));
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
-    req.on("timeout", () => req.destroy(new Error("Request timed out")));
-    req.on("error", reject);
-  });
-}
-
-async function fetchArticleJson(url) {
-  const key = url;
-  const cached = articleCache.get(key);
-  if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) return cached.article;
-  let article = null;
-  try {
-    const data = await httpGetJson(url);
-    article = data?.article || data?.news || data?.data || data || null;
-  } catch (err) {
-    console.error("Social-preview article fetch failed:", key, "-", err.message);
-  }
-  if (article) articleCache.set(key, { article, at: Date.now() });
-  return article;
-}
-
-function fetchArticleBySlug(slug) {
-  return fetchArticleJson(`${API_BASE}/news/${encodeURIComponent(slug)}`);
-}
-
-function fetchArticleByTitleSlug(titleSlug) {
-  return fetchArticleJson(`${API_BASE}/news/title-slug/${encodeURIComponent(titleSlug)}`);
-}
-
-function fetchArticleByEngSlug(engSlug) {
-  return fetchArticleJson(`${API_BASE}/news/eng-slug/${encodeURIComponent(engSlug)}`);
-}
-
 function buildArticleMeta(article, pathSlug) {
   const title = String(article.title || "").trim();
   const description = String(article.excerpt || article.title || "").trim();
-  const rawImage = (article.image || article.thumbnail || "").trim();
+  const rawImage = (article.image || "").trim();
   const image = rawImage ? resolveAbsoluteImage(rawImage) : DEFAULT_IMAGE;
   const engSlug = toEnglishSlug(article.title || "") || pathSlug;
   const url = `${SITE_URL}/post/${encodeURIComponent(engSlug)}`;
-  const publishedTime = toIso(article.createdAt || article.datePublished || article.publishedAt || article.date || "");
+  const publishedTime = toIso(article.createdAt || "");
   return { title, description, image, url, publishedTime };
 }
 
@@ -252,38 +189,57 @@ function injectMeta(html, meta) {
   return result.replace("</head>", tags + "\n  </head>");
 }
 
+async function findArticleFromDB(slug) {
+  try {
+    if (mongoose.connection.readyState !== 1) return null;
+
+    let article = await Article.findOne({ slug, published: true }).lean();
+    if (article) return article;
+
+    article = await Article.findOne({ engSlug: slug, published: true }).lean();
+    if (article) return article;
+
+    const allArticles = await Article.find({ published: true }).select("title slug engSlug image excerpt createdAt").limit(1000).lean();
+    article = allArticles.find(a => {
+      const titleEng = toEnglishSlug(a.title || "").toLowerCase();
+      return titleEng === slug.toLowerCase();
+    }) || null;
+
+    return article;
+  } catch (err) {
+    console.error("MongoDB article lookup failed:", err.message);
+    return null;
+  }
+}
+
 const spa = (_req, res) => res.sendFile(indexPath);
 
 const articlePageHandler = async (req, res) => {
   const slug = req.params.slug || "";
   if (!slug) return spa(req, res);
 
-  let article = await fetchArticleBySlug(slug);
-  if (!article) article = await fetchArticleByTitleSlug(slug);
-  if (!article) article = await fetchArticleByEngSlug(slug);
-  if (!article) {
-    const stripped = slug.replace(/^[a-z]+-\d+-/, "");
-    if (stripped !== slug) article = await fetchArticleByTitleSlug(stripped);
-  }
-  if (!article) {
-    try {
-      const raw = await httpGetJson(`${API_BASE}/news?limit=500`);
-      const articles = raw?.news || raw?.articles || [];
-      article = articles.find(a => {
-        const storedSlug = (a.slug || "").toLowerCase();
-        const engSlug = (a.engSlug || "").toLowerCase();
-        const titleEng = toEnglishSlug(a.title || "").toLowerCase();
-        const target = slug.toLowerCase();
-        return storedSlug === target || engSlug === target || titleEng === target;
-      }) || null;
-    } catch {}
-  }
-  if (!article) {
-    console.error("OG preview: article not found for slug:", slug);
-    return spa(req, res);
+  const cached = articleCache.get(slug);
+  if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) {
+    console.log("[OG] Cache hit for slug:", slug);
+    const meta = buildArticleMeta(cached.article, slug);
+    res.type("html");
+    return res.send(injectMeta(indexHtml, meta));
   }
 
+  console.log("[OG] Fetching article for slug:", slug);
+  let article = await findArticleFromDB(slug);
+
+  if (article) {
+    console.log("[OG] Found article:", article.title);
+  } else {
+    console.error("[OG] Article not found for slug:", slug);
+  }
+
+  if (!article) return spa(req, res);
+
+  articleCache.set(slug, { article, at: Date.now() });
   const meta = buildArticleMeta(article, slug);
+  console.log("[OG] Injecting meta - title:", meta.title, "| image:", meta.image);
   res.type("html");
   res.send(injectMeta(indexHtml, meta));
 };
@@ -301,6 +257,16 @@ app.get("/admin/{*splat}", spa);
 
 app.use(spa);
 
-app.listen(PORT, () => {
-  console.log("Frontend server running on port " + PORT);
-});
+mongoose.connect(process.env.MONGO_URI, {})
+  .then(() => {
+    console.log("MongoDB connected for frontend server");
+    app.listen(PORT, () => {
+      console.log("Frontend server running on port " + PORT);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection failed:", err.message);
+    app.listen(PORT, () => {
+      console.log("Frontend server running on port " + PORT + " (no MongoDB)");
+    });
+  });
