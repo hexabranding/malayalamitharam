@@ -31,12 +31,28 @@ function absImage($img, $siteUrl, $defaultImage) {
     return $siteUrl . $img;
 }
 function fetchJson($url) {
-    $ctx = stream_context_create([
-        'http' => ['timeout' => 4, 'ignore_errors' => true, 'header' => "User-Agent: Malayalamitram-OG/1.0\r\nAccept: application/json\r\n"],
-        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
-    ]);
-    $data = @file_get_contents($url, false, $ctx);
-    if ($data === false || $data === '') return null;
+    $data = null;
+    if (ini_get('allow_url_fopen')) {
+        $ctx = stream_context_create([
+            'http' => ['timeout' => 4, 'ignore_errors' => true, 'header' => "User-Agent: Malayalamitram-OG/1.0\r\nAccept: application/json\r\n"],
+            'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+        ]);
+        $data = @file_get_contents($url, false, $ctx);
+    }
+    if (($data === false || $data === '' || $data === null) && function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 4,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'Malayalamitram-OG/1.0',
+            CURLOPT_HTTPHEADER => ['Accept: application/json']
+        ]);
+        $data = curl_exec($ch);
+        curl_close($ch);
+    }
+    if ($data === false || $data === '' || $data === null) return null;
     $json = json_decode($data, true);
     if (json_last_error() !== JSON_ERROR_NONE) return null;
     return $json;
@@ -79,10 +95,6 @@ $excerpt = preg_replace('/\s+/', ' ', $excerpt);
 if (mb_strlen($excerpt) > 155) $excerpt = mb_substr($excerpt, 0, 154) . '…';
 if ($excerpt === '') $excerpt = $title;
 $image = absImage($article['image'] ?? '', $SITE_URL, $DEFAULT_IMAGE);
-$canonSlug = $slug;
-if (!empty($article['engSlug'])) {
-} else if (!empty($article['slug'])) {
-}
 $url = $SITE_URL . '/post/' . rawurlencode($slug);
 $published = $article['createdAt'] ?? $article['date'] ?? '';
 $iso = '';
@@ -140,6 +152,6 @@ header('Cache-Control: public, max-age=600, s-maxage=600');
 <?php if ($image !== $DEFAULT_IMAGE): ?><img src="<?= esc($image) ?>" alt="<?= esc($title) ?>" style="max-width:100%;height:auto" /><?php endif; ?>
 <p><?= esc($excerpt) ?></p>
 <p><a href="<?= esc($url) ?>"><?= esc($url) ?></a></p>
-<script>if(!/facebookexternalhit|WhatsApp|TwitterBot|TelegramBot|LinkedInBot|Slackbot|Discordbot|vkShare|Google-InspectionTool/i.test(navigator.userAgent)){window.location.replace("<?= esc($url, ENT_QUOTES) ?>");}</script>
+<script>if(!/facebookexternalhit|WhatsApp|TwitterBot|TelegramBot|LinkedInBot|Slackbot|Discordbot|vkShare|Google-InspectionTool/i.test(navigator.userAgent)){window.location.replace("<?= esc($url) ?>");}</script>
 </body>
 </html>
