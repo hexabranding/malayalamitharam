@@ -20,6 +20,35 @@ function slugify(text) {
     .slice(0, 60);
 }
 
+const ML_MAP = {
+  "\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii",
+  "\u0D09":"u","\u0D0A":"uu","\u0D0B":"ru",
+  "\u0D0E":"e","\u0D0F":"ee","\u0D10":"ai",
+  "\u0D12":"o","\u0D13":"oo","\u0D14":"ou",
+  "\u0D15":"ka","\u0D16":"kha","\u0D17":"ga","\u0D18":"gha","\u0D19":"nga",
+  "\u0D1A":"cha","\u0D1B":"chha","\u0D1C":"ja","\u0D1D":"jha","\u0D1E":"nya",
+  "\u0D1F":"ta","\u0D20":"tha","\u0D21":"da","\u0D22":"dha","\u0D23":"na",
+  "\u0D24":"th","\u0D25":"thh","\u0D26":"d","\u0D27":"dh","\u0D28":"n",
+  "\u0D2A":"p","\u0D2B":"f","\u0D2C":"b","\u0D2D":"bh","\u0D2E":"m",
+  "\u0D2F":"y","\u0D30":"r","\u0D32":"l","\u0D35":"v",
+  "\u0D36":"sh","\u0D37":"sh","\u0D38":"s","\u0D39":"h",
+  "\u0D33":"l","\u0D34":"zh","\u0D31":"r",
+  "\u0D3E":"a","\u0D3F":"i","\u0D41":"u","\u0D42":"oo","\u0D43":"ru",
+  "\u0D46":"e","\u0D47":"ee","\u0D48":"ai","\u0D4A":"o","\u0D4B":"oo","\u0D4C":"ou",
+  "\u0D02":"","\u0D03":"",
+};
+
+function toEnglishSlug(text) {
+  if (!text) return "";
+  let r = "";
+  for (const ch of text) {
+    if (ML_MAP[ch]) r += ML_MAP[ch];
+    else if (/[a-zA-Z0-9]/.test(ch)) r += ch;
+    else if (ch === " " || ch === "-" || ch === "_") r += "-";
+  }
+  return r.toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+}
+
 // Normalize an article title the same way the frontend does, keeping Malayalam
 // (U+0D00-U+0D7F) characters intact so Malayalam title-slugs resolve correctly.
 function titleSlugOf(article) {
@@ -35,6 +64,12 @@ async function findArticleByTitleSlug(titleSlug, isAdmin) {
   const filter = isAdmin ? {} : { published: true };
   const articles = await Article.find(filter).limit(500).sort({ createdAt: -1 });
   return articles.find(a => titleSlugOf(a) === String(titleSlug).toLowerCase()) || null;
+}
+
+async function findArticleByEnglishSlug(engSlug, isAdmin) {
+  const filter = isAdmin ? {} : { published: true };
+  const articles = await Article.find(filter).limit(500).sort({ createdAt: -1 });
+  return articles.find(a => toEnglishSlug(a.title) === String(engSlug).toLowerCase()) || null;
 }
 
 router.get("/title-slug/:slug", async (req, res) => {
@@ -94,9 +129,10 @@ router.get("/:slug", async (req, res) => {
         article = await Article.findById(req.params.slug);
       }
       if (!article) {
-        // Also resolve human-readable (often Malayalam) title-slugs here so
-        // the frontend does not need a separate 404-failing request first.
         article = await findArticleByTitleSlug(req.params.slug, isAdmin);
+      }
+      if (!article) {
+        article = await findArticleByEnglishSlug(req.params.slug, isAdmin);
       }
     }
     if (!article) return res.status(404).json({ error: "Article not found" });

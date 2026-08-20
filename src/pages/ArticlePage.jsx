@@ -14,6 +14,7 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { slugify } from "../utils/slugify.js";
+import { getShareUrl } from "../utils/transliterate.js";
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null;
@@ -53,6 +54,9 @@ export default function ArticlePage({ slug, navigate }) {
         let data = await fetchArticle(apiSlug);
         if (!data) {
           data = await fetchArticleByTitleSlug(slug);
+        }
+        if (!data && slug !== apiSlug) {
+          data = await fetchArticle(slug);
         }
         if (!data) {
           const searchResult = await fetchNews({ limit: 500 });
@@ -203,7 +207,9 @@ const displayRelated = related.length >= 1
         <div className="article-share" data-aos="fade-up" data-aos-delay="300">
           <span>Share:</span>
           {(() => {
-            const shareUrl = window.location.href;
+            const shareSlug = getShareUrl(article);
+            const origin = window.location.origin;
+            const shareUrl = `${origin}/post/${shareSlug}`;
             const shareTitle = article.title;
             const shareImage = resolveImageUrl(article.image || article.thumbnail) || "";
             const shareText = `${shareTitle}\n\n${shareUrl}`;
