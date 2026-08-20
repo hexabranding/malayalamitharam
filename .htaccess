@@ -1,7 +1,10 @@
 RewriteEngine On
 
-# SPA fallback - all non-file/directory to index.html. Article Open Graph
-# metadata is served by the Node/Express frontend server, not PHP.
+# Apache/Hostinger deployment: render article metadata before the React SPA
+# fallback. This must stay above the generic index.html rewrite.
+RewriteRule ^post/([^/]+)/?$ og.php?slug=$1 [L,QSA,B]
+
+# SPA fallback - all non-file/directory to index.html.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]

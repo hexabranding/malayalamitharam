@@ -25,6 +25,9 @@ const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
 const SITE_URL = (process.env.SITE_URL || "https://demo.malayalamitharam.in").replace(/\/+$/, "");
 const SITE_NAME = process.env.SITE_NAME || "Malayalamitram";
+// Uploaded news images are served by the API host, not by the static frontend
+// host. This must match src/services/images.jsx so crawlers get a real image.
+const UPLOADS_URL = (process.env.UPLOADS_URL || "https://api.malayalamitharam.in").replace(/\/+$/, "");
 // Used only when an article genuinely has no featured image. This is deliberately
 // not the Malayalamitram logo, because a logo is not a useful article preview.
 const DEFAULT_SOCIAL_IMAGE = process.env.DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
@@ -82,6 +85,7 @@ function resolveAbsoluteImage(image) {
   }
   if (value.startsWith("//")) value = "https:" + value;
   const prefixed = value.startsWith("/") ? value : "/" + value;
+  if (prefixed.startsWith("/uploads/")) return UPLOADS_URL + prefixed;
   return SITE_URL + prefixed;
 }
 
