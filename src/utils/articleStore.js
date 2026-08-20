@@ -93,6 +93,7 @@ export function getApiSlug(titleSlug) {
 
 export function getTitleSlug(article) {
   if (!article) return "";
+  if (article.engSlug) return article.engSlug;
   const cleanSlug = article.slug || "";
   if (cleanSlug && !/new-/.test(cleanSlug)) return cleanSlug;
   if (!article.title) return article.id || "";

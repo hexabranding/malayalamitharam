@@ -37,9 +37,6 @@ export function toEnglishSlug(text) {
 }
 
 export function getShareUrl(article) {
-  const slug = toEnglishSlug(article.title || "");
-  const cat = (article.category || "").toLowerCase().replace(/[^\w]+/g, "-");
-  const id = article.slug || article.id || "";
-  const parts = [cat, slug, id].filter(Boolean).join("-");
-  return parts || slug || id;
+  if (article.engSlug) return article.engSlug;
+  return toEnglishSlug(article.title || "") || article.slug || "";
 }

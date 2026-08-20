@@ -183,6 +183,10 @@ function fetchArticleByTitleSlug(titleSlug) {
   return fetchArticleJson(`${API_BASE}/news/title-slug/${encodeURIComponent(titleSlug)}`);
 }
 
+function fetchArticleByEngSlug(engSlug) {
+  return fetchArticleJson(`${API_BASE}/news/eng-slug/${encodeURIComponent(engSlug)}`);
+}
+
 function buildArticleMeta(article, pathSlug) {
   const title = String(article.title || SITE_NAME).trim();
   const description = String(article.excerpt || article.title || SITE_DESCRIPTION).trim();
@@ -254,6 +258,7 @@ const articlePageHandler = async (req, res) => {
 
   let article = await fetchArticleBySlug(slug);
   if (!article) article = await fetchArticleByTitleSlug(slug);
+  if (!article) article = await fetchArticleByEngSlug(slug);
   if (!article) {
     const stripped = slug.replace(/^[a-z]+-\d+-/, "");
     if (stripped !== slug) article = await fetchArticleByTitleSlug(stripped);

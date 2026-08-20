@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
-import { fetchArticle, fetchArticleByTitleSlug, fetchNews, incrementView } from "../services/api.js";
+import { fetchArticle, fetchArticleByTitleSlug, fetchArticleByEngSlug, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -54,6 +54,9 @@ export default function ArticlePage({ slug, navigate }) {
         let data = await fetchArticle(apiSlug);
         if (!data) {
           data = await fetchArticleByTitleSlug(slug);
+        }
+        if (!data) {
+          data = await fetchArticleByEngSlug(slug);
         }
         if (!data && slug !== apiSlug) {
           data = await fetchArticle(slug);

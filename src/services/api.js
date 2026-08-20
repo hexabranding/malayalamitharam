@@ -77,6 +77,11 @@ export async function fetchArticleByTitleSlug(titleSlug) {
   return articlePayload(result);
 }
 
+export async function fetchArticleByEngSlug(engSlug) {
+  const result = await request("/news/eng-slug/" + safeEncode(engSlug));
+  return articlePayload(result);
+}
+
 export async function createArticle(data) {
   return request("/news", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }

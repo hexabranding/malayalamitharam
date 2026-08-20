@@ -83,6 +83,23 @@ router.get("/title-slug/:slug", async (req, res) => {
   }
 });
 
+router.get("/eng-slug/:slug", async (req, res) => {
+  try {
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
+    let article = await Article.findOne({ engSlug: req.params.slug });
+    if (!article) {
+      article = await findArticleByEnglishSlug(req.params.slug, isAdmin);
+    }
+    if (!article) return res.status(404).json({ error: "Article not found" });
+    if (!article.published && !isAdmin) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+    res.json(article.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, breaking, limit = 50, page = 1, search } = req.query;
@@ -125,6 +142,9 @@ router.get("/:slug", async (req, res) => {
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
     let article = await Article.findOne({ slug: req.params.slug });
     if (!article) {
+      article = await Article.findOne({ engSlug: req.params.slug });
+    }
+    if (!article) {
       if (req.params.slug.match(/^[0-9a-fA-F]{24}$/)) {
         article = await Article.findById(req.params.slug);
       }
@@ -154,10 +174,12 @@ router.post("/", authMiddleware, async (req, res) => {
 
     const titlePart = slugify(titleEn || title) || "post";
     const slug = slugify(category) + "-" + titlePart + "-" + Date.now().toString(36);
+    const engSlug = toEnglishSlug(title) || slug;
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
       slug,
+      engSlug,
       title,
       titleEn: titleEn || "",
       category,
@@ -197,9 +219,13 @@ router.put("/:id", authMiddleware, async (req, res) => {
     const filter = req.params.id.match(/^[0-9a-fA-F]{24}$/)
       ? { _id: req.params.id }
       : { slug: req.params.id };
+    const updateData = { ...req.body, updatedAt: new Date().toISOString() };
+    if (req.body.title) {
+      updateData.engSlug = toEnglishSlug(req.body.title);
+    }
     const article = await Article.findOneAndUpdate(
       filter,
-      { ...req.body, updatedAt: new Date().toISOString() },
+      updateData,
       { new: true, runValidators: true }
     );
     if (!article) return res.status(404).json({ error: "Article not found" });
