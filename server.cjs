@@ -190,9 +190,10 @@ function fetchArticleByEngSlug(engSlug) {
 }
 
 function buildArticleMeta(article, pathSlug) {
-  const title = String(article.title || SITE_NAME).trim();
-  const description = String(article.excerpt || article.title || SITE_DESCRIPTION).trim();
-  const image = resolveAbsoluteImage(article.image || article.thumbnail);
+  const title = String(article.title || "").trim();
+  const description = String(article.excerpt || article.title || "").trim();
+  const rawImage = (article.image || article.thumbnail || "").trim();
+  const image = rawImage ? resolveAbsoluteImage(rawImage) : DEFAULT_IMAGE;
   const engSlug = toEnglishSlug(article.title || "") || pathSlug;
   const url = `${SITE_URL}/post/${encodeURIComponent(engSlug)}`;
   const publishedTime = toIso(article.createdAt || article.datePublished || article.publishedAt || article.date || "");
