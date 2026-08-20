@@ -1,4 +1,5 @@
 import { slugify } from "./slugify";
+import { toEnglishSlug } from "./transliterate";
 
 const STORAGE_KEY = "mm_article_slug_map";
 const ARTICLES_KEY = "mm_articles_cache";
@@ -37,7 +38,7 @@ function setArticlesCache(articles) {
 }
 
 function makeTitleSlug(article) {
-  const titleSlug = slugify(article.title);
+  const titleSlug = toEnglishSlug(article.title);
   return titleSlug || (article.slug || article.id || "");
 }
 
@@ -81,7 +82,7 @@ export function getApiSlug(titleSlug) {
 
   const cache = getArticlesCache();
   for (const a of cache) {
-    if (slugify(a.title) === titleSlug) {
+    if (toEnglishSlug(a.title) === titleSlug) {
       map[titleSlug] = a.slug || a.id;
       setSlugMap(map);
       return a.slug || a.id;

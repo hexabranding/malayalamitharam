@@ -14,7 +14,7 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { slugify } from "../utils/slugify.js";
-import { getShareUrl } from "../utils/transliterate.js";
+import { getShareUrl, toEnglishSlug } from "../utils/transliterate.js";
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null;
@@ -61,7 +61,7 @@ export default function ArticlePage({ slug, navigate }) {
         if (!data) {
           const searchResult = await fetchNews({ limit: 500 });
           const allArticles = searchResult.news || searchResult.articles || [];
-          data = allArticles.find(a => slugify(a.title) === slug) || null;
+          data = allArticles.find(a => toEnglishSlug(a.title) === slug) || null;
         }
         if (data) {
           setArticle(data);
