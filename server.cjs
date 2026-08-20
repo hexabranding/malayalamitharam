@@ -25,35 +25,9 @@ const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
 const SITE_URL = (process.env.SITE_URL || "https://demo.malayalamitharam.in").replace(/\/+$/, "");
 const SITE_NAME = process.env.SITE_NAME || "Malayalamitram";
-
-const ML_MAP = {
-  "\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii",
-  "\u0D09":"u","\u0D0A":"uu","\u0D0B":"ru",
-  "\u0D0E":"e","\u0D0F":"ee","\u0D10":"ai",
-  "\u0D12":"o","\u0D13":"oo","\u0D14":"ou",
-  "\u0D15":"ka","\u0D16":"kha","\u0D17":"ga","\u0D18":"gha","\u0D19":"nga",
-  "\u0D1A":"cha","\u0D1B":"chha","\u0D1C":"ja","\u0D1D":"jha","\u0D1E":"nya",
-  "\u0D1F":"ta","\u0D20":"tha","\u0D21":"da","\u0D22":"dha","\u0D23":"na",
-  "\u0D24":"th","\u0D25":"thh","\u0D26":"d","\u0D27":"dh","\u0D28":"n",
-  "\u0D2A":"p","\u0D2B":"f","\u0D2C":"b","\u0D2D":"bh","\u0D2E":"m",
-  "\u0D2F":"y","\u0D30":"r","\u0D32":"l","\u0D35":"v",
-  "\u0D36":"sh","\u0D37":"sh","\u0D38":"s","\u0D39":"h",
-  "\u0D33":"l","\u0D34":"zh","\u0D31":"r",
-  "\u0D3E":"a","\u0D3F":"i","\u0D41":"u","\u0D42":"oo","\u0D43":"ru",
-  "\u0D46":"e","\u0D47":"ee","\u0D48":"ai","\u0D4A":"o","\u0D4B":"oo","\u0D4C":"ou",
-  "\u0D02":"","\u0D03":"",
-};
-
-function toEnglishSlug(text) {
-  if (!text) return "";
-  let r = "";
-  for (const ch of text) {
-    if (ML_MAP[ch]) r += ML_MAP[ch];
-    else if (/[a-zA-Z0-9]/.test(ch)) r += ch;
-    else if (ch === " " || ch === "-" || ch === "_") r += "-";
-  }
-  return r.toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
-}
+// Used only when an article genuinely has no featured image. This is deliberately
+// not the Malayalamitram logo, because a logo is not a useful article preview.
+const DEFAULT_SOCIAL_IMAGE = process.env.DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
 
 const ARTICLE_CACHE_TTL = 10 * 60 * 1000;
 const articleCache = new Map();
@@ -98,7 +72,10 @@ function resolveAbsoluteImage(image) {
     try {
       const parsed = new URL(value);
       if (isPrivateHost(parsed.hostname)) return "";
-      return value;
+      // Social crawlers need a publicly accessible HTTPS resource. Upgrade
+      // legacy http URLs instead of emitting a mixed-content preview URL.
+      parsed.protocol = "https:";
+      return parsed.toString();
     } catch {
       return "";
     }
@@ -123,15 +100,22 @@ function truncate(s, n) {
   if (t.length <= n) return t;
   return t.slice(0, n - 1).trim() + "…";
 }
+
+function articleDescription(article) {
+  const body = Array.isArray(article.body) ? article.body.join(" ") : "";
+  return truncate(stripHtml(article.excerpt || article.content || body || article.title || ""), 155);
+}
+
 function buildArticleMeta(article, pathSlug) {
-  const title = stripHtml(article.title || "").trim();
-  let description = stripHtml(article.excerpt || article.content || article.title || "").trim();
-  description = truncate(description, 155);
+  // Keep the exact database headline. `esc()` later encodes quotes, ampersands
+  // and angle brackets safely for the generated HTML attribute.
+  const title = String(article.title || "").trim();
+  let description = articleDescription(article);
   if (!description) description = title;
-  const rawImage = (article.image || "").trim();
+  const rawImage = (article.image || article.thumbnail || "").trim();
   // Article pages must never substitute the Malayalamitram logo. The Article
   // model's `image` field is the featured image managed by the news admin.
-  const image = rawImage ? resolveAbsoluteImage(rawImage) : "";
+  const image = resolveAbsoluteImage(rawImage || DEFAULT_SOCIAL_IMAGE);
   const decodedSlug = (() => { try { return decodeURIComponent(pathSlug); } catch { return pathSlug; } })();
   const url = `${SITE_URL}/post/${encodeURIComponent(decodedSlug)}`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
@@ -198,32 +182,20 @@ function injectMeta(html, meta) {
   return result.replace("</head>", tags + "\n  </head>");
 }
 
-function titleSlugOf(t) {
-  return String(t || "").toLowerCase().replace(/[^\w\s\u0D00-\u0D7F-]/g, "").replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
-}
 async function findArticleFromDB(slug) {
   try {
     if (Article.db.readyState !== 1) return null;
     const decoded = (()=>{ try{ return decodeURIComponent(slug);}catch{ return slug;}})();
-    let article = await Article.findOne({ slug: decoded, published: true }).lean();
-    if (article) return article;
-    article = await Article.findOne({ slug, published: true }).lean();
-    if (article) return article;
-    article = await Article.findOne({ engSlug: decoded, published: true }).lean();
-    if (article) return article;
-    article = await Article.findOne({ engSlug: slug, published: true }).lean();
-    if (article) return article;
-    const allArticles = await Article.find({ published: true }).select("title slug engSlug image excerpt content createdAt updatedAt").limit(1500).lean();
-    const lower = decoded.toLowerCase();
-    const lowerRaw = slug.toLowerCase();
-    article = allArticles.find(a => {
-      const eng = toEnglishSlug(a.title || "").toLowerCase();
-      if (eng === lower || eng === lowerRaw) return true;
-      const tslug = titleSlugOf(a.title || "").toLowerCase();
-      if (tslug === lower || tslug === lowerRaw) return true;
-      return false;
-    }) || null;
-    return article;
+    // Query only persisted URL identifiers. Never infer a match from another
+    // article's title: an unknown URL must not inherit that article's preview.
+    const identifiers = [...new Set([slug, decoded].filter(Boolean))];
+    return Article.findOne({
+      published: true,
+      $or: [
+        { slug: { $in: identifiers } },
+        { engSlug: { $in: identifiers } },
+      ],
+    }).lean();
   } catch (err) {
     console.error("MongoDB article lookup failed:", err.message);
     return null;
@@ -231,6 +203,7 @@ async function findArticleFromDB(slug) {
 }
 
 const spa = (_req, res) => res.sendFile(indexPath);
+const spaNotFound = (_req, res) => res.status(404).sendFile(indexPath);
 
 const articlePageHandler = async (req, res) => {
   const slug = req.params.slug || "";
@@ -253,7 +226,7 @@ const articlePageHandler = async (req, res) => {
     console.error("[OG] Article not found for slug:", slug);
   }
 
-  if (!article) return spa(req, res);
+  if (!article) return spaNotFound(req, res);
 
   articleCache.set(slug, { article, at: Date.now() });
   const meta = buildArticleMeta(article, slug);
@@ -293,4 +266,4 @@ function start() {
 
 if (require.main === module) start();
 
-module.exports = { buildArticleMeta, injectMeta, resolveAbsoluteImage, start };
+module.exports = { articleDescription, buildArticleMeta, injectMeta, resolveAbsoluteImage, start };
