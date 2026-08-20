@@ -20,8 +20,10 @@ const ArticleSchema = new mongoose.Schema({
   category: { type: String },
   image: { type: String, default: "" },
   excerpt: { type: String, default: "" },
+  content: { type: String, default: "" },
   published: { type: Boolean, default: true },
   createdAt: { type: Date },
+  updatedAt: { type: Date },
 }, { timestamps: true, collection: "articles" });
 
 const Article = mongoose.model("Article", ArticleSchema);
@@ -126,14 +128,24 @@ function toIso(value) {
   return parsed.toISOString();
 }
 
+function stripHtml(s) {
+  return String(s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+function truncate(s, n) {
+  const t = String(s || "").trim();
+  if (t.length <= n) return t;
+  return t.slice(0, n - 1).trim() + "…";
+}
 function buildArticleMeta(article, pathSlug) {
-  const title = String(article.title || "").trim();
-  const description = String(article.excerpt || article.title || "").trim();
+  const title = stripHtml(article.title || "").trim();
+  let description = stripHtml(article.excerpt || article.content || article.title || "").trim();
+  description = truncate(description, 155);
+  if (!description) description = title;
   const rawImage = (article.image || "").trim();
   const image = rawImage ? resolveAbsoluteImage(rawImage) : DEFAULT_IMAGE;
-  const engSlug = toEnglishSlug(article.title || "") || pathSlug;
-  const url = `${SITE_URL}/post/${encodeURIComponent(engSlug)}`;
-  const publishedTime = toIso(article.createdAt || "");
+  const decodedSlug = (() => { try { return decodeURIComponent(pathSlug); } catch { return pathSlug; } })();
+  const url = `${SITE_URL}/post/${encodeURIComponent(decodedSlug)}`;
+  const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
 
@@ -166,7 +178,7 @@ function injectMeta(html, meta) {
     dateModified: publishedTime || undefined,
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    publisher: { "@type": "Organization", name: SITE_NAME },
+    publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: DEFAULT_IMAGE } },
   }).replace(/</g, "\\u003c");
 
   const publishedTag = publishedTime ? `\n    <meta property="article:published_time" content="${esc(publishedTime)}" />` : "";
@@ -178,33 +190,47 @@ function injectMeta(html, meta) {
     <meta property="og:title" content="${safeTitle}" />
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:url" content="${safeUrl}" />
-    <meta property="og:image" content="${safeImage}" />${publishedTag}
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="${safeImage}" />
+    <meta property="og:image:secure_url" content="${safeImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${safeTitle}" />${publishedTag}
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:image" content="${safeImage}" />
+    <meta name="twitter:image:alt" content="${safeTitle}" />
     <meta name="twitter:url" content="${safeUrl}" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
   return result.replace("</head>", tags + "\n  </head>");
 }
 
+function titleSlugOf(t) {
+  return String(t || "").toLowerCase().replace(/[^\w\s\u0D00-\u0D7F-]/g, "").replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+}
 async function findArticleFromDB(slug) {
   try {
     if (mongoose.connection.readyState !== 1) return null;
-
-    let article = await Article.findOne({ slug, published: true }).lean();
+    const decoded = (()=>{ try{ return decodeURIComponent(slug);}catch{ return slug;}})();
+    let article = await Article.findOne({ slug: decoded, published: true }).lean();
     if (article) return article;
-
+    article = await Article.findOne({ slug, published: true }).lean();
+    if (article) return article;
+    article = await Article.findOne({ engSlug: decoded, published: true }).lean();
+    if (article) return article;
     article = await Article.findOne({ engSlug: slug, published: true }).lean();
     if (article) return article;
-
-    const allArticles = await Article.find({ published: true }).select("title slug engSlug image excerpt createdAt").limit(1000).lean();
+    const allArticles = await Article.find({ published: true }).select("title slug engSlug image excerpt content createdAt updatedAt").limit(1500).lean();
+    const lower = decoded.toLowerCase();
+    const lowerRaw = slug.toLowerCase();
     article = allArticles.find(a => {
-      const titleEng = toEnglishSlug(a.title || "").toLowerCase();
-      return titleEng === slug.toLowerCase();
+      const eng = toEnglishSlug(a.title || "").toLowerCase();
+      if (eng === lower || eng === lowerRaw) return true;
+      const tslug = titleSlugOf(a.title || "").toLowerCase();
+      if (tslug === lower || tslug === lowerRaw) return true;
+      return false;
     }) || null;
-
     return article;
   } catch (err) {
     console.error("MongoDB article lookup failed:", err.message);

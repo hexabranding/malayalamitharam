@@ -137,6 +137,34 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/slug/:slug", async (req, res) => {
+  try {
+    const slugParam = req.params.slug;
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
+    let article = await Article.findOne({ slug: slugParam });
+    if (!article) article = await Article.findOne({ engSlug: slugParam });
+    if (!article) {
+      try {
+        const decoded = decodeURIComponent(slugParam);
+        if (decoded !== slugParam) {
+          article = await Article.findOne({ slug: decoded }) || await Article.findOne({ engSlug: decoded });
+        }
+      } catch {}
+    }
+    if (!article) article = await findArticleByTitleSlug(slugParam, isAdmin);
+    if (!article) article = await findArticleByEnglishSlug(slugParam, isAdmin);
+    if (!article) {
+      if (slugParam.match(/^[0-9a-fA-F]{24}$/)) article = await Article.findById(slugParam);
+    }
+    if (!article) return res.status(404).json({ error: "Article not found" });
+    if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
+    const doc = article.toJSON();
+    res.json(doc);
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 router.get("/:slug", async (req, res) => {
   try {
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");

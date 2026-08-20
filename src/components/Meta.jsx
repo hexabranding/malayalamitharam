@@ -2,14 +2,15 @@ import { useEffect } from "react";
 import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 
-const SITE_NAME = "Malayala Mitra";
-const SITE_URL = "https://malayalamitharam.in";
+const SITE_NAME = "Malayalamitram";
+const SITE_URL = "https://demo.malayalamitharam.in";
 
 export default function Meta({ article }) {
   useEffect(() => {
     if (!article) return;
-    const title = (article.title || SITE_NAME) + " | " + SITE_NAME;
-    const desc = article.excerpt || article.title || "Malayala Mitra - Malayalam News Portal";
+    const rawTitle = String(article.title || SITE_NAME).trim();
+    const title = rawTitle + " | " + SITE_NAME;
+    const desc = String(article.excerpt || article.title || "Malayalamitram - Malayalam News Portal").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 155);
     let image = resolveImageUrl(article.image || article.thumbnail) || "";
     if (image && !image.startsWith("http")) {
       image = window.location.origin + image;
@@ -33,15 +34,20 @@ export default function Meta({ article }) {
 
     setMeta("property", "og:type", "article");
     setMeta("property", "og:site_name", SITE_NAME);
-    setMeta("property", "og:title", title);
+    setMeta("property", "og:title", rawTitle);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:url", url);
     setMeta("property", "og:image", image);
+    setMeta("property", "og:image:secure_url", image);
+    setMeta("property", "og:image:width", "1200");
+    setMeta("property", "og:image:height", "630");
+    setMeta("property", "og:image:alt", rawTitle);
     setMeta("property", "article:published_time", article.createdAt || article.date || "");
-    setMeta("name", "twitter:card", image ? "summary_large_image" : "summary");
-    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", rawTitle);
     setMeta("name", "twitter:description", desc);
     setMeta("name", "twitter:image", image);
+    setMeta("name", "twitter:image:alt", rawTitle);
     setMeta("name", "twitter:url", url);
 
     let canonical = document.querySelector('link[rel="canonical"]');
