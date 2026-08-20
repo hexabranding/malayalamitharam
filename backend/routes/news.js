@@ -265,4 +265,21 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/migrate-engslug", authMiddleware, async (req, res) => {
+  try {
+    const articles = await Article.find({ $or: [{ engSlug: { $exists: false } }, { engSlug: "" }] });
+    let updated = 0;
+    for (const article of articles) {
+      const engSlug = toEnglishSlug(article.title);
+      if (engSlug) {
+        await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
+        updated++;
+      }
+    }
+    res.json({ message: "Migration complete", updated, total: articles.length });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;
