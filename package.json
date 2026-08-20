@@ -13,7 +13,7 @@
     "server": "node server.cjs",
     "start": "node server.cjs",
     "postinstall": "cd backend && npm install --omit=dev && cd .. && npm run build",
-    "deploy:hostinger": "npm run build && rm -rf css images js sass vendor index.html robots.txt 404.php && cp -r dist/* ."
+    "deploy:hostinger": "npm run build && rm -rf css images js sass vendor index.html robots.txt 404.php && cp -r dist/* . && cp dist/.htaccess . 2>/dev/null || true && cp dist/og.php . 2>/dev/null || true"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

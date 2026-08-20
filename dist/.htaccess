@@ -1,6 +1,11 @@
 RewriteEngine On
 
-# Redirect all non-existing requests to /index.html for SPA
+# Crawler OG - serve og.php for bots on /post/ and /news/ - must be before SPA fallback
+RewriteCond %{REQUEST_URI} ^/(post|news)/[^/]+/?$
+RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Facebot|facebookcatalog|WhatsApp|TwitterBot|X-TwitterBot|TelegramBot|LinkedInBot|Slackbot|vkShare|Discordbot|Google-InspectionTool|bingbot|Baiduspider|YandexBot) [NC]
+RewriteRule ^ og.php [L]
+
+# SPA fallback - all non-file/directory to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]
