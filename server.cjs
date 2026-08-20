@@ -11,22 +11,10 @@ const compression = require("compression");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const mongoose = require("mongoose");
-
-const ArticleSchema = new mongoose.Schema({
-  slug: { type: String },
-  engSlug: { type: String, default: "" },
-  title: { type: String, required: true },
-  category: { type: String },
-  image: { type: String, default: "" },
-  excerpt: { type: String, default: "" },
-  content: { type: String, default: "" },
-  published: { type: Boolean, default: true },
-  createdAt: { type: Date },
-  updatedAt: { type: Date },
-}, { timestamps: true, collection: "articles" });
-
-const Article = mongoose.model("Article", ArticleSchema);
+// Use the backend's existing model so the OG renderer always uses the same
+// MongoDB collection and field definitions as the news API.
+const Article = require("./backend/models/Article");
+const articleMongoose = Article.db.base;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -37,7 +25,6 @@ const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
 const SITE_URL = (process.env.SITE_URL || "https://demo.malayalamitharam.in").replace(/\/+$/, "");
 const SITE_NAME = process.env.SITE_NAME || "Malayalamitram";
-const DEFAULT_IMAGE = SITE_URL + "/images/malayalamithram-logo.png";
 
 const ML_MAP = {
   "\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii",
@@ -104,16 +91,16 @@ function isPrivateHost(hostname) {
 }
 
 function resolveAbsoluteImage(image) {
-  if (!image || typeof image !== "string") return DEFAULT_IMAGE;
+  if (!image || typeof image !== "string") return "";
   let value = image.trim();
-  if (!value || /^data:/i.test(value)) return DEFAULT_IMAGE;
+  if (!value || /^data:/i.test(value)) return "";
   if (/^https?:\/\//i.test(value)) {
     try {
       const parsed = new URL(value);
-      if (isPrivateHost(parsed.hostname)) return DEFAULT_IMAGE;
+      if (isPrivateHost(parsed.hostname)) return "";
       return value;
     } catch {
-      return DEFAULT_IMAGE;
+      return "";
     }
   }
   if (value.startsWith("//")) value = "https:" + value;
@@ -142,7 +129,9 @@ function buildArticleMeta(article, pathSlug) {
   description = truncate(description, 155);
   if (!description) description = title;
   const rawImage = (article.image || "").trim();
-  const image = rawImage ? resolveAbsoluteImage(rawImage) : DEFAULT_IMAGE;
+  // Article pages must never substitute the Malayalamitram logo. The Article
+  // model's `image` field is the featured image managed by the news admin.
+  const image = rawImage ? resolveAbsoluteImage(rawImage) : "";
   const decodedSlug = (() => { try { return decodeURIComponent(pathSlug); } catch { return pathSlug; } })();
   const url = `${SITE_URL}/post/${encodeURIComponent(decodedSlug)}`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
@@ -178,10 +167,19 @@ function injectMeta(html, meta) {
     dateModified: publishedTime || undefined,
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: DEFAULT_IMAGE } },
+    publisher: { "@type": "Organization", name: SITE_NAME },
   }).replace(/</g, "\\u003c");
 
   const publishedTag = publishedTime ? `\n    <meta property="article:published_time" content="${esc(publishedTime)}" />` : "";
+
+  const imageTags = image ? `
+    <meta property="og:image" content="${safeImage}" />
+    <meta property="og:image:secure_url" content="${safeImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${safeTitle}" />
+    <meta name="twitter:image" content="${safeImage}" />
+    <meta name="twitter:image:alt" content="${safeTitle}" />` : "";
 
   const tags = `
     <link rel="canonical" href="${safeUrl}" />
@@ -190,16 +188,10 @@ function injectMeta(html, meta) {
     <meta property="og:title" content="${safeTitle}" />
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:url" content="${safeUrl}" />
-    <meta property="og:image" content="${safeImage}" />
-    <meta property="og:image:secure_url" content="${safeImage}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="${safeTitle}" />${publishedTag}
+    ${imageTags}${publishedTag}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
-    <meta name="twitter:image" content="${safeImage}" />
-    <meta name="twitter:image:alt" content="${safeTitle}" />
     <meta name="twitter:url" content="${safeUrl}" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
@@ -211,7 +203,7 @@ function titleSlugOf(t) {
 }
 async function findArticleFromDB(slug) {
   try {
-    if (mongoose.connection.readyState !== 1) return null;
+    if (Article.db.readyState !== 1) return null;
     const decoded = (()=>{ try{ return decodeURIComponent(slug);}catch{ return slug;}})();
     let article = await Article.findOne({ slug: decoded, published: true }).lean();
     if (article) return article;
@@ -283,16 +275,22 @@ app.get("/admin/{*splat}", spa);
 
 app.use(spa);
 
-mongoose.connect(process.env.MONGO_URI, {})
-  .then(() => {
-    console.log("MongoDB connected for frontend server");
-    app.listen(PORT, () => {
-      console.log("Frontend server running on port " + PORT);
+function start() {
+  articleMongoose.connect(process.env.MONGO_URI, {})
+    .then(() => {
+      console.log("MongoDB connected for frontend server");
+      app.listen(PORT, () => {
+        console.log("Frontend server running on port " + PORT);
+      });
+    })
+    .catch((err) => {
+      console.error("MongoDB connection failed:", err.message);
+      app.listen(PORT, () => {
+        console.log("Frontend server running on port " + PORT + " (no MongoDB)");
+      });
     });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection failed:", err.message);
-    app.listen(PORT, () => {
-      console.log("Frontend server running on port " + PORT + " (no MongoDB)");
-    });
-  });
+}
+
+if (require.main === module) start();
+
+module.exports = { buildArticleMeta, injectMeta, resolveAbsoluteImage, start };
