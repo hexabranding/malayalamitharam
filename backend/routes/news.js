@@ -18,7 +18,7 @@ function slugify(text) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
+    .slice(0, 120);
 }
 
 function isMalayalam(text) {
