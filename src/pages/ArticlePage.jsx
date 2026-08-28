@@ -62,10 +62,13 @@ export default function ArticlePage({ slug, navigate }) {
           incrementView(data.slug || data.id).catch(() => {});
           try {
             const relatedData = await fetchNews({ category: data.category, limit: 5 });
-            const r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
+            let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
+            if (r.length === 0) {
+              r = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
+            }
             setRelated(r);
           } catch {
-            setRelated([]);
+            setRelated(fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3));
           }
         }
       } catch (err) {
@@ -249,21 +252,23 @@ const displayRelated = related.length >= 1
         </div>
       </article>
 
-      <section className="related-articles-section" data-aos="fade-up" data-aos-delay="400">
-        <h3 className="section-block-title" data-aos="fade-left">
-          <span>കൂടുതൽ വായിക്കൂ (Related Stories)</span>
-        </h3>
-        <div className="card-grid">
-          {displayRelated.map((relatedStory, i) => (
-            <ArticleCard
-              key={relatedStory.id}
-              article={relatedStory}
-              navigate={navigate}
-              dataAosDelay={i * 100}
-            />
-          ))}
-        </div>
-      </section>
+      {displayRelated.length > 0 && (
+        <section className="related-articles-section" data-aos="fade-up" data-aos-delay="400">
+          <h3 className="section-block-title" data-aos="fade-left">
+            <span>കൂടുതൽ വായിക്കൂ (Related Stories)</span>
+          </h3>
+          <div className="card-grid">
+            {displayRelated.map((relatedStory, i) => (
+              <ArticleCard
+                key={relatedStory.id}
+                article={relatedStory}
+                navigate={navigate}
+                dataAosDelay={i * 100}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </PageLayout>
   );
 }
