@@ -3,6 +3,7 @@ RewriteEngine On
 # Apache/Hostinger deployment: render article metadata before the React SPA
 # fallback. This must stay above the generic index.html rewrite.
 RewriteRule ^post/([^/]+)/?$ og.php?slug=$1 [L,QSA,B]
+RewriteRule ^news/([^/]+)/?$ og.php?slug=$1 [L,QSA,B]
 
 # SPA fallback - all non-file/directory to index.html.
 RewriteCond %{REQUEST_FILENAME} !-f

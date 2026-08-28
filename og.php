@@ -89,20 +89,26 @@ $image = absolute_image((string) ($article['image'] ?? $article['thumbnail'] ?? 
 $url = SITE_URL . '/post/' . rawurlencode($slug);
 $published = !empty($article['createdAt']) ? '<meta property="article:published_time" content="' . escape_html((string) $article['createdAt']) . '" />' : '';
 
-$tags = '\n    <link rel="canonical" href="' . escape_html($url) . '" />'
-    . '\n    <meta name="description" content="' . escape_html($description) . '" />'
-    . '\n    <meta property="og:type" content="article" />'
-    . '\n    <meta property="og:title" content="' . escape_html($title) . '" />'
-    . '\n    <meta property="og:description" content="' . escape_html($description) . '" />'
-    . '\n    <meta property="og:image" content="' . escape_html($image) . '" />'
-    . '\n    <meta property="og:image:secure_url" content="' . escape_html($image) . '" />'
-    . '\n    <meta property="og:url" content="' . escape_html($url) . '" />'
-    . '\n    <meta property="og:site_name" content="' . SITE_NAME . '" />'
+$tags = "\n    <link rel=\"canonical\" href=\"" . escape_html($url) . "\" />"
+    . "\n    <meta name=\"description\" content=\"" . escape_html($description) . "\" />"
+    . "\n    <meta property=\"og:type\" content=\"article\" />"
+    . "\n    <meta property=\"og:site_name\" content=\"" . escape_html(SITE_NAME) . "\" />"
+    . "\n    <meta property=\"og:locale\" content=\"ml_IN\" />"
+    . "\n    <meta property=\"og:title\" content=\"" . escape_html($title) . "\" />"
+    . "\n    <meta property=\"og:description\" content=\"" . escape_html($description) . "\" />"
+    . "\n    <meta property=\"og:url\" content=\"" . escape_html($url) . "\" />"
+    . "\n    <meta property=\"og:image\" content=\"" . escape_html($image) . "\" />"
+    . "\n    <meta property=\"og:image:url\" content=\"" . escape_html($image) . "\" />"
+    . "\n    <meta property=\"og:image:secure_url\" content=\"" . escape_html($image) . "\" />"
+    . "\n    <meta property=\"og:image:type\" content=\"image/jpeg\" />"
+    . "\n    <meta property=\"og:image:width\" content=\"1200\" />"
+    . "\n    <meta property=\"og:image:height\" content=\"630\" />"
+    . "\n    <meta property=\"og:image:alt\" content=\"" . escape_html($title) . "\" />"
     . $published
-    . '\n    <meta name="twitter:card" content="summary_large_image" />'
-    . '\n    <meta name="twitter:title" content="' . escape_html($title) . '" />'
-    . '\n    <meta name="twitter:description" content="' . escape_html($description) . '" />'
-    . '\n    <meta name="twitter:image" content="' . escape_html($image) . '" />';
+    . "\n    <meta name=\"twitter:card\" content=\"summary_large_image\" />"
+    . "\n    <meta name=\"twitter:title\" content=\"" . escape_html($title) . "\" />"
+    . "\n    <meta name=\"twitter:description\" content=\"" . escape_html($description) . "\" />"
+    . "\n    <meta name=\"twitter:image\" content=\"" . escape_html($image) . "\" />";
 
 header('Content-Type: text/html; charset=UTF-8');
 echo str_replace('</head>', $tags . "\n  </head>", without_social_meta($index));
