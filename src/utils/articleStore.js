@@ -1,3 +1,5 @@
+import { toEnglishSlug } from "./transliterate";
+
 const ARTICLES_KEY = "mm_articles_cache";
 
 function getArticlesCache() {
@@ -38,6 +40,8 @@ export function registerArticles(articles) {
 export function getTitleSlug(article) {
   if (!article) return "";
   if (article.engSlug) return article.engSlug;
+  const engSlug = toEnglishSlug(article.title);
+  if (engSlug) return engSlug;
   return article.slug || article.id || "";
 }
 
@@ -48,6 +52,7 @@ export function getArticleBySlug(slug) {
     if (a.engSlug === slug) return true;
     if (a.slug === slug) return true;
     if (a.id === slug) return true;
+    if (toEnglishSlug(a.title) === slug) return true;
     return false;
   }) || null;
 }

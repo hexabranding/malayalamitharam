@@ -18,7 +18,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
     readTime: "",
     image: "",
     titleEn: "",
-    engSlug: "",
     featured: false,
     breaking: false,
     mainNews: false,
@@ -65,7 +64,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
               readTime: found.readTime || "",
               image: found.image || "",
               titleEn: found.titleEn || "",
-              engSlug: found.engSlug || "",
               featured: found.featured || false,
               breaking: found.breaking || false,
               mainNews: found.mainNews || false,
@@ -227,31 +225,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 required
                 placeholder="Enter news title in Malayalam"
               />
-            </div>
-
-            <div className="form-group">
-              <label>English Title (for URL slug generation)</label>
-              <input
-                type="text"
-                name="titleEn"
-                value={formData.titleEn}
-                onChange={handleChange}
-                placeholder="Enter English title (e.g., Modi Government Leads NDA)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>URL Slug (English, auto-generated or manual)</label>
-              <input
-                type="text"
-                name="engSlug"
-                value={formData.engSlug}
-                onChange={handleChange}
-                placeholder="e.g., modi-government-leads-nda-gets-326-seats-survey"
-              />
-              <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 12 }}>
-                Leave empty to auto-generate from English title. Use lowercase letters, numbers, and hyphens only.
-              </small>
             </div>
 
             <div className="form-group">
