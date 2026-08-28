@@ -30,14 +30,16 @@ app.use(cors({
     if (!origin || process.env.NODE_ENV !== "production") {
       return callback(null, true);
     }
-    const allowed = [
-      FRONTEND_URL,
-      process.env.ALLOWED_ORIGIN,
-      "https://demo.malayalamitharam.in",
-      "https://malayalamitharam.in",
-      "https://malayalamithram.in",
-      "https://demo.malayalamithram.in",
-    ].filter(Boolean);
+   const allowed = [
+  FRONTEND_URL,
+  process.env.ALLOWED_ORIGIN,
+  "https://demo.malayalamitharam.in",
+  "https://malayalamitharam.in",
+  "https://malayalamithram.in",
+  "https://demo.malayalamithram.in",
+  "https://malayalamithramonline.com",
+  "https://www.malayalamithramonline.com",
+].filter(Boolean);
     callback(null, allowed.includes(origin));
   },
   credentials: true,
