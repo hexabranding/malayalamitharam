@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
-import { fetchArticle, fetchArticleByTitleSlug, fetchArticleByEngSlug, fetchNews, incrementView } from "../services/api.js";
+import { fetchArticle, fetchArticleByEngSlug, incrementView } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -12,9 +12,8 @@ import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
-import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticleAsync } from "../utils/articleStore.js";
-import { slugify } from "../utils/slugify.js";
-import { getShareUrl, toEnglishSlug } from "../utils/transliterate.js";
+import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
+import { getShareUrl } from "../utils/transliterate.js";
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null;
@@ -27,11 +26,11 @@ function getYoutubeEmbedUrl(url) {
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
 
-  const fallbackByTitleSlug = fallback.find(a => getTitleSlug(a) === slug);
+  const fallbackBySlug = fallback.find(a => a.engSlug === slug || a.slug === slug || a.id === slug);
   const fallbackById = fallback.find(a => a.id === slug);
-  const fallbackArticle = fallbackByTitleSlug || fallbackById;
+  const fallbackArticle = fallbackBySlug || fallbackById;
 
-  const cachedArticle = !fallbackArticle ? getArticleByTitleSlug(slug) : null;
+  const cachedArticle = !fallbackArticle ? getArticleBySlug(slug) : null;
 
   const [article, setArticle] = useState(fallbackArticle || cachedArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
@@ -50,29 +49,18 @@ export default function ArticlePage({ slug, navigate }) {
           setRelated(fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3));
           return;
         }
-        let apiSlug = getApiSlug(slug);
-        let data = await fetchArticle(apiSlug);
-        if (!data) {
-          data = await fetchArticleByTitleSlug(slug);
-        }
+        let data = await fetchArticle(slug);
         if (!data) {
           data = await fetchArticleByEngSlug(slug);
         }
-        if (!data && slug !== apiSlug) {
-          data = await fetchArticle(slug);
-        }
         if (!data) {
-          const searchResult = await fetchNews({ limit: 500 });
-          const allArticles = searchResult.news || searchResult.articles || [];
-          data = allArticles.find(a => toEnglishSlug(a.title) === slug) || null;
+          data = await fetchArticle(slug);
         }
         if (data) {
           setArticle(data);
-          registerArticleAsync(data);
+          registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});
-          const relatedData = await fetchNews({ category: data.category, limit: 5 });
-          const r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
-          if (r.length > 0) setRelated(r);
+          setRelated([]);
         }
       } catch (err) {
         if (!fallbackArticle && !cachedArticle) setArticle(null);

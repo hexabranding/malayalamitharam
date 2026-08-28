@@ -2,13 +2,13 @@ import { useEffect } from "react";
 import Meta from "./Meta.jsx";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
-import { getTitleSlug, registerArticleAsync } from "../utils/articleStore";
+import { getTitleSlug, registerArticle } from "../utils/articleStore";
 
 export default function ArticleCard({ article, navigate, variant = "default", dataAosDelay }) {
   if (!article) return null;
 
   useEffect(() => {
-    registerArticleAsync(article);
+    registerArticle(article);
   }, [article?.id]);
 
   const postSlug = getTitleSlug(article);

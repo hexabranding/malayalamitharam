@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { useSettings } from "../context/DataContext.jsx";
-import { getTitleSlug, registerArticlesAsync } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 
 function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
@@ -48,8 +48,8 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
   }, [articles]);
 
   useEffect(() => {
-    registerArticlesAsync(displayArticles);
-    registerArticlesAsync(latestUpdates);
+    registerArticles(displayArticles);
+    registerArticles(latestUpdates);
   }, [displayArticles, latestUpdates]);
 
   useEffect(() => {

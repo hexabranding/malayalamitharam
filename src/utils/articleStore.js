@@ -1,22 +1,4 @@
-import { toEnglishSlug, translateTitleSlug } from "./transliterate";
-
-const STORAGE_KEY = "mm_article_slug_map";
 const ARTICLES_KEY = "mm_articles_cache";
-
-function getSlugMap() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function setSlugMap(map) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {}
-}
 
 function getArticlesCache() {
   try {
@@ -36,21 +18,8 @@ function setArticlesCache(articles) {
   } catch {}
 }
 
-function makeTitleSlug(article) {
-  const titleSlug = toEnglishSlug(article.title);
-  return titleSlug || (article.slug || article.id || "");
-}
-
 export function registerArticle(article) {
   if (!article || !article.title) return;
-  const titleSlug = makeTitleSlug(article);
-  if (!titleSlug) return;
-
-  const map = getSlugMap();
-  const apiSlug = article.slug || article.id;
-  map[titleSlug] = apiSlug;
-  setSlugMap(map);
-
   const cache = getArticlesCache();
   const idx = cache.findIndex(a => a.id === article.id);
   if (idx >= 0) {
@@ -61,56 +30,19 @@ export function registerArticle(article) {
   setArticlesCache(cache);
 }
 
-export async function registerArticleAsync(article) {
-  if (!article || !article.title) return;
-  
-  if (!article.engSlug) {
-    try {
-      article.engSlug = await translateTitleSlug(article.title);
-    } catch {}
-  }
-  
-  registerArticle(article);
-}
-
 export function registerArticles(articles) {
   if (!Array.isArray(articles)) return;
   articles.forEach(registerArticle);
 }
 
-export async function registerArticlesAsync(articles) {
-  if (!Array.isArray(articles)) return;
-  await Promise.allSettled(articles.map(a => registerArticleAsync(a)));
-}
-
-export function getArticleByTitleSlug(titleSlug) {
-  const map = getSlugMap();
-  const apiSlug = map[titleSlug];
-  if (!apiSlug) return null;
-
-  const cache = getArticlesCache();
-  return cache.find(a => (a.slug || a.id) === apiSlug) || null;
-}
-
-export function getApiSlug(titleSlug) {
-  const map = getSlugMap();
-  if (map[titleSlug]) return map[titleSlug];
-
-  const cache = getArticlesCache();
-  for (const a of cache) {
-    if (toEnglishSlug(a.title) === titleSlug) {
-      map[titleSlug] = a.slug || a.id;
-      setSlugMap(map);
-      return a.slug || a.id;
-    }
-  }
-  return titleSlug;
-}
-
 export function getTitleSlug(article) {
   if (!article) return "";
   if (article.engSlug) return article.engSlug;
-  const engSlug = toEnglishSlug(article.title);
-  if (engSlug) return engSlug;
   return article.slug || article.id || "";
+}
+
+export function getArticleBySlug(slug) {
+  if (!slug) return null;
+  const cache = getArticlesCache();
+  return cache.find(a => a.engSlug === slug || a.slug === slug || a.id === slug) || null;
 }

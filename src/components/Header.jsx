@@ -4,7 +4,7 @@ import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 import { fetchNews } from "../services/api.js";
 import { getKollavarsham, getHijriDate } from "../utils/calendars.js";
-import { getTitleSlug, registerArticlesAsync } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 
 export default function Header({ navigate, activeSlug }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function Header({ navigate, activeSlug }) {
       fetchNews({ search: searchQuery.trim(), limit: 6 }).then(data => {
         const results = (data.news || []).slice(0, 6);
         setSuggestions(results);
-        registerArticlesAsync(results);
+        registerArticles(results);
       }).catch(() => setSuggestions([]));
     }, 300);
     return () => clearTimeout(debounceRef.current);
