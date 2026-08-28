@@ -5,7 +5,14 @@ RewriteEngine On
 RewriteRule ^post/([^/]+)/?$ og.php?slug=$1 [L,QSA,B]
 RewriteRule ^news/([^/]+)/?$ og.php?slug=$1 [L,QSA,B]
 
-# SPA fallback - all non-file/directory to index.html.
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# Never rewrite requests that already point to a real file or directory
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Never rewrite static assets by extension (fixes MIME type errors)
+RewriteCond %{REQUEST_URI} \.(js|css|json|png|jpe?g|gif|ico|svg|woff2?|ttf|eot|webp|avif|mp4|webm|mp3|ogg|wasm)$ [NC]
+RewriteRule ^ - [L]
+
+# SPA fallback - everything else goes to index.html
 RewriteRule ^ /index.html [L]
