@@ -39,14 +39,26 @@ export default function ArticlePage({ slug, navigate }) {
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
-    return fallback.filter(a => a.category === base.category && a.id !== base.id).slice(0, 3);
+    const cat = base.category || base.categoryMl || "";
+    const engSlug = base.engSlug || base.slug || base.id;
+    let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== engSlug);
+    if (items.length === 0) {
+      items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== engSlug);
+    }
+    return items.slice(0, 3);
   });
 
   useEffect(() => {
     async function load() {
       try {
         if (fallbackArticle) {
-          setRelated(fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3));
+          const cat = fallbackArticle.category || fallbackArticle.categoryMl || "";
+          const engSlug = fallbackArticle.engSlug || fallbackArticle.slug || fallbackArticle.id;
+          let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== engSlug);
+          if (items.length === 0) {
+            items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== engSlug);
+          }
+          setRelated(items.slice(0, 3));
           return;
         }
         let data = await fetchArticle(slug);
@@ -64,11 +76,22 @@ export default function ArticlePage({ slug, navigate }) {
             const relatedData = await fetchNews({ category: data.category, limit: 50 });
             let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
             if (r.length === 0) {
-              r = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
+              const cat = data.category || data.categoryMl || "";
+              const artId = data.engSlug || data.slug || data.id;
+              r = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+              if (r.length === 0) {
+                r = fallback.filter(a => (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+              }
             }
             setRelated(r);
           } catch {
-            setRelated(fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3));
+            const cat = data.category || data.categoryMl || "";
+            const artId = data.engSlug || data.slug || data.id;
+            let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+            if (items.length === 0) {
+              items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+            }
+            setRelated(items);
           }
         }
       } catch (err) {
