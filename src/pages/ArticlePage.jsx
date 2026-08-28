@@ -39,14 +39,14 @@ export default function ArticlePage({ slug, navigate }) {
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
-    return fallback.filter(a => a.category === base.category && a.id !== base.id).slice(0, 3);
+    return fallback.filter(a => a.category === base.category && a.id !== base.id);
   });
 
   useEffect(() => {
     async function load() {
       try {
         if (fallbackArticle) {
-          setRelated(fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id).slice(0, 3));
+          setRelated(fallback.filter(a => a.category === fallbackArticle.category && a.id !== fallbackArticle.id));
           return;
         }
         let data = await fetchArticle(slug);
@@ -61,10 +61,10 @@ export default function ArticlePage({ slug, navigate }) {
           registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});
           try {
-            const relatedData = await fetchNews({ category: data.category, limit: 5 });
-            let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
+            const relatedData = await fetchNews({ category: data.category, limit: 50 });
+            let r = (relatedData.news || []).filter(a => a.id !== data.id);
             if (r.length === 0) {
-              r = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
+              r = fallback.filter(a => a.category === data.category && a.id !== data.id);
             }
             setRelated(r);
           } catch {
