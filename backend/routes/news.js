@@ -295,11 +295,6 @@ router.post("/migrate-engslug", authMiddleware, async (req, res) => {
     let updated = 0;
     let skipped = 0;
     for (const article of articles) {
-      const needsUpdate = !article.engSlug || !hasOnlyEnglishChars(article.engSlug);
-      if (!needsUpdate) {
-        skipped++;
-        continue;
-      }
       const baseEngSlug = await generateEngSlug(article.title, article.titleEn);
       const engSlug = await ensureUniqueSlug(baseEngSlug, article._id);
       await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
