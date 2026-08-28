@@ -59,13 +59,15 @@ async function generateEngSlug(title, titleEn) {
         const slug = slugify(translated);
         if (slug && hasOnlyEnglishChars(slug)) return slug;
       }
-    } catch {}
+    } catch (err) {
+      console.warn("Translation error:", err.message);
+    }
   }
 
-  const fallback = slugify(titleEn || title || "");
+  const fallback = slugify(titleEn || "");
   if (fallback && hasOnlyEnglishChars(fallback)) return fallback;
 
-  return "article-" + Date.now().toString(36);
+  return "post-" + Date.now().toString(36);
 }
 
 async function ensureUniqueSlug(baseSlug, excludeId) {
