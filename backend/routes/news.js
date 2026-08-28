@@ -338,4 +338,28 @@ router.post("/migrate-engslug", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/translate", async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: "text is required" });
+    const translated = await translateToEnglish(text);
+    res.json({ translated });
+  } catch (err) {
+    res.status(500).json({ error: "Translation failed" });
+  }
+});
+
+router.post("/translate-batch", async (req, res) => {
+  try {
+    const { texts } = req.body;
+    if (!Array.isArray(texts) || texts.length === 0) {
+      return res.status(400).json({ error: "texts array is required" });
+    }
+    const results = await Promise.all(texts.map(t => translateToEnglish(t)));
+    res.json({ translations: results });
+  } catch (err) {
+    res.status(500).json({ error: "Translation failed" });
+  }
+});
+
 module.exports = router;

@@ -1,4 +1,4 @@
-import { translate } from "@vitalets/google-translate-api";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.malayalamitharam.in/api";
 
 const CACHE_KEY = "mm_translation_cache";
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000;
@@ -32,15 +32,22 @@ export async function translateToEnglish(text) {
   if (cache[text]) return cache[text];
 
   try {
-    const result = await translate(text, { from: "ml", to: "en" });
-    const translated = result.text;
-    if (translated) {
-      cache[text] = translated;
-      setCache(cache);
-      return translated;
+    const res = await fetch(`${API_BASE}/news/translate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data.translated;
+      if (translated && translated !== text) {
+        cache[text] = translated;
+        setCache(cache);
+        return translated;
+      }
     }
   } catch (err) {
-    console.warn("Translation failed, falling back to transliteration:", err.message);
+    console.warn("Translation failed:", err.message);
   }
 
   return text;
@@ -66,14 +73,21 @@ export async function translateBatch(texts) {
   if (toTranslate.length > 0) {
     try {
       const batchTexts = toTranslate.map((t) => t.text);
-      const result = await translate(batchTexts, { from: "ml", to: "en" });
-      const translations = Array.isArray(result.text) ? result.text : [result.text];
-      toTranslate.forEach((item, i) => {
-        const translated = translations[i] || item.text;
-        results[item.index] = translated;
-        cache[item.text] = translated;
+      const res = await fetch(`${API_BASE}/news/translate-batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texts: batchTexts }),
       });
-      setCache(cache);
+      if (res.ok) {
+        const data = await res.json();
+        const translations = data.translations || [];
+        toTranslate.forEach((item, i) => {
+          const translated = translations[i] || item.text;
+          results[item.index] = translated;
+          cache[item.text] = translated;
+        });
+        setCache(cache);
+      }
     } catch (err) {
       console.warn("Batch translation failed:", err.message);
       toTranslate.forEach((item) => {
