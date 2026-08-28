@@ -39,11 +39,10 @@ export default function ArticlePage({ slug, navigate }) {
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
-    const cat = base.category || base.categoryMl || "";
-    const engSlug = base.engSlug || base.slug || base.id;
-    let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== engSlug);
+    const cat = base.category || "";
+    let items = fallback.filter(a => a.category === cat && a.id !== base.id);
     if (items.length === 0) {
-      items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== engSlug);
+      items = fallback.filter(a => a.id !== base.id);
     }
     return items.slice(0, 3);
   });
@@ -52,11 +51,10 @@ export default function ArticlePage({ slug, navigate }) {
     async function load() {
       try {
         if (fallbackArticle) {
-          const cat = fallbackArticle.category || fallbackArticle.categoryMl || "";
-          const engSlug = fallbackArticle.engSlug || fallbackArticle.slug || fallbackArticle.id;
-          let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== engSlug);
+          const cat = fallbackArticle.category || "";
+          let items = fallback.filter(a => a.category === cat && a.id !== fallbackArticle.id);
           if (items.length === 0) {
-            items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== engSlug);
+            items = fallback.filter(a => a.id !== fallbackArticle.id);
           }
           setRelated(items.slice(0, 3));
           return;
@@ -73,23 +71,24 @@ export default function ArticlePage({ slug, navigate }) {
           registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});
           try {
-            const relatedData = await fetchNews({ category: data.category, limit: 50 });
-            let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
-            if (r.length === 0) {
-              const cat = data.category || data.categoryMl || "";
-              const artId = data.engSlug || data.slug || data.id;
-              r = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+            if (data.category) {
+              const relatedData = await fetchNews({ category: data.category, limit: 50 });
+              let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
               if (r.length === 0) {
-                r = fallback.filter(a => (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+                r = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
               }
+              if (r.length === 0) {
+                r = fallback.filter(a => a.id !== data.id).slice(0, 3);
+              }
+              setRelated(r);
+            } else {
+              setRelated(fallback.filter(a => a.id !== data.id).slice(0, 3));
             }
-            setRelated(r);
           } catch {
-            const cat = data.category || data.categoryMl || "";
-            const artId = data.engSlug || data.slug || data.id;
-            let items = fallback.filter(a => (a.category === cat || a.categoryMl === cat) && (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+            const cat = data.category || "";
+            let items = fallback.filter(a => a.category === cat && a.id !== data.id).slice(0, 3);
             if (items.length === 0) {
-              items = fallback.filter(a => (a.engSlug || a.slug || a.id) !== artId).slice(0, 3);
+              items = fallback.filter(a => a.id !== data.id).slice(0, 3);
             }
             setRelated(items);
           }

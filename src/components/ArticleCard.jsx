@@ -12,12 +12,20 @@ export default function ArticleCard({ article, navigate, variant = "default", da
   }, [article?.id]);
 
   const postSlug = getTitleSlug(article);
+  const handleClick = () => {
+    const slug = getTitleSlug(article);
+    if (slug) {
+      navigate("/post/" + slug);
+    } else if (article.id) {
+      navigate("/post/" + article.id);
+    }
+  };
   return (
     <article
       className={"article-card clickable " + variant}
       data-aos="fade-up"
       data-aos-delay={dataAosDelay}
-      onClick={() => navigate("/post/" + postSlug)}
+      onClick={handleClick}
     >
       <div className="image-link">
         <ArticleImage article={article} alt={article.title} />
