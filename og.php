@@ -110,5 +110,8 @@ $tags = "\n    <link rel=\"canonical\" href=\"" . escape_html($url) . "\" />"
     . "\n    <meta name=\"twitter:description\" content=\"" . escape_html($description) . "\" />"
     . "\n    <meta name=\"twitter:image\" content=\"" . escape_html($image) . "\" />";
 
+$pageTitle = escape_html($title) . ' | ' . escape_html(SITE_NAME);
+$withTitle = preg_replace('/<title>[^<]*<\/title>/', '<title>' . $pageTitle . '</title>', $index);
+
 header('Content-Type: text/html; charset=UTF-8');
-echo str_replace('</head>', $tags . "\n  </head>", without_social_meta($index));
+echo str_replace('</head>', $tags . "\n  </head>", without_social_meta($withTitle));
