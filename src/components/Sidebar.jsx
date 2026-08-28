@@ -3,7 +3,7 @@ import { Clock3, Star } from "lucide-react";
 import { fetchNews, fetchTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
-import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticlesAsync } from "../utils/articleStore.js";
 import AdSlot from "./AdSlot.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
@@ -44,10 +44,10 @@ export default function Sidebar({ navigate, articles = [] }) {
       fetchNews({ limit: 20 }).then(data => {
         const results = data.news || [];
         setLatestNews(results);
-        registerArticles(results);
+        registerArticlesAsync(results);
       }).catch(() => {});
     } else {
-      registerArticles(articles);
+      registerArticlesAsync(articles);
     }
     fetchTags().then(data => {
       if (Array.isArray(data)) setTags(data);

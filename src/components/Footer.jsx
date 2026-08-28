@@ -86,7 +86,7 @@ export default function Footer({ navigate }) {
       </div>
       <div className="copyright">
         <div className="container copyright-inner">
-          <span>© 2026 Malayala Mitra. All Rights Reserved.</span>
+          <span>© 2026 Malayalamithram. All Rights Reserved.</span>
           <span>നിർമ്മാണം: മലയാളമിത്രം ഡിജിറ്റൽ ടീം</span>
         </div>
       </div>

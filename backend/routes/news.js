@@ -49,6 +49,34 @@ function toEnglishSlug(text) {
   return r.toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 }
 
+function isMalayalam(text) {
+  return /[\u0D00-\u0D7F]/.test(text);
+}
+
+async function translateToEnglish(text) {
+  if (!text || !isMalayalam(text)) return text;
+  try {
+    const { translate } = await import("@vitalets/google-translate-api");
+    const result = await translate(text, { from: "ml", to: "en" });
+    return result.text || text;
+  } catch (err) {
+    console.warn("Translation failed:", err.message);
+    return text;
+  }
+}
+
+async function generateEngSlug(title) {
+  if (!title) return "";
+  if (!isMalayalam(title)) {
+    return slugify(title);
+  }
+  const translated = await translateToEnglish(title);
+  if (translated && translated !== title) {
+    return slugify(translated);
+  }
+  return toEnglishSlug(title);
+}
+
 // Normalize an article title the same way the frontend does, keeping Malayalam
 // (U+0D00-U+0D7F) characters intact so Malayalam title-slugs resolve correctly.
 function titleSlugOf(article) {
@@ -202,7 +230,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     const titlePart = slugify(titleEn || title) || "post";
     const slug = slugify(category) + "-" + titlePart + "-" + Date.now().toString(36);
-    const engSlug = toEnglishSlug(title) || slug;
+    const engSlug = await generateEngSlug(title);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
@@ -249,7 +277,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
       : { slug: req.params.id };
     const updateData = { ...req.body, updatedAt: new Date().toISOString() };
     if (req.body.title) {
-      updateData.engSlug = toEnglishSlug(req.body.title);
+      updateData.engSlug = await generateEngSlug(req.body.title);
     }
     const article = await Article.findOneAndUpdate(
       filter,
@@ -298,7 +326,7 @@ router.post("/migrate-engslug", authMiddleware, async (req, res) => {
     const articles = await Article.find({ $or: [{ engSlug: { $exists: false } }, { engSlug: "" }] });
     let updated = 0;
     for (const article of articles) {
-      const engSlug = toEnglishSlug(article.title);
+      const engSlug = await generateEngSlug(article.title);
       if (engSlug) {
         await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
         updated++;

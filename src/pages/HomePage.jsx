@@ -3,7 +3,7 @@ import { fetchNews, fetchCategories } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName, preloadCategories } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
-import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticlesAsync } from "../utils/articleStore.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
@@ -30,13 +30,13 @@ export default function HomePage({ navigate }) {
 
   useEffect(() => {
     preloadCategories();
-    registerArticles(fallback);
+    registerArticlesAsync(fallback);
     function loadArticles() {
       fetchNews({ limit: 50 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) {
           setArticles(fetched);
-          registerArticles(fetched);
+          registerArticlesAsync(fetched);
         }
       }).catch(() => {});
     }

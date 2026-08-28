@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
+    "@vitalets/google-translate-api": "^9.1.0",
     "aos": "^2.3.4",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",

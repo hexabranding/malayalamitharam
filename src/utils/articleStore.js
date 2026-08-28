@@ -1,5 +1,4 @@
-import { slugify } from "./slugify";
-import { toEnglishSlug } from "./transliterate";
+import { toEnglishSlug, translateTitleSlug } from "./transliterate";
 
 const STORAGE_KEY = "mm_article_slug_map";
 const ARTICLES_KEY = "mm_articles_cache";
@@ -62,9 +61,26 @@ export function registerArticle(article) {
   setArticlesCache(cache);
 }
 
+export async function registerArticleAsync(article) {
+  if (!article || !article.title) return;
+  
+  if (!article.engSlug) {
+    try {
+      article.engSlug = await translateTitleSlug(article.title);
+    } catch {}
+  }
+  
+  registerArticle(article);
+}
+
 export function registerArticles(articles) {
   if (!Array.isArray(articles)) return;
   articles.forEach(registerArticle);
+}
+
+export async function registerArticlesAsync(articles) {
+  if (!Array.isArray(articles)) return;
+  await Promise.allSettled(articles.map(a => registerArticleAsync(a)));
 }
 
 export function getArticleByTitleSlug(titleSlug) {

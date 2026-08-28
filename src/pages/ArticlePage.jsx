@@ -12,7 +12,7 @@ import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
-import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
+import { getArticleByTitleSlug, getApiSlug, getTitleSlug, registerArticleAsync } from "../utils/articleStore.js";
 import { slugify } from "../utils/slugify.js";
 import { getShareUrl, toEnglishSlug } from "../utils/transliterate.js";
 
@@ -68,7 +68,7 @@ export default function ArticlePage({ slug, navigate }) {
         }
         if (data) {
           setArticle(data);
-          registerArticle(data);
+          registerArticleAsync(data);
           incrementView(data.slug || data.id).catch(() => {});
           const relatedData = await fetchNews({ category: data.category, limit: 5 });
           const r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);

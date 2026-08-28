@@ -1,3 +1,5 @@
+import { translateToEnglish } from "./translate";
+
 const MAP = {
   "\u0D05": "a", "\u0D06": "aa", "\u0D07": "i", "\u0D08": "ii",
   "\u0D09": "u", "\u0D0A": "uu", "\u0D0B": "ru",
@@ -17,6 +19,10 @@ const MAP = {
   " ": "-",
 };
 
+function isMalayalam(text) {
+  return /[\u0D00-\u0D7F]/.test(text);
+}
+
 export function toEnglishSlug(text) {
   if (!text) return "";
   let result = "";
@@ -34,6 +40,29 @@ export function toEnglishSlug(text) {
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function slugify(text) {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+export async function translateTitleSlug(text) {
+  if (!text) return "";
+  if (!isMalayalam(text)) return slugify(text);
+  try {
+    const translated = await translateToEnglish(text);
+    if (translated && translated !== text) {
+      return slugify(translated);
+    }
+  } catch {}
+  return toEnglishSlug(text);
 }
 
 export function getShareUrl(article) {
