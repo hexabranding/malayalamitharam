@@ -15,11 +15,16 @@ import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { getShareUrl } from "../utils/transliterate.js";
 
-function getYoutubeEmbedUrl(url) {
+function getVideoEmbedUrl(url) {
   if (!url) return null;
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (match) return `https://www.youtube.com/embed/${match[1]}`;
-  if (url.includes("facebook.com") || url.includes("instagram.com")) return url;
+  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+  if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
+  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com") || url.includes("x.com") || url.includes("twitter.com")) return url;
+  if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
 }
 
@@ -166,7 +171,7 @@ const displayRelated = related.length >= 1
               {showVideo && selectedVideo ? (
                 <div className="article-video-player">
                   <iframe
-                    src={getYoutubeEmbedUrl(selectedVideo.videoUrl)}
+                    src={getVideoEmbedUrl(selectedVideo.videoUrl)}
                     title={selectedVideo.title}
                     frameBorder="0"
                     allow="autoplay; encrypted-media"

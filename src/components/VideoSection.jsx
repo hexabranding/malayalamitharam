@@ -5,11 +5,16 @@ import { useSettings } from "../context/DataContext.jsx";
 import { getTitleSlug } from "../utils/articleStore.js";
 import AdSlot from "./AdSlot.jsx";
 
-function getYoutubeEmbedUrl(url) {
+function getVideoEmbedUrl(url) {
   if (!url) return null;
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
-  if (url.includes("facebook.com") || url.includes("instagram.com")) return url;
+  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+  if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
+  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com") || url.includes("x.com") || url.includes("twitter.com")) return url;
+  if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
 }
 
@@ -24,7 +29,7 @@ export default function VideoSection({ articles, navigate }) {
   const videoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : [];
-  const embedUrl = useMemo(() => getYoutubeEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
+  const embedUrl = useMemo(() => getVideoEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;
 

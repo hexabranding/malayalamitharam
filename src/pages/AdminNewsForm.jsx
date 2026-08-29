@@ -393,19 +393,19 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
 
               <div className="form-group">
-                <label>Video URL (YouTube / embed link)</label>
+                <label>Video URL (YouTube, Vimeo, Dailymotion, Facebook, etc.)</label>
                 <input
                   type="text"
                   name="videoUrl"
                   value={formData.videoUrl}
                   onChange={handleChange}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="Paste any video link: YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
                 />
               </div>
             </div>
 
             <div className="form-group">
-              <label>Related Videos (shown on detail page)</label>
+              <label>Related Videos (shown on detail page) — supports YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
               <div className="related-videos-list">
                 {formData.relatedVideos.map((video, index) => (
                   <div key={index} className="related-video-item">
@@ -426,7 +426,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 />
                 <input
                   type="text"
-                  placeholder="YouTube URL or embed link"
+                  placeholder="Paste any video link: YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
                   value={newVideoUrl}
                   onChange={(e) => setNewVideoUrl(e.target.value)}
                 />
