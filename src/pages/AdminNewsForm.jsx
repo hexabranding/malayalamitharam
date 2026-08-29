@@ -209,10 +209,14 @@ export default function AdminNewsForm({ navigate, newsId }) {
     delete newsData.slugManuallyEdited;
 
     try {
+      const submitData = {
+        ...newsData,
+        relatedVideos: formData.relatedVideos,
+      };
       if (isEditing) {
-        await updateArticle(newsId, newsData);
+        await updateArticle(newsId, submitData);
       } else {
-        await createArticle(newsData);
+        await createArticle(submitData);
       }
       alert(isEditing ? "News updated successfully!" : "News created successfully!");
       navigate("/admin/news");
