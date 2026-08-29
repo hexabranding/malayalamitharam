@@ -38,7 +38,8 @@ export default function AdminCategoriesPage({ navigate }) {
     setEditingId(id);
     setEditLabel(label);
     setEditMl(ml || "");
-    setEditSlug(slug || "");
+    const cleanSlug = (slug && !slug.startsWith("new-")) ? slug : frontendSlugify(label);
+    setEditSlug(cleanSlug);
   }
 
   function cancelEdit() {
@@ -50,7 +51,8 @@ export default function AdminCategoriesPage({ navigate }) {
 
   async function saveEdit() {
     if (!editLabel.trim()) return;
-    const newSlug = editSlug.trim() || frontendSlugify(editLabel);
+    const cleanSlug = frontendSlugify(editLabel);
+    const newSlug = (editSlug.trim() && !editSlug.startsWith("new-")) ? editSlug.trim() : cleanSlug;
     if (!newSlug) return;
     setSaving(true);
     try {
