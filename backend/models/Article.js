@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const articleSchema = new mongoose.Schema({
-  slug: { type: String, unique: true, index: true },
+  slug: { type: String, required: true, unique: true, index: true, match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/ },
   // Previous public URLs are retained solely for permanent redirects.
   legacySlugs: [{ type: String, index: true }],
   engSlug: { type: String, default: "", index: true, sparse: true },

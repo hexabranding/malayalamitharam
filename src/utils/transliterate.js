@@ -82,7 +82,5 @@ function isBadSlug(s) {
 export function getShareUrl(article) {
   if (article.slug && !isBadSlug(article.slug)) return article.slug;
   if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
-  const fallback = generateSlugFromTitle(article.title, article.titleEn);
-  if (fallback) return fallback;
-  return article.id || "";
+  return "";
 }

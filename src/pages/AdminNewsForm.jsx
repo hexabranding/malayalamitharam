@@ -4,7 +4,6 @@ import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } 
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
-import { generateSlugFromTitle } from "../utils/transliterate.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -107,10 +106,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const { name, value, type, checked } = e.target;
     setFormData(prev => {
       const next = { ...prev, [name]: type === "checkbox" ? checked : value };
-      if ((name === "titleEn" || name === "title") && !prev.slugManuallyEdited) {
-        const englishTitle = name === "titleEn" ? value : prev.titleEn;
-        const malayalamTitle = name === "title" ? value : prev.title;
-        const base = englishTitle ? frontendSlugify(englishTitle) : generateSlugFromTitle(malayalamTitle);
+      if (name === "titleEn" && !prev.slugManuallyEdited) {
+        const base = frontendSlugify(value);
         if (base) next.slug = base.split("-").slice(0, 5).join("-");
       }
       return next;
@@ -266,13 +263,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>English Title (optional — if empty, Malayalam title will be auto-transliterated to English URL)</label>
+              <label>English Title (optional — the server translates the Malayalam title when omitted)</label>
               <input
                 type="text"
                 name="titleEn"
                 value={formData.titleEn}
                 onChange={handleChange}
-                placeholder="e.g., Heavy Rain Expected in Kerala — leave empty to auto-convert Malayalam"
+                placeholder="e.g., Rahul Gandhi Calls Kharge"
               />
             </div>
 

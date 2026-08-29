@@ -1,7 +1,8 @@
 const express = require("express");
 const Article = require("../models/Article");
 const { authMiddleware } = require("../middleware/auth");
-const { slugifyEnglish, suggestNewsSlug, slugifyManglish, isCleanNewsSlug } = require("../utils/newsSlug");
+const { isCleanNewsSlug } = require("../utils/newsSlug");
+const { englishSlugSource } = require("../utils/englishNewsSlug");
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ async function findArticleBySlug(slugParam, isAdmin) {
   } catch {}
 
   if (slugParam.match(/^[0-9a-fA-F]{24}$/)) {
-    article = await Article.findById(slugParam);
+    article = await Article.findOne({ ...filter, _id: slugParam });
     if (article) return article;
   }
 
@@ -85,24 +86,30 @@ router.get("/", async (req, res) => {
 
     res.json({ news, total, page: Number(page), limit: Number(limit) });
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : "Server error" });
   }
 });
 
 router.get("/slug/:slug", async (req, res) => {
   try {
+    if (!isCleanNewsSlug(req.params.slug)) {
+      return res.status(400).json({ error: "A valid English news slug is required" });
+    }
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
     const article = await findArticleBySlug(req.params.slug, isAdmin);
     if (!article) return res.status(404).json({ error: "Article not found" });
     if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
     res.json(article.toJSON());
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : "Server error" });
   }
 });
 
 router.get("/:slug", async (req, res) => {
   try {
+    if (!isCleanNewsSlug(req.params.slug) && !/^[0-9a-fA-F]{24}$/.test(req.params.slug)) {
+      return res.status(400).json({ error: "A valid English news slug is required" });
+    }
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
     const article = await findArticleBySlug(req.params.slug, isAdmin);
     if (!article) return res.status(404).json({ error: "Article not found" });
@@ -120,19 +127,15 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!title || !category || !content) {
       return res.status(400).json({ error: "title, category, and content are required" });
     }
-    let baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(title, titleEn);
-    if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---")) {
-      baseSlug = slugifyManglish(title, titleEn);
-    }
-    if (!baseSlug) return res.status(400).json({ error: "Enter a valid English slug or title" });
-    const slug = await ensureUniqueSlug(baseSlug);
+    const slugSource = await englishSlugSource(title, titleEn, requestedSlug);
+    const slug = await ensureUniqueSlug(slugSource.baseSlug);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
       slug,
       engSlug: slug,
       title,
-      titleEn: titleEn || "",
+      titleEn: slugSource.englishTitle,
       category,
       categories: articleCategories,
       subcategory: subcategory || "",
@@ -161,7 +164,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     res.status(201).json(article.toJSON());
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : "Server error" });
   }
 });
 
@@ -177,14 +180,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
     const shouldUpdateSlug = requestedSlug || req.body.titleEn || req.body.title;
     let computedLegacy = null;
     if (shouldUpdateSlug) {
-      let baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(req.body.title || existing.title, req.body.titleEn || existing.titleEn);
-      if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---") || !isCleanNewsSlug(baseSlug)) {
-        baseSlug = slugifyManglish(req.body.title || existing.title, req.body.titleEn || existing.titleEn);
-      }
-      if (!baseSlug) return res.status(400).json({ error: "An English title or valid slug is required" });
-      const slug = await ensureUniqueSlug(baseSlug, existing._id);
+      const slugSource = await englishSlugSource(req.body.title || existing.title, req.body.titleEn || existing.titleEn, requestedSlug);
+      const slug = await ensureUniqueSlug(slugSource.baseSlug, existing._id);
       updateData.slug = slug;
       updateData.engSlug = slug;
+      updateData.titleEn = slugSource.englishTitle;
       if (slug !== existing.slug) {
         computedLegacy = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
       }
@@ -200,7 +200,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (!article) return res.status(404).json({ error: "Article not found" });
     res.json(article);
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : "Server error" });
   }
 });
 
@@ -239,13 +239,16 @@ router.post("/migrate-slugs", authMiddleware, async (req, res) => {
     const articles = await Article.find({});
     let updated = 0, skipped = 0;
     for (const article of articles) {
-      let baseSlug = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
-      if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---")) baseSlug = slugifyManglish(article.title, article.titleEn);
-      if (!baseSlug) { skipped++; continue; }
-      const isBad = /^new-\d{8,}/.test(article.slug) || article.slug.includes("---") || !isCleanNewsSlug(article.slug);
-      const slug = await ensureUniqueSlug(baseSlug, article._id);
-      if (slug !== article.slug || isBad) {
-        await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
+      let slugSource;
+      try {
+        slugSource = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
+      } catch (error) {
+        skipped++;
+        continue;
+      }
+      const slug = await ensureUniqueSlug(slugSource.baseSlug, article._id);
+      if (slug !== article.slug || article.titleEn !== slugSource.englishTitle) {
+        await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, titleEn: slugSource.englishTitle, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
         updated++;
       }
     }

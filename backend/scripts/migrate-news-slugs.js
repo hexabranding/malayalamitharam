@@ -1,7 +1,7 @@
 require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 const mongoose = require("mongoose");
 const Article = require("../models/Article");
-const { suggestNewsSlug, slugifyManglish, isCleanNewsSlug } = require("../utils/newsSlug");
+const { englishSlugSource } = require("../utils/englishNewsSlug");
 
 async function uniqueSlug(base, id) {
   let candidate = base;
@@ -19,19 +19,19 @@ async function migrate() {
   let updated = 0;
   let skipped = 0;
   for (const article of articles) {
-    let base = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
-    if (!base || /^new-\d{8,}/.test(base) || base.includes("---")) base = slugifyManglish(article.title, article.titleEn);
-    if (!base) {
+    let source;
+    try {
+      source = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
+    } catch (error) {
       skipped++;
-      console.warn(`Skipped ${article._id}: add an English title before migrating.`);
+      console.warn(`Skipped ${article._id}: ${error.message}`);
       continue;
     }
-    const isBad = /^new-\d{8,}/.test(article.slug) || article.slug.includes("---") || !isCleanNewsSlug(article.slug);
-    const slug = await uniqueSlug(base, article._id);
-    if (slug === article.slug && !isBad) continue;
+    const slug = await uniqueSlug(source.baseSlug, article._id);
+    if (slug === article.slug && article.titleEn === source.englishTitle) continue;
     await Article.updateOne(
       { _id: article._id },
-      { $set: { slug, engSlug: slug, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } }
+      { $set: { slug, engSlug: slug, titleEn: source.englishTitle, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } }
     );
     updated++;
   }
