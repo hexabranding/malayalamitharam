@@ -1,7 +1,7 @@
 require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 const mongoose = require("mongoose");
 const Article = require("../models/Article");
-const { suggestNewsSlug, isCleanNewsSlug } = require("../utils/newsSlug");
+const { suggestNewsSlug, slugifyManglish, isCleanNewsSlug } = require("../utils/newsSlug");
 
 async function uniqueSlug(base, id) {
   let candidate = base;
@@ -19,7 +19,7 @@ async function migrate() {
   let updated = 0;
   let skipped = 0;
   for (const article of articles) {
-    const base = suggestNewsSlug(article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+    const base = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
     if (!base) {
       skipped++;
       console.warn(`Skipped ${article._id}: add an English title before migrating.`);

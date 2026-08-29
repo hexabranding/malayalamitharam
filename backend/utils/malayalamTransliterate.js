@@ -13,20 +13,23 @@ const MALAYALAM_MAP = {
   '\u0D2F': 'ya', '\u0D30': 'ra', '\u0D31': 'ra', '\u0D32': 'la', '\u0D33': 'la',
   '\u0D34': 'zha', '\u0D35': 'va', '\u0D36': 'sha', '\u0D37': 'sha',
   '\u0D38': 'sa', '\u0D39': 'ha',
-  '\u0D3E': 'aa', '\u0D3F': 'i', '\u0D40': 'ee',
+  '\u0D3A': '', '\u0D3B': '', '\u0D3C': '',
+  '\u0D3D': '', '\u0D3E': 'aa', '\u0D3F': 'i', '\u0D40': 'ee',
   '\u0D41': 'u', '\u0D42': 'uu', '\u0D43': 'ri', '\u0D44': 'ru',
   '\u0D46': 'e', '\u0D47': 'e', '\u0D48': 'ai',
   '\u0D4A': 'o', '\u0D4B': 'o', '\u0D4C': 'au',
-  '\u0D4D': '',
+  '\u0D4D': '', '\u0D4E': '',
+  '\u0D57': '',
   '\u0D5F': 'ee',
   '\u0D60': 'oo', '\u0D61': 'oo',
+  '\u0D66': '0', '\u0D67': '1', '\u0D68': '2', '\u0D69': '3',
+  '\u0D6A': '4', '\u0D6B': '5', '\u0D6C': '6', '\u0D6D': '7',
+  '\u0D6E': '8', '\u0D6F': '9',
 };
 
 const VIRAMA = '\u0D4D';
 
-const STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "with"]);
-
-export function transliterateMalayalam(text) {
+function transliterateMalayalam(text) {
   if (!text) return '';
   let result = '';
   const chars = [...text];
@@ -53,21 +56,4 @@ export function transliterateMalayalam(text) {
   return result;
 }
 
-export function generateSlugFromTitle(malayalamTitle) {
-  if (!malayalamTitle) return '';
-  const hasMalayalam = /[\u0D00-\u0D7F]/.test(malayalamTitle);
-  let words;
-  if (hasMalayalam) {
-    const transliterated = transliterateMalayalam(malayalamTitle);
-    words = transliterated.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
-  } else {
-    words = malayalamTitle.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
-  }
-  const meaningful = words.filter((word, index) => index === 0 || !STOP_WORDS.has(word));
-  return meaningful.slice(0, 5).join('-');
-}
-
-export function getShareUrl(article) {
-  if (article.slug) return article.slug;
-  return article.id || "";
-}
+module.exports = { transliterateMalayalam };

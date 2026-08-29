@@ -4,6 +4,7 @@ import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } 
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
+import { generateSlugFromTitle } from "../utils/transliterate.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -104,10 +105,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: type === "checkbox" ? checked : value };
+      if (name === "title" && !prev.slugManuallyEdited) {
+        next.slug = generateSlugFromTitle(value);
+      }
+      return next;
+    });
   };
 
   const handleEngSlugChange = (e) => {
@@ -267,13 +271,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>SEO Slug (URL)</label>
+              <label>SEO Slug (auto-generated from title — edit if needed)</label>
               <input
                 type="text"
                 name="slug"
                 value={formData.slug}
                 onChange={handleEngSlugChange}
-                placeholder="e.g., heavy-rain-expected-in-kerala"
+                placeholder="Auto-generated from Malayalam title"
               />
               {formData.slug && (
                 <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 13, wordBreak: "break-all" }}>
