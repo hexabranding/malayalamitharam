@@ -180,7 +180,7 @@ export default function AdminNewsPage({ navigate }) {
               <h3>{news.title}</h3>
               <p>{news.excerpt}</p>
               <div className="admin-news-actions">
-                <button className="admin-btn-icon view" onClick={() => handleView(news.engSlug || news.id)} title="View">
+                <button className="admin-btn-icon view" onClick={() => handleView(news.slug)} title="View">
                   <Eye size={16} />
                 </button>
                 <button className="admin-btn-icon edit" onClick={() => handleEdit(news.id)} title="Edit">

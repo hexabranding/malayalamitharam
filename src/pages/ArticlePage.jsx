@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
-import { fetchArticle, fetchArticleByEngSlug, fetchNews, incrementView } from "../services/api.js";
+import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -26,7 +26,7 @@ function getYoutubeEmbedUrl(url) {
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
 
-  const fallbackBySlug = fallback.find(a => a.engSlug === slug || a.slug === slug || a.id === slug);
+  const fallbackBySlug = fallback.find(a => a.slug === slug || a.id === slug);
   const fallbackById = fallback.find(a => a.id === slug);
   const fallbackArticle = fallbackBySlug || fallbackById;
 
@@ -68,7 +68,6 @@ export default function ArticlePage({ slug, navigate }) {
           return;
         }
         let data = await fetchArticle(slug);
-        if (!data) data = await fetchArticleByEngSlug(slug);
         if (!cancelled && data) {
           setArticle(data);
           registerArticle(data);
@@ -76,7 +75,7 @@ export default function ArticlePage({ slug, navigate }) {
           try {
             if (data.category) {
               const relatedData = await fetchNews({ category: data.category, limit: 50 });
-              let r = (relatedData.news || []).filter(a => (a.engSlug || a.slug) !== (data.engSlug || data.slug)).slice(0, 3);
+              let r = (relatedData.news || []).filter(a => a.slug !== data.slug).slice(0, 3);
               if (r.length === 0) {
                 r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
               }

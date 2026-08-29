@@ -9,7 +9,7 @@ export default function ArticleCard({ article, navigate, variant = "default", da
 
   useEffect(() => {
     registerArticle(article);
-  }, [article?.engSlug || article?.slug]);
+  }, [article?.slug]);
 
   const handleClick = () => {
     const slug = getTitleSlug(article);

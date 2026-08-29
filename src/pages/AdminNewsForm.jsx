@@ -4,7 +4,6 @@ import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } 
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
-import { toEnglishSlug } from "../utils/transliterate.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -20,7 +19,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     readTime: "",
     image: "",
     titleEn: "",
-    engSlug: "",
+    slug: "",
     slugManuallyEdited: false,
     featured: false,
     breaking: false,
@@ -68,8 +67,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
               readTime: found.readTime || "",
               image: found.image || "",
               titleEn: found.titleEn || "",
-              engSlug: found.engSlug || "",
-              slugManuallyEdited: !!found.engSlug,
+              slug: found.slug || "",
+              slugManuallyEdited: true,
               featured: found.featured || false,
               breaking: found.breaking || false,
               mainNews: found.mainNews || false,
@@ -112,15 +111,10 @@ export default function AdminNewsForm({ navigate, newsId }) {
       };
       if (name === "titleEn" && !prev.slugManuallyEdited) {
         if (value && value.trim()) {
-          next.engSlug = frontendSlugify(value);
-        } else if (prev.title) {
-          next.engSlug = toEnglishSlug(prev.title);
+          next.slug = frontendSlugify(value);
         } else {
-          next.engSlug = "";
+          next.slug = "";
         }
-      }
-      if (name === "title" && !prev.titleEn && !prev.slugManuallyEdited) {
-        next.engSlug = toEnglishSlug(value);
       }
       return next;
     });
@@ -130,7 +124,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
-      engSlug: value,
+      slug: frontendSlugify(value),
       slugManuallyEdited: true,
     }));
   };
@@ -277,22 +271,23 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 name="titleEn"
                 value={formData.titleEn}
                 onChange={handleChange}
+                required
                 placeholder="e.g., Heavy Rain Expected in Kerala"
               />
             </div>
 
             <div className="form-group">
-              <label>English Slug (URL)</label>
+              <label>SEO Slug (URL)</label>
               <input
                 type="text"
-                name="engSlug"
-                value={formData.engSlug}
+                name="slug"
+                value={formData.slug}
                 onChange={handleEngSlugChange}
                 placeholder="e.g., heavy-rain-expected-in-kerala"
               />
-              {formData.engSlug && (
+              {formData.slug && (
                 <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 13, wordBreak: "break-all" }}>
-                  URL Preview: /news/{formData.engSlug}
+                  URL Preview: /news/{formData.slug}
                 </small>
               )}
             </div>

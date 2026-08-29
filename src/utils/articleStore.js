@@ -37,7 +37,6 @@ export function registerArticles(articles) {
 
 export function getTitleSlug(article) {
   if (!article) return "";
-  if (article.engSlug) return article.engSlug;
   if (article.slug) return article.slug;
   return article.id || "";
 }
@@ -46,7 +45,6 @@ export function getArticleBySlug(slug) {
   if (!slug) return null;
   const cache = getArticlesCache();
   return cache.find(a => {
-    if (a.engSlug === slug) return true;
     if (a.slug === slug) return true;
     if (a.id === slug) return true;
     return false;
