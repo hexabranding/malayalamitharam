@@ -107,12 +107,12 @@ export async function createCategory(data) {
   return request("/categories", { method: "POST", headers: headers(), body: JSON.stringify(data) });
 }
 
-export async function updateCategory(id, data) {
-  return request("/categories/" + encodeURIComponent(id), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
+export async function updateCategory(slug, data) {
+  return request("/categories/" + encodeURIComponent(slug), { method: "PUT", headers: headers(), body: JSON.stringify(data) });
 }
 
-export async function deleteCategory(id) {
-  return request("/categories/" + encodeURIComponent(id), { method: "DELETE", headers: headers() });
+export async function deleteCategory(slug) {
+  return request("/categories/" + encodeURIComponent(slug), { method: "DELETE", headers: headers() });
 }
 
 // Auth

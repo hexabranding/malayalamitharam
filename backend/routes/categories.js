@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
     const withCounts = await Promise.all(
       categories.map(async (cat) => ({
         ...cat,
-        count: await Article.countDocuments({ category: cat.id, published: true }),
+        count: await Article.countDocuments({ category: cat.slug, published: true }),
       }))
     );
 
@@ -33,25 +33,25 @@ router.get("/", async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { id, label, slug, titleMl, parent } = req.body;
-    if (!id || !label || !slug) {
-      return res.status(400).json({ error: "id, label, and slug are required" });
+    const { label, slug, titleMl, parent } = req.body;
+    if (!label || !slug) {
+      return res.status(400).json({ error: "label and slug are required" });
     }
-    const existing = await Category.findOne({ $or: [{ id }, { slug }] });
+    const existing = await Category.findOne({ slug });
     if (existing) {
       return res.status(409).json({ error: "Category already exists" });
     }
-    const cat = await Category.create({ id, label, slug, titleMl: titleMl || "", parent: parent || null });
+    const cat = await Category.create({ label, slug, titleMl: titleMl || "", parent: parent || null });
     res.status(201).json(cat);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
 });
 
-router.put("/:id", authMiddleware, async (req, res) => {
+router.put("/:slug", authMiddleware, async (req, res) => {
   try {
     const cat = await Category.findOneAndUpdate(
-      { id: req.params.id },
+      { slug: req.params.slug },
       { ...req.body },
       { new: true, runValidators: true }
     );
@@ -62,14 +62,23 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:slug", authMiddleware, async (req, res) => {
   try {
-    const cat = await Category.findOneAndDelete({ id: req.params.id });
+    const cat = await Category.findOneAndDelete({ slug: req.params.slug });
     if (!cat) return res.status(404).json({ error: "Category not found" });
     if (cat.parent === null) {
       await Category.deleteMany({ parent: cat.slug });
     }
     res.json({ message: "Category deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/migrate", authMiddleware, async (req, res) => {
+  try {
+    const result = await Category.updateMany({}, { $unset: { id: "" } });
+    res.json({ message: "Migration complete", modified: result.modifiedCount });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }

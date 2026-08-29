@@ -103,10 +103,9 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const handleAddSubcategory = async (groupSlug) => {
     const slug = `new-${Date.now()}`;
-    const id = slug;
     setSaving(true);
     try {
-      await createCategory({ id, label: "New Category", slug, titleMl: "New", parent: groupSlug });
+      await createCategory({ label: "New Category", slug, titleMl: "New", parent: groupSlug });
       await refresh();
       setEditingId(`child-${groupSlug}__${slug}`);
       setEditLabel("New Category");
@@ -120,10 +119,9 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const handleAddGroup = async () => {
     const slug = `new-group-${Date.now()}`;
-    const id = slug;
     setSaving(true);
     try {
-      await createCategory({ id, label: "New Group", slug, titleMl: "" });
+      await createCategory({ label: "New Group", slug, titleMl: "" });
       await refresh();
       setEditingId(`group-${slug}`);
       setEditLabel("New Group");

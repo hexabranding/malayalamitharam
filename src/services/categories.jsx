@@ -32,12 +32,10 @@ function buildSlugMap(groups) {
   for (const g of groups) {
     if (g.label) {
       map[g.slug] = g.titleMl || g.label;
-      map[g.id] = g.titleMl || g.label;
     }
     for (const c of (g.children || [])) {
       if (c.label) {
         map[c.slug] = c.titleMl || c.label;
-        map[c.id] = c.titleMl || c.label;
       }
     }
   }
