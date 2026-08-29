@@ -132,7 +132,6 @@ export default function AdminDashboard({ navigate }) {
                 <div key={category} className="category-stat">
                   <div className="category-stat-header">
                     <span className="category-name">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                    <span className="category-count">{count} articles</span>
                   </div>
                   <div className="category-progress">
                     <div

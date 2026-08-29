@@ -213,7 +213,6 @@ export default function AdminNewsPage({ navigate }) {
           <span>Featured</span>
         </div>
         <div className="stat-card">
-          <strong>{categories.length - 1}</strong>
           <span>Categories</span>
         </div>
         <div className="stat-card">

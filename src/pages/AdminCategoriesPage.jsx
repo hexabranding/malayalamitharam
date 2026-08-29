@@ -248,11 +248,9 @@ export default function AdminCategoriesPage({ navigate }) {
 
       <div className="admin-stats">
         <div className="stat-card">
-          <strong>{categories.length}</strong>
           <span>Category Groups</span>
         </div>
         <div className="stat-card">
-          <strong>{categories.reduce((acc, g) => acc + (g.children?.length || 0), 0)}</strong>
           <span>Subcategories</span>
         </div>
       </div>
