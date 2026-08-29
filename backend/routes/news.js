@@ -167,6 +167,15 @@ router.get("/:slug", async (req, res) => {
     const article = await findArticleBySlug(req.params.slug, isAdmin);
     if (!article) return res.status(404).json({ error: "Article not found" });
     if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
+
+    // Auto-generate engSlug for old articles missing it
+    if (!article.engSlug && article.title) {
+      const baseEngSlug = generateEngSlug(article.title, article.titleEn);
+      const engSlug = await ensureUniqueSlug(baseEngSlug, article._id);
+      await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
+      article.engSlug = engSlug;
+    }
+
     res.json(article.toJSON());
   } catch (err) {
     res.status(500).json({ error: "Server error" });
@@ -288,7 +297,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
 router.post("/migrate-engslug", authMiddleware, async (req, res) => {
   try {
-    const articles = await Article.find({});
+    const articles = await Article.find({ $or: [{ engSlug: { $exists: false } }, { engSlug: "" }, { engSlug: null }] });
     let updated = 0;
     for (const article of articles) {
       const baseEngSlug = generateEngSlug(article.title, article.titleEn);

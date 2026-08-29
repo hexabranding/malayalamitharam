@@ -40,9 +40,9 @@ export function registerArticles(articles) {
 export function getTitleSlug(article) {
   if (!article) return "";
   if (article.engSlug) return article.engSlug;
-  if (article.slug) return article.slug;
   const engSlug = toEnglishSlug(article.title);
   if (engSlug) return engSlug;
+  if (article.slug) return article.slug;
   return article.id || "";
 }
 
