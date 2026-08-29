@@ -18,8 +18,11 @@ const MALAYALAM_MAP = {
   '\u0D46': 'e', '\u0D47': 'e', '\u0D48': 'ai',
   '\u0D4A': 'o', '\u0D4B': 'o', '\u0D4C': 'au',
   '\u0D4D': '',
+  '\u0D57': '',
   '\u0D5F': 'ee',
   '\u0D60': 'oo', '\u0D61': 'oo',
+  '\u0D7A': 'n', '\u0D7B': 'n', '\u0D7C': 'r', '\u0D7D': 'l', '\u0D7E': 'l', '\u0D7F': 'k',
+  '\u200C': '', '\u200D': '',
 };
 
 const VIRAMA = '\u0D4D';
