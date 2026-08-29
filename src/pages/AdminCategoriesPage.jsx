@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X, Loader2 } from "lucide-react";
 import { loadMenuGroups, createCategory, updateCategory, deleteCategory, clearMenuCache } from "../services/api.js";
+import { slugify as frontendSlugify } from "../utils/slugify.js";
 import AdminPagination from "../components/AdminPagination.jsx";
 
 export default function AdminCategoriesPage({ navigate }) {
@@ -9,6 +10,7 @@ export default function AdminCategoriesPage({ navigate }) {
   const [editingId, setEditingId] = useState(null);
   const [editLabel, setEditLabel] = useState("");
   const [editMl, setEditMl] = useState("");
+  const [editSlug, setEditSlug] = useState("");
   const [expandedGroups, setExpandedGroups] = useState({});
   const [saving, setSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,31 +34,35 @@ export default function AdminCategoriesPage({ navigate }) {
     setExpandedGroups(prev => ({ ...prev, [slug]: !prev[slug] }));
   };
 
-  function startEdit(id, label, ml) {
+  function startEdit(id, label, ml, slug) {
     setEditingId(id);
     setEditLabel(label);
     setEditMl(ml || "");
+    setEditSlug(slug || "");
   }
 
   function cancelEdit() {
     setEditingId(null);
     setEditLabel("");
     setEditMl("");
+    setEditSlug("");
   }
 
   async function saveEdit() {
     if (!editLabel.trim()) return;
+    const newSlug = editSlug.trim() || frontendSlugify(editLabel);
+    if (!newSlug) return;
     setSaving(true);
     try {
       if (editingId.startsWith("group-")) {
-        const slug = editingId.replace("group-", "");
-        await updateCategory(slug, { label: editLabel.trim(), titleMl: editMl.trim() });
+        const oldSlug = editingId.replace("group-", "");
+        await updateCategory(oldSlug, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
       } else if (editingId.startsWith("child-")) {
         const raw = editingId.replace("child-", "");
         const sepIdx = raw.indexOf("__");
         const groupSlug = raw.substring(0, sepIdx);
         const childSlug = raw.substring(sepIdx + 2);
-        await updateCategory(childSlug, { label: editLabel.trim(), titleMl: editMl.trim() });
+        await updateCategory(childSlug, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
       }
       await refresh();
     } catch (err) {
@@ -68,13 +74,13 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const handleEditGroup = (slug) => {
     const g = categories.find(c => c.slug === slug);
-    startEdit(`group-${slug}`, g?.label || "", g?.titleMl || "");
+    startEdit(`group-${slug}`, g?.label || "", g?.titleMl || "", slug);
   };
 
   const handleEditChild = (groupSlug, childSlug) => {
     const g = categories.find(c => c.slug === groupSlug);
     const c = g?.children?.find(ch => ch.slug === childSlug);
-    startEdit(`child-${groupSlug}__${childSlug}`, c?.label || "", c?.titleMl || "");
+    startEdit(`child-${groupSlug}__${childSlug}`, c?.label || "", c?.titleMl || "", childSlug);
   };
 
   const handleDeleteGroup = async (slug) => {
@@ -160,8 +166,9 @@ export default function AdminCategoriesPage({ navigate }) {
             <div className="category-group-header">
               {editingId === `group-${group.slug}` ? (
                 <div className="crud-edit-row" style={{ flex: 1 }}>
-                  <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="English" autoFocus />
+                  <input value={editLabel} onChange={e => { setEditLabel(e.target.value); if (!editSlug || editSlug === frontendSlugify(editLabel)) setEditSlug(frontendSlugify(e.target.value)); }} placeholder="English" autoFocus />
                   <input value={editMl} onChange={e => setEditMl(e.target.value)} placeholder="Malayalam" />
+                  <input value={editSlug} onChange={e => setEditSlug(e.target.value)} placeholder="URL slug" style={{ flex: 0.7 }} />
                   <button className="admin-btn-icon edit" onClick={saveEdit} disabled={saving}><Check size={16} /></button>
                   <button className="admin-btn-icon delete" onClick={cancelEdit}><X size={16} /></button>
                 </div>
@@ -198,8 +205,9 @@ export default function AdminCategoriesPage({ navigate }) {
                   <div key={child.slug} className="category-child">
                     {editingId === `child-${group.slug}__${child.slug}` ? (
                       <div className="crud-edit-row" style={{ flex: 1, paddingLeft: 32 }}>
-                        <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="English" autoFocus />
+                        <input value={editLabel} onChange={e => { setEditLabel(e.target.value); if (!editSlug || editSlug === frontendSlugify(editLabel)) setEditSlug(frontendSlugify(e.target.value)); }} placeholder="English" autoFocus />
                         <input value={editMl} onChange={e => setEditMl(e.target.value)} placeholder="Malayalam" />
+                        <input value={editSlug} onChange={e => setEditSlug(e.target.value)} placeholder="URL slug" style={{ flex: 0.7 }} />
                         <button className="admin-btn-icon edit" onClick={saveEdit} disabled={saving}><Check size={16} /></button>
                         <button className="admin-btn-icon delete" onClick={cancelEdit}><X size={16} /></button>
                       </div>

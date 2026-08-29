@@ -160,7 +160,7 @@ const displayRelated = related.length >= 1
         {(article.relatedVideos?.length > 0 || article.videoUrl) && (
           <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
             <h4 className="article-video-title">
-              <Play size={18} /> വീഡിയോകൾ (Videos)
+              <Play size={20} /> വീഡിയോകൾ (Videos)
             </h4>
             <div className="article-video-container">
               {showVideo && selectedVideo ? (
@@ -183,7 +183,7 @@ const displayRelated = related.length >= 1
                     >
                       <div className="article-video-thumb">
                         {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                        <div className="article-video-play"><Play size={24} fill="#fff" /></div>
+                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{article.title}</span>
                     </div>
@@ -196,7 +196,7 @@ const displayRelated = related.length >= 1
                     >
                       <div className="article-video-thumb">
                         {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                        <div className="article-video-play"><Play size={24} fill="#fff" /></div>
+                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
                       </div>
                       <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
                     </div>

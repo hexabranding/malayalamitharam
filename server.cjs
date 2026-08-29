@@ -229,7 +229,12 @@ async function findArticleFromDB(slug) {
 
     if (Article.db.readyState !== 1) {
       try {
-        const BASE = (process.env.VITE_API_URL || "https://api.malayalamitharam.in/api").replace(/\/+$/, "");
+        // VITE_API_URL is meant for the browser build and may be a relative
+// path like "/api" (same-origin). Node's server-side fetch needs an
+// absolute URL, so ignore relative values here and use a dedicated
+// absolute base instead.
+const isAbsolute = process.env.VITE_API_URL && /^https?:\/\//i.test(process.env.VITE_API_URL);
+const BASE = (process.env.API_BASE_URL || (isAbsolute ? process.env.VITE_API_URL : null) || "https://api.malayalamitharam.in/api").replace(/\/+$/, "");
         const res = await fetch(`${BASE}/news/${encodeURIComponent(slug)}`);
         if (res.ok) {
           return await res.json();
@@ -318,7 +323,7 @@ app.get("/search", spa);
 app.get("/news", spa);
 app.get("/login", spa);
 app.get("/admin", spa);
-app.get("/admin/*", spa);
+app.get("/admin/*splat", spa);
 
 app.use(spa);
 

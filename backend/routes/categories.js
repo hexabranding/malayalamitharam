@@ -50,13 +50,27 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.put("/:slug", authMiddleware, async (req, res) => {
   try {
-    const cat = await Category.findOneAndUpdate(
-      { slug: req.params.slug },
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
+    const oldSlug = req.params.slug;
+    const newSlug = req.body.slug || oldSlug;
+    const cat = await Category.findOne({ slug: oldSlug });
     if (!cat) return res.status(404).json({ error: "Category not found" });
-    res.json(cat);
+
+    const updateData = { ...req.body };
+    delete updateData.slug;
+
+    if (newSlug !== oldSlug) {
+      const existing = await Category.findOne({ slug: newSlug });
+      if (existing) return res.status(409).json({ error: "A category with this slug already exists" });
+
+      await Category.updateOne({ slug: oldSlug }, { slug: newSlug, ...updateData });
+      await Article.updateMany({ category: oldSlug }, { $set: { category: newSlug } });
+      await Article.updateMany({ categories: oldSlug }, { $set: { "categories.$": newSlug } });
+    } else {
+      await Category.updateOne({ slug: oldSlug }, updateData);
+    }
+
+    const updated = await Category.findOne({ slug: newSlug });
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
