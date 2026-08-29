@@ -55,7 +55,8 @@ function generateEngSlug(title, titleEn) {
     const slug = slugify(titleEn);
     if (slug) return slug;
   }
-  return toEnglishSlug(title) || "post-" + Date.now().toString(36);
+  const cat = "news";
+  return cat + "-" + Date.now().toString(36);
 }
 
 async function ensureUniqueSlug(baseSlug, excludeId) {
@@ -297,13 +298,22 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
 router.post("/migrate-engslug", authMiddleware, async (req, res) => {
   try {
-    const articles = await Article.find({ $or: [{ engSlug: { $exists: false } }, { engSlug: "" }, { engSlug: null }] });
+    const articles = await Article.find({});
     let updated = 0;
     for (const article of articles) {
-      const baseEngSlug = generateEngSlug(article.title, article.titleEn);
+      let baseEngSlug;
+      if (article.titleEn && article.titleEn.trim()) {
+        baseEngSlug = slugify(article.titleEn);
+      }
+      if (!baseEngSlug) {
+        const cat = (article.category || "").toLowerCase().replace(/[^\w]/g, "");
+        baseEngSlug = (cat ? cat + "-" : "") + "news-" + article._id.toString().slice(-6);
+      }
       const engSlug = await ensureUniqueSlug(baseEngSlug, article._id);
-      await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
-      updated++;
+      if (engSlug !== article.engSlug) {
+        await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
+        updated++;
+      }
     }
     res.json({ message: "Migration complete", updated, total: articles.length });
   } catch (err) {

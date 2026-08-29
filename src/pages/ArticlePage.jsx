@@ -48,58 +48,57 @@ export default function ArticlePage({ slug, navigate }) {
   });
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
+      setLoading(true);
+      setArticle(null);
+      setRelated([]);
       try {
         if (fallbackArticle) {
-          const cat = fallbackArticle.category || "";
-          let items = fallback.filter(a => a.category === cat && a.id !== fallbackArticle.id);
-          if (items.length === 0) {
-            items = fallback.filter(a => a.id !== fallbackArticle.id);
+          if (!cancelled) {
+            setArticle(fallbackArticle);
+            const cat = fallbackArticle.category || "";
+            let items = fallback.filter(a => a.category === cat && a.id !== fallbackArticle.id);
+            if (items.length === 0) {
+              items = fallback.filter(a => a.id !== fallbackArticle.id);
+            }
+            setRelated(items.slice(0, 3));
+            setLoading(false);
           }
-          setRelated(items.slice(0, 3));
           return;
         }
         let data = await fetchArticle(slug);
-        if (!data) {
-          data = await fetchArticleByEngSlug(slug);
-        }
-        if (!data) {
-          data = await fetchArticle(slug);
-        }
-        if (data) {
+        if (!data) data = await fetchArticleByEngSlug(slug);
+        if (!cancelled && data) {
           setArticle(data);
           registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});
           try {
             if (data.category) {
               const relatedData = await fetchNews({ category: data.category, limit: 50 });
-              let r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
+              let r = (relatedData.news || []).filter(a => (a.engSlug || a.slug) !== (data.engSlug || data.slug)).slice(0, 3);
               if (r.length === 0) {
-                r = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
-              }
-              if (r.length === 0) {
-                r = fallback.filter(a => a.id !== data.id).slice(0, 3);
+                r = (relatedData.news || []).filter(a => a.id !== data.id).slice(0, 3);
               }
               setRelated(r);
-            } else {
-              setRelated(fallback.filter(a => a.id !== data.id).slice(0, 3));
             }
           } catch {
-            const cat = data.category || "";
-            let items = fallback.filter(a => a.category === cat && a.id !== data.id).slice(0, 3);
-            if (items.length === 0) {
-              items = fallback.filter(a => a.id !== data.id).slice(0, 3);
+            if (data.category) {
+              let items = fallback.filter(a => a.category === data.category && a.id !== data.id).slice(0, 3);
+              setRelated(items);
             }
-            setRelated(items);
           }
+        } else if (!cancelled) {
+          setArticle(null);
         }
       } catch (err) {
-        if (!fallbackArticle && !cachedArticle) setArticle(null);
+        if (!cancelled && !fallbackArticle && !cachedArticle) setArticle(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     if (slug) load();
+    return () => { cancelled = true; };
   }, [slug]);
 
   if (loading) {

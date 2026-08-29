@@ -9,15 +9,12 @@ export default function ArticleCard({ article, navigate, variant = "default", da
 
   useEffect(() => {
     registerArticle(article);
-  }, [article?.id]);
+  }, [article?.engSlug || article?.slug]);
 
-  const postSlug = getTitleSlug(article);
   const handleClick = () => {
     const slug = getTitleSlug(article);
     if (slug) {
       navigate("/news/" + slug);
-    } else if (article.id) {
-      navigate("/news/" + article.id);
     }
   };
   return (

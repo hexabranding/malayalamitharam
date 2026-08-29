@@ -241,7 +241,7 @@ export default function App() {
       const slug = path.replace("/post/", "");
       return <ArticlePage slug={slug} navigate={navigate} />;
     }
-    if (path.startsWith("/news/")) return <ArticlePage slug={path.replace("/news/", "")} navigate={navigate} />;
+    if (path.startsWith("/news/")) return <ArticlePage key={path} slug={path.replace("/news/", "")} navigate={navigate} />;
     if (path.startsWith("/search")) return <SearchPage path={path} navigate={navigate} />;
     if (path.startsWith("/tags/")) return <TagsPage tag={decodeURIComponent(path.replace("/tags/", ""))} navigate={navigate} />;
     if (path === "/contact") return <ContactPage navigate={navigate} />;

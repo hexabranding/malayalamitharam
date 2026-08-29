@@ -38,5 +38,6 @@ export function toEnglishSlug(text) {
 
 export function getShareUrl(article) {
   if (article.engSlug) return article.engSlug;
-  return toEnglishSlug(article.title || "") || article.slug || "";
+  if (article.slug) return article.slug;
+  return article.id || "";
 }
