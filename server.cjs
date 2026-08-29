@@ -44,6 +44,40 @@ app.use(cors({
 
 app.use(express.static(distPath, { index: false }));
 
+// OG image proxy — serves article images from the SAME domain so social
+// crawlers (WhatsApp, Facebook, Twitter) can fetch them without cross-origin
+// issues.  The image is fetched from the API host and streamed back with a
+// long cache.
+app.get("/og-image", async (req, res) => {
+  try {
+    const src = String(req.query.src || "").trim();
+    if (!src) return res.status(400).end();
+
+    let imageUrl;
+    if (src.startsWith("http")) {
+      imageUrl = src;
+    } else if (src.startsWith("/uploads/")) {
+      imageUrl = UPLOADS_URL + src;
+    } else if (src.startsWith("/")) {
+      imageUrl = SITE_URL + src;
+    } else {
+      imageUrl = SITE_URL + "/" + src;
+    }
+
+    const upstream = await fetch(imageUrl, { redirect: "follow" });
+    if (!upstream.ok) return res.status(404).end();
+
+    const contentType = upstream.headers.get("content-type") || "image/jpeg";
+    res.set("Content-Type", contentType);
+    res.set("Cache-Control", "public, max-age=86400");
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.send(buf);
+  } catch (err) {
+    console.error("[OG-IMAGE] proxy error:", err.message);
+    res.status(502).end();
+  }
+});
+
 function esc(str) {
   return String(str || "")
     .replace(/&/g, "&amp;")
@@ -108,8 +142,19 @@ function buildArticleMeta(article) {
   let description = articleDescription(article);
   if (!description) description = title;
   const rawImage = (article.image || article.thumbnail || "").trim();
-  const image = resolveAbsoluteImage(rawImage || DEFAULT_SOCIAL_IMAGE);
-  const url = `${SITE_URL}/news/${encodeURIComponent(article.slug)}`;
+
+  // Build an absolute image URL for social crawlers.
+  // For /uploads/ images we route through the same-domain /og-image proxy so
+  // WhatsApp/Facebook don't hit cross-origin issues.  For other relative paths
+  // we fall back to the direct absolute URL.
+  let image;
+  if (rawImage && rawImage.startsWith("/uploads/")) {
+    image = `${SITE_URL}/og-image?src=${encodeURIComponent(rawImage)}`;
+  } else {
+    image = resolveAbsoluteImage(rawImage || DEFAULT_SOCIAL_IMAGE);
+  }
+
+  const url = `${SITE_URL}/news/${article.slug || ""}`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
