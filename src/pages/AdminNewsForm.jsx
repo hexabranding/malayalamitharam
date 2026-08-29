@@ -262,14 +262,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>English Title</label>
+              <label>English Title (optional — if empty, Malayalam title will be auto-transliterated to English URL)</label>
               <input
                 type="text"
                 name="titleEn"
                 value={formData.titleEn}
                 onChange={handleChange}
-                required
-                placeholder="e.g., Heavy Rain Expected in Kerala"
+                placeholder="e.g., Heavy Rain Expected in Kerala — leave empty to auto-convert Malayalam"
               />
             </div>
 

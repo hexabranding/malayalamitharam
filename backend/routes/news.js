@@ -117,8 +117,8 @@ router.get("/:slug", async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, titleEn, slug: requestedSlug, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
-    if (!title || !titleEn || !category || !content) {
-      return res.status(400).json({ error: "title, English title, category, and content are required" });
+    if (!title || !category || !content) {
+      return res.status(400).json({ error: "title, category, and content are required" });
     }
     let baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(title, titleEn);
     if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---")) {
