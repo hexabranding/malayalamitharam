@@ -1,6 +1,7 @@
 const express = require("express");
 const Article = require("../models/Article");
 const { authMiddleware } = require("../middleware/auth");
+const { slugifyEnglish, suggestNewsSlug, isCleanNewsSlug } = require("../utils/newsSlug");
 
 const router = express.Router();
 
@@ -10,60 +11,12 @@ function getRandomBgColor() {
   return BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)];
 }
 
-function slugify(text) {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
-}
-
-const ML_MAP = {
-  "\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii",
-  "\u0D09":"u","\u0D0A":"uu","\u0D0B":"ru",
-  "\u0D0E":"e","\u0D0F":"ee","\u0D10":"ai",
-  "\u0D12":"o","\u0D13":"oo","\u0D14":"ou",
-  "\u0D15":"ka","\u0D16":"kha","\u0D17":"ga","\u0D18":"gha","\u0D19":"nga",
-  "\u0D1A":"cha","\u0D1B":"chha","\u0D1C":"ja","\u0D1D":"jha","\u0D1E":"nya",
-  "\u0D1F":"ta","\u0D20":"tha","\u0D21":"da","\u0D22":"dha","\u0D23":"na",
-  "\u0D24":"th","\u0D25":"thh","\u0D26":"d","\u0D27":"dh","\u0D28":"n",
-  "\u0D2A":"p","\u0D2B":"f","\u0D2C":"b","\u0D2D":"bh","\u0D2E":"m",
-  "\u0D2F":"y","\u0D30":"r","\u0D32":"l","\u0D35":"v",
-  "\u0D36":"sh","\u0D37":"sh","\u0D38":"s","\u0D39":"h",
-  "\u0D33":"l","\u0D34":"zh","\u0D31":"r",
-  "\u0D3E":"a","\u0D3F":"i","\u0D41":"u","\u0D42":"oo","\u0D43":"ru",
-  "\u0D46":"e","\u0D47":"ee","\u0D48":"ai","\u0D4A":"o","\u0D4B":"oo","\u0D4C":"ou",
-  "\u0D02":"","\u0D03":"",
-};
-
-function toEnglishSlug(text) {
-  if (!text) return "";
-  let r = "";
-  for (const ch of text) {
-    if (ML_MAP[ch]) r += ML_MAP[ch];
-    else if (/[a-zA-Z0-9]/.test(ch)) r += ch;
-    else if (ch === " " || ch === "-" || ch === "_") r += "-";
-  }
-  return r.toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120);
-}
-
-function generateEngSlug(title, titleEn) {
-  if (titleEn && titleEn.trim()) {
-    const slug = slugify(titleEn);
-    if (slug) return slug;
-  }
-  return toEnglishSlug(title) || "post-" + Date.now().toString(36);
-}
-
 async function ensureUniqueSlug(baseSlug, excludeId) {
   let candidate = baseSlug;
   let counter = 2;
   while (true) {
     const existing = await Article.findOne({
-      engSlug: candidate,
+      slug: candidate,
       ...(excludeId ? { _id: { $ne: excludeId } } : {}),
     });
     if (!existing) return candidate;
@@ -75,18 +28,18 @@ async function ensureUniqueSlug(baseSlug, excludeId) {
 async function findArticleBySlug(slugParam, isAdmin) {
   const filter = isAdmin ? {} : { published: true };
 
-  let article = await Article.findOne({ ...filter, engSlug: slugParam });
+  let article = await Article.findOne({ ...filter, slug: slugParam });
   if (article) return article;
 
-  article = await Article.findOne({ ...filter, slug: slugParam });
+  article = await Article.findOne({ ...filter, legacySlugs: slugParam });
   if (article) return article;
 
   try {
     const decoded = decodeURIComponent(slugParam);
     if (decoded !== slugParam) {
-      article = await Article.findOne({ ...filter, engSlug: decoded });
-      if (article) return article;
       article = await Article.findOne({ ...filter, slug: decoded });
+      if (article) return article;
+      article = await Article.findOne({ ...filter, legacySlugs: decoded });
       if (article) return article;
     }
   } catch {}
@@ -136,19 +89,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/eng-slug/:slug", async (req, res) => {
-  try {
-    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
-    const article = await Article.findOne(
-      isAdmin ? { engSlug: req.params.slug } : { engSlug: req.params.slug, published: true }
-    );
-    if (!article) return res.status(404).json({ error: "Article not found" });
-    res.json(article.toJSON());
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
 router.get("/slug/:slug", async (req, res) => {
   try {
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
@@ -168,14 +108,6 @@ router.get("/:slug", async (req, res) => {
     if (!article) return res.status(404).json({ error: "Article not found" });
     if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
 
-    // Auto-generate engSlug for old articles missing it
-    if (!article.engSlug && article.title) {
-      const baseEngSlug = generateEngSlug(article.title, article.titleEn);
-      const engSlug = await ensureUniqueSlug(baseEngSlug, article._id);
-      await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
-      article.engSlug = engSlug;
-    }
-
     res.json(article.toJSON());
   } catch (err) {
     res.status(500).json({ error: "Server error" });
@@ -184,25 +116,18 @@ router.get("/:slug", async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, titleEn, engSlug: adminEngSlug, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
-    if (!title || !category || !content) {
-      return res.status(400).json({ error: "title, category, and content are required" });
+    const { title, titleEn, slug: requestedSlug, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
+    if (!title || !titleEn || !category || !content) {
+      return res.status(400).json({ error: "title, English title, category, and content are required" });
     }
-
-    const titlePart = slugify(titleEn || title) || "post";
-    const slug = slugify(category) + "-" + titlePart + "-" + Date.now().toString(36);
-    let engSlug;
-    if (adminEngSlug && adminEngSlug.trim()) {
-      engSlug = await ensureUniqueSlug(slugify(adminEngSlug));
-    } else {
-      const baseEngSlug = generateEngSlug(title, titleEn);
-      engSlug = await ensureUniqueSlug(baseEngSlug);
-    }
+    const baseSlug = slugifyEnglish(requestedSlug) || suggestNewsSlug(titleEn);
+    if (!baseSlug) return res.status(400).json({ error: "Enter a valid English slug" });
+    const slug = await ensureUniqueSlug(baseSlug);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
       slug,
-      engSlug,
+      engSlug: slug,
       title,
       titleEn: titleEn || "",
       category,
@@ -243,16 +168,21 @@ router.put("/:id", authMiddleware, async (req, res) => {
       ? { _id: req.params.id }
       : { slug: req.params.id };
     const updateData = { ...req.body, updatedAt: new Date().toISOString() };
-    if (req.body.engSlug && req.body.engSlug.trim()) {
-      const existing = await Article.findOne(filter);
-      const excludeId = existing ? existing._id : null;
-      updateData.engSlug = await ensureUniqueSlug(slugify(req.body.engSlug), excludeId);
-    } else if (req.body.title || req.body.titleEn) {
-      const baseEngSlug = generateEngSlug(req.body.title, req.body.titleEn);
-      const existing = await Article.findOne(filter);
-      const excludeId = existing ? existing._id : null;
-      updateData.engSlug = await ensureUniqueSlug(baseEngSlug, excludeId);
+    const existing = await Article.findOne(filter);
+    if (!existing) return res.status(404).json({ error: "Article not found" });
+    const requestedSlug = req.body.slug !== undefined ? req.body.slug : (req.body.engSlug || "");
+    if (requestedSlug || req.body.titleEn) {
+      const baseSlug = slugifyEnglish(requestedSlug) || suggestNewsSlug(req.body.titleEn || existing.titleEn);
+      if (!baseSlug) return res.status(400).json({ error: "An English title or valid slug is required" });
+      const slug = await ensureUniqueSlug(baseSlug, existing._id);
+      updateData.slug = slug;
+      updateData.engSlug = slug;
+      if (slug !== existing.slug) {
+        updateData.legacySlugs = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
+      }
     }
+    delete updateData.legacySlugs;
+    delete updateData.slugManuallyEdited;
     const article = await Article.findOneAndUpdate(
       filter,
       updateData,
@@ -295,39 +225,20 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/migrate-engslug", authMiddleware, async (req, res) => {
+router.post("/migrate-slugs", authMiddleware, async (req, res) => {
   try {
-    const ML = {"\u0D05":"a","\u0D06":"aa","\u0D07":"i","\u0D08":"ii","\u0D09":"u","\u0D0A":"uu","\u0D0B":"ru","\u0D0E":"e","\u0D0F":"ee","\u0D10":"ai","\u0D12":"o","\u0D13":"oo","\u0D14":"ou","\u0D15":"ka","\u0D16":"kha","\u0D17":"ga","\u0D18":"gha","\u0D19":"nga","\u0D1A":"cha","\u0D1B":"chha","\u0D1C":"ja","\u0D1D":"jha","\u0D1E":"nya","\u0D1F":"ta","\u0D20":"tha","\u0D21":"da","\u0D22":"dha","\u0D23":"na","\u0D24":"th","\u0D25":"thh","\u0D26":"d","\u0D27":"dh","\u0D28":"n","\u0D2A":"p","\u0D2B":"f","\u0D2C":"b","\u0D2D":"bh","\u0D2E":"m","\u0D2F":"y","\u0D30":"r","\u0D32":"l","\u0D35":"v","\u0D36":"sh","\u0D37":"sh","\u0D38":"s","\u0D39":"h","\u0D33":"l","\u0D34":"zh","\u0D31":"r","\u0D3E":"a","\u0D3F":"i","\u0D41":"u","\u0D42":"oo","\u0D43":"ru","\u0D46":"e","\u0D47":"ee","\u0D48":"ai","\u0D4A":"o","\u0D4B":"oo","\u0D4C":"ou","\u0D02":"","\u0D03":""};
-    function transliterate(text) {
-      if (!text) return "";
-      let r = "";
-      for (const ch of text) {
-        if (ML[ch]) r += ML[ch];
-        else if (/[a-zA-Z0-9]/.test(ch)) r += ch;
-        else if (ch === " " || ch === "-" || ch === "_") r += "-";
-      }
-      return r.toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120);
-    }
     const articles = await Article.find({});
-    let updated = 0;
+    let updated = 0, skipped = 0;
     for (const article of articles) {
-      let baseEngSlug;
-      if (article.titleEn && article.titleEn.trim()) {
-        baseEngSlug = slugify(article.titleEn);
-      }
-      if (!baseEngSlug) {
-        baseEngSlug = transliterate(article.title);
-      }
-      if (!baseEngSlug) {
-        baseEngSlug = "post-" + Date.now().toString(36);
-      }
-      const engSlug = await ensureUniqueSlug(baseEngSlug, article._id);
-      if (engSlug !== article.engSlug) {
-        await Article.updateOne({ _id: article._id }, { $set: { engSlug } });
+      const baseSlug = suggestNewsSlug(article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+      if (!baseSlug) { skipped++; continue; }
+      const slug = await ensureUniqueSlug(baseSlug, article._id);
+      if (slug !== article.slug) {
+        await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
         updated++;
       }
     }
-    res.json({ message: "Migration complete", updated, total: articles.length });
+    res.json({ message: "Migration complete", updated, skipped, total: articles.length });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }

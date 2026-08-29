@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 
 const articleSchema = new mongoose.Schema({
   slug: { type: String, unique: true, index: true },
+  // Previous public URLs are retained solely for permanent redirects.
+  legacySlugs: [{ type: String, index: true }],
   engSlug: { type: String, default: "", index: true, sparse: true },
   title: { type: String, required: true },
   titleEn: { type: String, default: "" },
