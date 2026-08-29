@@ -120,9 +120,12 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!title || !titleEn || !category || !content) {
       return res.status(400).json({ error: "title, English title, category, and content are required" });
     }
-    const baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(title, titleEn);
+    let baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(title, titleEn);
+    if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---")) {
+      baseSlug = slugifyManglish(title, titleEn);
+    }
     if (!baseSlug) return res.status(400).json({ error: "Enter a valid English slug or title" });
-    const slug = baseSlug;
+    const slug = await ensureUniqueSlug(baseSlug);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
@@ -171,18 +174,24 @@ router.put("/:id", authMiddleware, async (req, res) => {
     const existing = await Article.findOne(filter);
     if (!existing) return res.status(404).json({ error: "Article not found" });
     const requestedSlug = req.body.slug !== undefined ? req.body.slug : (req.body.engSlug || "");
-    if (requestedSlug || req.body.titleEn) {
-      const baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(req.body.title || existing.title, req.body.titleEn || existing.titleEn);
+    const shouldUpdateSlug = requestedSlug || req.body.titleEn || req.body.title;
+    let computedLegacy = null;
+    if (shouldUpdateSlug) {
+      let baseSlug = slugifyEnglish(requestedSlug) || slugifyManglish(req.body.title || existing.title, req.body.titleEn || existing.titleEn);
+      if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---") || !isCleanNewsSlug(baseSlug)) {
+        baseSlug = slugifyManglish(req.body.title || existing.title, req.body.titleEn || existing.titleEn);
+      }
       if (!baseSlug) return res.status(400).json({ error: "An English title or valid slug is required" });
-      const slug = baseSlug;
+      const slug = await ensureUniqueSlug(baseSlug, existing._id);
       updateData.slug = slug;
       updateData.engSlug = slug;
       if (slug !== existing.slug) {
-        updateData.legacySlugs = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
+        computedLegacy = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
       }
     }
     delete updateData.legacySlugs;
     delete updateData.slugManuallyEdited;
+    if (computedLegacy) updateData.legacySlugs = computedLegacy;
     const article = await Article.findOneAndUpdate(
       filter,
       updateData,
@@ -230,10 +239,12 @@ router.post("/migrate-slugs", authMiddleware, async (req, res) => {
     const articles = await Article.find({});
     let updated = 0, skipped = 0;
     for (const article of articles) {
-      const baseSlug = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+      let baseSlug = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+      if (!baseSlug || /^new-\d{8,}/.test(baseSlug) || baseSlug.includes("---")) baseSlug = slugifyManglish(article.title, article.titleEn);
       if (!baseSlug) { skipped++; continue; }
+      const isBad = /^new-\d{8,}/.test(article.slug) || article.slug.includes("---") || !isCleanNewsSlug(article.slug);
       const slug = await ensureUniqueSlug(baseSlug, article._id);
-      if (slug !== article.slug) {
+      if (slug !== article.slug || isBad) {
         await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
         updated++;
       }

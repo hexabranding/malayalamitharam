@@ -74,6 +74,9 @@ export default function ArticlePage({ slug, navigate }) {
         }
         let data = await fetchArticle(slug);
         if (!cancelled && data) {
+          if (data.slug && data.slug !== slug) {
+            try { window.history.replaceState({}, "", "/news/" + data.slug); } catch {}
+          }
           setArticle(data);
           registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});

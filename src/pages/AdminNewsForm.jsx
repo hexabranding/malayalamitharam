@@ -107,8 +107,11 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const { name, value, type, checked } = e.target;
     setFormData(prev => {
       const next = { ...prev, [name]: type === "checkbox" ? checked : value };
-      if (name === "title" && !prev.slugManuallyEdited) {
-        next.slug = generateSlugFromTitle(value);
+      if ((name === "titleEn" || name === "title") && !prev.slugManuallyEdited) {
+        const englishTitle = name === "titleEn" ? value : prev.titleEn;
+        const malayalamTitle = name === "title" ? value : prev.title;
+        const base = englishTitle ? frontendSlugify(englishTitle) : generateSlugFromTitle(malayalamTitle);
+        if (base) next.slug = base.split("-").slice(0, 5).join("-");
       }
       return next;
     });
@@ -271,13 +274,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>SEO Slug (auto-generated from title — edit if needed)</label>
+              <label>SEO Slug (auto-generated from English title — edit if needed)</label>
               <input
                 type="text"
                 name="slug"
                 value={formData.slug}
                 onChange={handleEngSlugChange}
-                placeholder="Auto-generated from Malayalam title"
+                placeholder="Auto-generated from English title (e.g., heavy-rain-kerala-coast)"
               />
               {formData.slug && (
                 <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 13, wordBreak: "break-all" }}>

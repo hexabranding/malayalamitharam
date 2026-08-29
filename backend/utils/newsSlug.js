@@ -13,7 +13,7 @@ function slugifyEnglish(value) {
 }
 
 function slugifyManglish(malayalamTitle, englishTitle) {
-  const source = malayalamTitle || englishTitle || "";
+  const source = englishTitle || malayalamTitle || "";
   const hasMalayalam = /[\u0D00-\u0D7F]/.test(source);
   let words;
   if (hasMalayalam) {
@@ -42,7 +42,10 @@ function suggestNewsSlug(englishTitle) {
 }
 
 function isCleanNewsSlug(value) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(value || ""));
+  const v = String(value || "");
+  if (/^new-\d{8,}/.test(v)) return false;
+  if (v.includes("---")) return false;
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v);
 }
 
 module.exports = { slugifyEnglish, suggestNewsSlug, slugifyManglish, isCleanNewsSlug };

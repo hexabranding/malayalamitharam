@@ -35,9 +35,22 @@ export function registerArticles(articles) {
   articles.forEach(registerArticle);
 }
 
+function isBadSlug(s) {
+  return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
+}
+
+function slugifyEnglishLocal(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/[\s-]+/).filter(Boolean).join("-");
+}
+
 export function getTitleSlug(article) {
   if (!article) return "";
-  if (article.slug) return article.slug;
+  if (article.slug && !isBadSlug(article.slug)) return article.slug;
+  if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
+  if (article.titleEn) {
+    const s = slugifyEnglishLocal(article.titleEn);
+    if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
+  }
   return article.id || "";
 }
 

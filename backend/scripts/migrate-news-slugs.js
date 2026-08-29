@@ -19,14 +19,16 @@ async function migrate() {
   let updated = 0;
   let skipped = 0;
   for (const article of articles) {
-    const base = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+    let base = slugifyManglish(article.title, article.titleEn) || (isCleanNewsSlug(article.engSlug) ? article.engSlug : "");
+    if (!base || /^new-\d{8,}/.test(base) || base.includes("---")) base = slugifyManglish(article.title, article.titleEn);
     if (!base) {
       skipped++;
       console.warn(`Skipped ${article._id}: add an English title before migrating.`);
       continue;
     }
+    const isBad = /^new-\d{8,}/.test(article.slug) || article.slug.includes("---") || !isCleanNewsSlug(article.slug);
     const slug = await uniqueSlug(base, article._id);
-    if (slug === article.slug) continue;
+    if (slug === article.slug && !isBad) continue;
     await Article.updateOne(
       { _id: article._id },
       { $set: { slug, engSlug: slug, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } }

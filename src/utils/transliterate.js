@@ -53,21 +53,29 @@ export function transliterateMalayalam(text) {
   return result;
 }
 
-export function generateSlugFromTitle(malayalamTitle) {
-  if (!malayalamTitle) return '';
-  const hasMalayalam = /[\u0D00-\u0D7F]/.test(malayalamTitle);
+export function generateSlugFromTitle(title, englishTitle) {
+  const source = englishTitle || title || '';
+  if (!source) return '';
+  const hasMalayalam = /[\u0D00-\u0D7F]/.test(source);
   let words;
   if (hasMalayalam) {
-    const transliterated = transliterateMalayalam(malayalamTitle);
+    const transliterated = transliterateMalayalam(source);
     words = transliterated.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
   } else {
-    words = malayalamTitle.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
+    words = source.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
   }
   const meaningful = words.filter((word, index) => index === 0 || !STOP_WORDS.has(word));
   return meaningful.slice(0, 5).join('-');
 }
 
+function isBadSlug(s) {
+  return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
+}
+
 export function getShareUrl(article) {
-  if (article.slug) return article.slug;
+  if (article.slug && !isBadSlug(article.slug)) return article.slug;
+  if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
+  const fallback = generateSlugFromTitle(article.title, article.titleEn);
+  if (fallback) return fallback;
   return article.id || "";
 }
