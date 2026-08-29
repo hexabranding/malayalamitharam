@@ -69,7 +69,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
             <div
               key={article.id}
               className={`carousel-slide ${index === currentIndex ? "active" : ""}`}
-              onClick={() => navigate("/post/" + getTitleSlug(article))}
+              onClick={() => navigate("/news/" + getTitleSlug(article))}
             >
               <div className="carousel-slide-content">
                 <span className="carousel-category" style={{ padding: `2px ${categoryPad}px` }}>{getCategoryName(article)}</span>
@@ -91,7 +91,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
         <div className="latest-updates-scroll">
           <div className="latest-updates-track">
             {[...latestUpdates, ...latestUpdates].map((article, i) => (
-              <button key={article.id + "-" + i} type="button" className="latest-update-item" onClick={() => navigate("/post/" + getTitleSlug(article))}>
+              <button key={article.id + "-" + i} type="button" className="latest-update-item" onClick={() => navigate("/news/" + getTitleSlug(article))}>
                 <span>{getCategoryName(article)}</span>
                 {article.title}
               </button>

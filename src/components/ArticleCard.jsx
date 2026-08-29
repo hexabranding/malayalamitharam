@@ -15,9 +15,9 @@ export default function ArticleCard({ article, navigate, variant = "default", da
   const handleClick = () => {
     const slug = getTitleSlug(article);
     if (slug) {
-      navigate("/post/" + slug);
+      navigate("/news/" + slug);
     } else if (article.id) {
-      navigate("/post/" + article.id);
+      navigate("/news/" + article.id);
     }
   };
   return (

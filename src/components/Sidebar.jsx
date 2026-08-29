@@ -67,7 +67,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       <section className="sidebar-block sidebar-latest">
         <h2><Clock3 size={18} /> Latest News</h2>
         {latest.map((article, index) => (
-          <button className="headline-link" key={article.id} onClick={() => navigate("/post/" + getTitleSlug(article))}>
+          <button className="headline-link" key={article.id} onClick={() => navigate("/news/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="headline-link-img" />
             <span>
               <em>{String(index + 1).padStart(2, "0")}</em>
@@ -80,7 +80,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       <section className="sidebar-block">
         <h2>Popular</h2>
         {popular.map((article) => (
-          <button className="mini-story" key={article.id} onClick={() => navigate("/post/" + getTitleSlug(article))}>
+          <button className="mini-story" key={article.id} onClick={() => navigate("/news/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="mini-story-img" />
             <span>{article.title}</span>
           </button>
@@ -91,7 +91,7 @@ export default function Sidebar({ navigate, articles = [] }) {
         <section className="sidebar-block editor-picks">
           <h2><Star size={18} /> Editor Picks</h2>
           {editorPicks.map((article) => (
-            <button key={article.id} type="button" onClick={() => navigate("/post/" + getTitleSlug(article))}>
+            <button key={article.id} type="button" onClick={() => navigate("/news/" + getTitleSlug(article))}>
               <strong>{getCategoryName(article)}</strong>
               <span>{article.title}</span>
             </button>

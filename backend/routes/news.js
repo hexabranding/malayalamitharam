@@ -175,15 +175,20 @@ router.get("/:slug", async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, titleEn, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
+    const { title, titleEn, engSlug: adminEngSlug, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
     if (!title || !category || !content) {
       return res.status(400).json({ error: "title, category, and content are required" });
     }
 
     const titlePart = slugify(titleEn || title) || "post";
     const slug = slugify(category) + "-" + titlePart + "-" + Date.now().toString(36);
-    const baseEngSlug = generateEngSlug(title, titleEn);
-    const engSlug = await ensureUniqueSlug(baseEngSlug);
+    let engSlug;
+    if (adminEngSlug && adminEngSlug.trim()) {
+      engSlug = await ensureUniqueSlug(slugify(adminEngSlug));
+    } else {
+      const baseEngSlug = generateEngSlug(title, titleEn);
+      engSlug = await ensureUniqueSlug(baseEngSlug);
+    }
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
@@ -229,7 +234,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
       ? { _id: req.params.id }
       : { slug: req.params.id };
     const updateData = { ...req.body, updatedAt: new Date().toISOString() };
-    if (req.body.title || req.body.titleEn) {
+    if (req.body.engSlug && req.body.engSlug.trim()) {
+      const existing = await Article.findOne(filter);
+      const excludeId = existing ? existing._id : null;
+      updateData.engSlug = await ensureUniqueSlug(slugify(req.body.engSlug), excludeId);
+    } else if (req.body.title || req.body.titleEn) {
       const baseEngSlug = generateEngSlug(req.body.title, req.body.titleEn);
       const existing = await Article.findOne(filter);
       const excludeId = existing ? existing._id : null;

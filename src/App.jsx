@@ -40,10 +40,10 @@ const legacyRoutes = {
   "/video_category.html": "/category/videos",
   "/photo_signle_post.html": "/category/photos",
   "/video_signle_post.html": "/category/videos",
-  "/single_post_standard_v1.html": "/post/rain-alert-kerala-coast",
-  "/single_post_standard_v2.html": "/post/delhi-policy-meeting",
-  "/single_post_video_v1.html": "/post/football-final-training",
-  "/single_post_video_v2.html": "/post/football-final-training",
+  "/single_post_standard_v1.html": "/news/rain-alert-kerala-coast",
+  "/single_post_standard_v2.html": "/news/delhi-policy-meeting",
+  "/single_post_video_v1.html": "/news/football-final-training",
+  "/single_post_video_v2.html": "/news/football-final-training",
   "/single_post_audio_v1.html": "/category/audio",
   "/single_post_audio_v2.html": "/category/audio",
   "/single_post_slideshow_v1.html": "/category/photos",
@@ -56,6 +56,9 @@ const legacyRoutes = {
 };
 
 function normalizePath(path) {
+  if (path.startsWith("/post/")) {
+    return "/news/" + path.replace("/post/", "");
+  }
   return legacyRoutes[path] || path || "/";
 }
 
@@ -234,7 +237,10 @@ export default function App() {
       if (item.mediaType) return <MediaPage type={item.mediaType} title={item.titleMl} navigate={navigate} />;
       return <CategoryPage categoryItem={item} navigate={navigate} />;
     }
-    if (path.startsWith("/post/")) return <ArticlePage slug={path.replace("/post/", "")} navigate={navigate} />;
+    if (path.startsWith("/post/")) {
+      const slug = path.replace("/post/", "");
+      return <ArticlePage slug={slug} navigate={navigate} />;
+    }
     if (path.startsWith("/news/")) return <ArticlePage slug={path.replace("/news/", "")} navigate={navigate} />;
     if (path.startsWith("/search")) return <SearchPage path={path} navigate={navigate} />;
     if (path.startsWith("/tags/")) return <TagsPage tag={decodeURIComponent(path.replace("/tags/", ""))} navigate={navigate} />;

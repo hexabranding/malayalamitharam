@@ -148,7 +148,7 @@ export default function HomePage({ navigate }) {
         <div className="news-ticker-text">
           <div className="news-ticker-content">
             {[...tickerStories, ...tickerStories].map((story, i) => (
-              <span key={`${story.id}-${i}`} className={`clickable ${story.breaking ? "breaking-alert" : ""}`} onClick={() => navigate("/post/" + getTitleSlug(story))}>
+              <span key={`${story.id}-${i}`} className={`clickable ${story.breaking ? "breaking-alert" : ""}`} onClick={() => navigate("/news/" + getTitleSlug(story))}>
                 {story.breaking ? "\u{1F6A8}" : "\u{1F4E2}"} {story.title} \u2022
               </span>
             ))}
@@ -168,7 +168,7 @@ export default function HomePage({ navigate }) {
         </div>
         <div className="latest-strip-list">
           {latestUpdates.map((article) => (
-            <button key={article.id} type="button" onClick={() => navigate("/post/" + getTitleSlug(article))}>
+            <button key={article.id} type="button" onClick={() => navigate("/news/" + getTitleSlug(article))}>
               <span>{getCategoryName(article)}</span>
               {article.title}
             </button>
@@ -180,7 +180,7 @@ export default function HomePage({ navigate }) {
         <div className="newspaper-front" data-aos="fade-up">
           <aside className="editorial-col">
             {leftColumnStories.map((story) => (
-              <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/post/" + getTitleSlug(story))}>
+              <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/news/" + getTitleSlug(story))}>
                 <small>{getCategoryName(story) || "രാഷ്ട്രീയം"}</small>
                 <h4>{story.title}</h4>
                 <p>{story.excerpt}</p>
@@ -189,7 +189,7 @@ export default function HomePage({ navigate }) {
           </aside>
 
           <div className="lead-col" data-aos="fade-up" data-aos-delay="100">
-            <article className="newspaper-lead-card clickable" onClick={() => navigate("/post/" + getTitleSlug(leadStory))}>
+            <article className="newspaper-lead-card clickable" onClick={() => navigate("/news/" + getTitleSlug(leadStory))}>
               <ArticleImage article={leadStory} alt={leadStory.title} />
               <div className="lead-copy">
                 <span className="lead-category">{getCategoryName(leadStory)}</span>
@@ -203,7 +203,7 @@ export default function HomePage({ navigate }) {
                 const usedIds = new Set([leadStory?.id, ...leftColumnStories.map(s => s.id), ...rightColumnStories.map(s => s.id)]);
                 const miniNews = articles.filter(a => !usedIds.has(a.id)).slice(0, 4);
                 return miniNews.map((article) => (
-                  <div key={article.id} className="lead-mini-card clickable" onClick={() => navigate("/post/" + getTitleSlug(article))}>
+                  <div key={article.id} className="lead-mini-card clickable" onClick={() => navigate("/news/" + getTitleSlug(article))}>
                     {article.image && <ArticleImage article={article} alt={article.title} />}
                     <h5>{article.title}</h5>
                   </div>
@@ -215,7 +215,7 @@ export default function HomePage({ navigate }) {
           <aside className="briefs-col" data-aos="fade-up" data-aos-delay="200">
             <h3 className="column-title">പ്രധാന വാർത്തകൾ</h3>
             {rightColumnStories.map((story) => (
-              <div key={story.id} className="brief-story-card clickable" onClick={() => navigate("/post/" + getTitleSlug(story))}>
+              <div key={story.id} className="brief-story-card clickable" onClick={() => navigate("/news/" + getTitleSlug(story))}>
                 <ArticleImage article={story} alt={story.title} className="brief-story-img" />
                 <div>
                   <h4>{story.title}</h4>
@@ -347,7 +347,7 @@ export default function HomePage({ navigate }) {
           {displayMedia.length > 0 && (
             <div className="multimedia-grid">
               {displayMedia.map((article, i) => (
-                <div key={article.id} className="multimedia-card clickable" data-aos="zoom-in" data-aos-delay={i * 100} onClick={() => navigate("/post/" + getTitleSlug(article))}>
+                <div key={article.id} className="multimedia-card clickable" data-aos="zoom-in" data-aos-delay={i * 100} onClick={() => navigate("/news/" + getTitleSlug(article))}>
                   <div className="media-thumbnail">
                     <ArticleImage article={article} alt={article.title} />
                     <span className="media-badge">{article.media === "video" ? "VIDEO" : "PHOTO"}</span>

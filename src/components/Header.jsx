@@ -48,7 +48,7 @@ export default function Header({ navigate, activeSlug }) {
   function handleSuggestionClick(article) {
     setShowSuggestions(false);
     setSearchQuery("");
-    navigate("/post/" + getTitleSlug(article));
+    navigate("/news/" + getTitleSlug(article));
   }
 
   function handleSearchSubmit(e) {

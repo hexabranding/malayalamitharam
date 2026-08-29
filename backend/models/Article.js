@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const articleSchema = new mongoose.Schema({
   slug: { type: String, unique: true, index: true },
-  engSlug: { type: String, default: "", index: true },
+  engSlug: { type: String, default: "", index: true, sparse: true },
   title: { type: String, required: true },
   titleEn: { type: String, default: "" },
   category: { type: String, required: true, index: true },

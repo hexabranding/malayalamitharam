@@ -121,7 +121,7 @@ function buildArticleMeta(article, pathSlug) {
   // model's `image` field is the featured image managed by the news admin.
   const image = resolveAbsoluteImage(rawImage || DEFAULT_SOCIAL_IMAGE);
   const decodedSlug = (() => { try { return decodeURIComponent(pathSlug); } catch { return pathSlug; } })();
-  const url = `${SITE_URL}/post/${encodeURIComponent(decodedSlug)}`;
+  const url = `${SITE_URL}/news/${encodeURIComponent(decodedSlug)}`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
@@ -196,13 +196,18 @@ async function findArticleFromDB(slug) {
     // Query only persisted URL identifiers. Never infer a match from another
     // article's title: an unknown URL must not inherit that article's preview.
     const identifiers = [...new Set([slug, decoded].filter(Boolean))];
-    return Article.findOne({
+    let article = await Article.findOne({
       published: true,
       $or: [
         { slug: { $in: identifiers } },
         { engSlug: { $in: identifiers } },
       ],
     }).lean();
+    // Backward compatibility: if slug looks like a MongoDB ObjectId, try _id lookup
+    if (!article && slug.match(/^[0-9a-fA-F]{24}$/)) {
+      article = await Article.findById(slug).lean();
+    }
+    return article;
   } catch (err) {
     console.error("MongoDB article lookup failed:", err.message);
     return null;
@@ -215,6 +220,18 @@ const spaNotFound = (_req, res) => res.status(404).sendFile(indexPath);
 const articlePageHandler = async (req, res) => {
   const slug = req.params.slug || "";
   if (!slug) return spa(req, res);
+
+  // Backward compatibility: redirect old MongoDB _id URLs to slug
+  if (slug.match(/^[0-9a-fA-F]{24}$/)) {
+    try {
+      if (Article.db.readyState === 1) {
+        const article = await Article.findById(slug).lean();
+        if (article && article.engSlug) {
+          return res.redirect(301, `/news/${article.engSlug}`);
+        }
+      }
+    } catch {}
+  }
 
   const cached = articleCache.get(slug);
   if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) {
@@ -242,7 +259,9 @@ const articlePageHandler = async (req, res) => {
   res.send(injectMeta(indexHtml, meta));
 };
 
-app.get("/post/:slug", articlePageHandler);
+app.get("/post/:slug", (req, res) => {
+  res.redirect(301, `/news/${req.params.slug}`);
+});
 app.get("/news/:slug", articlePageHandler);
 
 app.get("/category/:slug", spa);

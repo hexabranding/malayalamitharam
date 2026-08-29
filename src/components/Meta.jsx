@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
+import { getShareUrl } from "../utils/transliterate.js";
 
 const SITE_NAME = "Malayalamitram";
 const SITE_URL = "https://demo.malayalamitharam.in";
@@ -15,7 +16,10 @@ export default function Meta({ article }) {
     if (image && !image.startsWith("http")) {
       image = window.location.origin + image;
     }
-    const url = window.location.href;
+    const shareSlug = getShareUrl(article);
+    const canonicalUrl = shareSlug
+      ? `${SITE_URL}/news/${shareSlug}`
+      : window.location.href;
 
     document.title = title;
 
@@ -36,7 +40,7 @@ export default function Meta({ article }) {
     setMeta("property", "og:site_name", SITE_NAME);
     setMeta("property", "og:title", rawTitle);
     setMeta("property", "og:description", desc);
-    setMeta("property", "og:url", url);
+    setMeta("property", "og:url", canonicalUrl);
     setMeta("property", "og:image", image);
     setMeta("property", "og:image:secure_url", image);
     setMeta("property", "og:image:width", "1200");
@@ -48,15 +52,15 @@ export default function Meta({ article }) {
     setMeta("name", "twitter:description", desc);
     setMeta("name", "twitter:image", image);
     setMeta("name", "twitter:image:alt", rawTitle);
-    setMeta("name", "twitter:url", url);
+    setMeta("name", "twitter:url", canonicalUrl);
 
     let canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
-      canonical.setAttribute("href", url);
+      canonical.setAttribute("href", canonicalUrl);
     } else {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
-      canonical.setAttribute("href", url);
+      canonical.setAttribute("href", canonicalUrl);
       document.head.appendChild(canonical);
     }
   }, [article]);

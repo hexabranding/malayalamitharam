@@ -69,7 +69,7 @@ export default function VideoSection({ articles, navigate }) {
                     className="video-player clickable"
                     onClick={() => {
                       if (embedUrl) setShowVideo(true);
-                      else navigate("/post/" + getTitleSlug(mainVideo));
+                      else navigate("/news/" + getTitleSlug(mainVideo));
                     }}
                   >
                     <ArticleImage article={mainVideo} alt={mainVideo.title} className="video-thumbnail" />

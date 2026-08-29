@@ -3,6 +3,7 @@ import { Save, X, Upload } from "lucide-react";
 import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
+import { slugify as frontendSlugify } from "../utils/slugify.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -18,6 +19,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
     readTime: "",
     image: "",
     titleEn: "",
+    engSlug: "",
+    slugManuallyEdited: false,
     featured: false,
     breaking: false,
     mainNews: false,
@@ -64,6 +67,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
               readTime: found.readTime || "",
               image: found.image || "",
               titleEn: found.titleEn || "",
+              engSlug: found.engSlug || "",
+              slugManuallyEdited: !!found.engSlug,
               featured: found.featured || false,
               breaking: found.breaking || false,
               mainNews: found.mainNews || false,
@@ -99,9 +104,24 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    setFormData(prev => {
+      const next = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value
+      };
+      if (name === "titleEn" && !prev.slugManuallyEdited) {
+        next.engSlug = frontendSlugify(value);
+      }
+      return next;
+    });
+  };
+
+  const handleEngSlugChange = (e) => {
+    const value = e.target.value;
     setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      engSlug: value,
+      slugManuallyEdited: true,
     }));
   };
 
@@ -185,6 +205,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       backgroundColor: formData.backgroundColor || undefined,
     };
     delete newsData.id;
+    delete newsData.slugManuallyEdited;
 
     try {
       if (isEditing) {
@@ -237,6 +258,33 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 rows={3}
                 placeholder="Brief summary of the news"
               />
+            </div>
+
+            <div className="form-group">
+              <label>English Title</label>
+              <input
+                type="text"
+                name="titleEn"
+                value={formData.titleEn}
+                onChange={handleChange}
+                placeholder="e.g., Heavy Rain Expected in Kerala"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>English Slug (URL)</label>
+              <input
+                type="text"
+                name="engSlug"
+                value={formData.engSlug}
+                onChange={handleEngSlugChange}
+                placeholder="e.g., heavy-rain-expected-in-kerala"
+              />
+              {formData.engSlug && (
+                <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 13, wordBreak: "break-all" }}>
+                  URL Preview: /news/{formData.engSlug}
+                </small>
+              )}
             </div>
 
             <div className="form-row">

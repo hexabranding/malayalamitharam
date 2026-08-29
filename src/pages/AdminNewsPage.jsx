@@ -105,7 +105,7 @@ export default function AdminNewsPage({ navigate }) {
   };
 
   const handleView = (id) => {
-    navigate(`/post/${id}`);
+    navigate(`/news/${id}`);
   };
 
   const handleAddNew = () => {

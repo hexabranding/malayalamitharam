@@ -23,7 +23,7 @@ export default function PhotoGallery({ articles, navigate }) {
             <div
               key={article.id}
               className={`photo-card ${index === 0 ? "featured" : ""}`}
-              onClick={() => navigate("/post/" + getTitleSlug(article))}
+              onClick={() => navigate("/news/" + getTitleSlug(article))}
             >
               <div className="photo-wrapper">
                 <ArticleImage article={article} alt={article.title} className="photo-wrapper-img" />

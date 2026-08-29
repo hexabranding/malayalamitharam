@@ -231,7 +231,7 @@ const displayRelated = related.length >= 1
           {(() => {
             const shareSlug = getShareUrl(article);
             const origin = window.location.origin;
-            const shareUrl = `${origin}/post/${shareSlug}`;
+            const shareUrl = `${origin}/news/${shareSlug}`;
             const shareTitle = article.title;
             const rawImage = article.image || article.thumbnail || "";
             let shareImage = resolveImageUrl(rawImage) || "";
