@@ -182,6 +182,67 @@ function injectMeta(html, meta) {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
+  const publishedTime = toIso(article.createdAt || article.updatedAt || "");
+  return { title, description, image, url, publishedTime };
+}
+
+function injectMeta(html, meta) {
+  const { title, description, image, url, publishedTime } = meta;
+  const pageTitle = title + " | " + SITE_NAME;
+  const safeTitle = esc(title);
+  const safePageTitle = esc(pageTitle);
+  const safeDesc = esc(description);
+  const safeImage = esc(image);
+  const safeUrl = esc(url);
+  const safeSiteName = esc(SITE_NAME);
+
+  let result = html;
+  result = result.replace(/<title>[^<]*<\/title>/, `<title>${safePageTitle}</title>`);
+  result = result.replace(/<meta[^>]*name="description"[^>]*>/i, `<meta name="description" content="${safeDesc}" />`);
+  result = result.replace(/<meta[^>]*property="og:[^"]*"[^>]*>/gi, "");
+  result = result.replace(/<meta[^>]*property="article:[^"]*"[^>]*>/gi, "");
+  result = result.replace(/<meta[^>]*name="twitter:[^"]*"[^>]*>/gi, "");
+  result = result.replace(/<link[^>]*rel="canonical"[^>]*>/gi, "");
+  result = result.replace(/<script[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  const jsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: title,
+    description,
+    image: image ? [image] : undefined,
+    datePublished: publishedTime || undefined,
+    dateModified: publishedTime || undefined,
+    url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    publisher: { "@type": "Organization", name: SITE_NAME },
+  }).replace(/</g, "\\u003c");
+
+  const publishedTag = publishedTime ? `\n    <meta property="article:published_time" content="${esc(publishedTime)}" />` : "";
+
+  const imageTags = image ? `
+    <meta property="og:image" content="${safeImage}" />
+    <meta property="og:image:url" content="${safeImage}" />
+    <meta property="og:image:secure_url" content="${safeImage}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${safeTitle}" />
+    <meta name="twitter:image" content="${safeImage}" />
+    <meta name="twitter:image:alt" content="${safeTitle}" />` : "";
+
+  const tags = `
+    <link rel="canonical" href="${safeUrl}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="${safeSiteName}" />
+    <meta property="og:locale" content="ml_IN" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:url" content="${safeUrl}" />
+    ${imageTags}${publishedTag}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:url" content="${safeUrl}" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
@@ -190,30 +251,27 @@ function injectMeta(html, meta) {
 
 async function findArticleFromDB(slug) {
   try {
-    if (Article.db.readyState !== 1) return null;
     const decoded = (()=>{ try{ return decodeURIComponent(slug);}catch{ return slug;}})();
     const identifiers = [...new Set([slug, decoded].filter(Boolean))];
+    
+    if (Article.db.readyState !== 1) {
+      try {
+        const BASE = (process.env.VITE_API_URL || "https://api.malayalamitharam.in/api").replace(/\/+$/, "");
+        const res = await fetch(`${BASE}/news/${encodeURIComponent(slug)}`);
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (e) {
+        console.error("API fallback fetch failed:", e.message);
+      }
+      return null;
+    }
+
     let article = await Article.findOne({
       published: true,
       $or: [
         { slug: { $in: identifiers } },
         { legacySlugs: { $in: identifiers } },
-      ],
-    }).lean();
-    if (!article && slug.match(/^[0-9a-fA-F]{24}$/)) {
-      article = await Article.findById(slug).lean();
-    }
-    return article;
-  } catch (err) {
-    console.error("MongoDB article lookup failed:", err.message);
-    return null;
-  }
-}
-
-const spa = (_req, res) => res.sendFile(indexPath);
-const spaNotFound = (_req, res) => res.status(404).sendFile(indexPath);
-
-const articlePageHandler = async (req, res) => {
   const slug = req.params.slug || "";
   if (!slug) return spa(req, res);
 
