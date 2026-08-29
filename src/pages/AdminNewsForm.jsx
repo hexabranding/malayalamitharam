@@ -4,6 +4,7 @@ import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } 
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
+import { toEnglishSlug } from "../utils/transliterate.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -110,7 +111,16 @@ export default function AdminNewsForm({ navigate, newsId }) {
         [name]: type === "checkbox" ? checked : value
       };
       if (name === "titleEn" && !prev.slugManuallyEdited) {
-        next.engSlug = frontendSlugify(value);
+        if (value && value.trim()) {
+          next.engSlug = frontendSlugify(value);
+        } else if (prev.title) {
+          next.engSlug = toEnglishSlug(prev.title);
+        } else {
+          next.engSlug = "";
+        }
+      }
+      if (name === "title" && !prev.titleEn && !prev.slugManuallyEdited) {
+        next.engSlug = toEnglishSlug(value);
       }
       return next;
     });
