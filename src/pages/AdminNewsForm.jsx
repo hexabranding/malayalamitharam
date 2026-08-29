@@ -230,7 +230,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
           <div className="admin-form-section">
             <h3>Basic Information</h3>
             
-            <div>
+            <div className="form-group">
               <label>Title (Malayalam)</label>
               <input
                 type="text"
@@ -242,7 +242,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               />
             </div>
 
-            <div>
+            <div className="form-group">
               <label>Excerpt</label>
               <textarea
                 name="excerpt"
@@ -254,7 +254,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               />
             </div>
 
-            <div>
+            <div className="form-group">
               <label>English Title</label>
               <input
                 type="text"
@@ -266,7 +266,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               />
             </div>
 
-            <div>
+            <div className="form-group">
               <label>SEO Slug (URL)</label>
               <input
                 type="text"
@@ -283,7 +283,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-row">
-              <div>
+              <div className="form-group">
                 <label>Primary Category</label>
                 <select
                   name="category"
@@ -300,7 +300,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 </select>
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Author</label>
                 <input
                   type="text"
@@ -313,7 +313,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
             </div>
 
-            <div>
+            <div className="form-group">
               <label>Additional Categories (optional)</label>
               <div className="category-checkboxes">
                 {allCategories.map(cat => (
@@ -330,7 +330,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-row">
-              <div>
+              <div className="form-group">
                 <label>Date</label>
                 <input
                   type="text"
@@ -341,7 +341,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 />
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Read Time</label>
                 <input
                   type="text"
@@ -357,7 +357,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
           <div className="admin-form-section">
             <h3>Media & Display</h3>
             
-            <div>
+            <div className="form-group">
               <label>Image URL or Upload</label>
               <input
                 type="text"
@@ -378,7 +378,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-row">
-              <div>
+              <div className="form-group">
                 <label>Media Type</label>
                 <select
                   name="media"
@@ -392,7 +392,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 </select>
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Video URL (YouTube / embed link)</label>
                 <input
                   type="text"
@@ -404,7 +404,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
             </div>
 
-            <div>
+            <div className="form-group">
               <label>Related Videos (shown on detail page)</label>
               <div className="related-videos-list">
                 {formData.relatedVideos.map((video, index) => (
@@ -449,7 +449,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-row">
-              <div className="" style={{ flex: 0 }}>
+              <div className="form-group" style={{ flex: 0 }}>
                 <label>Title Background Color</label>
                 <input
                   type="color"
@@ -511,7 +511,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-row">
-              <div>
+              <div className="form-group">
                 <label>Likes Count</label>
                 <input
                   type="number"
@@ -523,7 +523,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 />
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Views Count</label>
                 <input
                   type="number"
@@ -541,7 +541,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
         <div className="admin-form-section full-width">
           <h3>Content</h3>
           
-          <div>
+          <div className="form-group">
               <label>Body Content (separate paragraphs with blank lines)</label>
               <textarea
                 name="body"
@@ -555,7 +555,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </small>
           </div>
 
-          <div>
+          <div className="form-group">
             <label>Tags (comma separated)</label>
             <input
               type="text"
