@@ -122,7 +122,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
     const baseSlug = slugifyEnglish(requestedSlug) || suggestNewsSlug(titleEn);
     if (!baseSlug) return res.status(400).json({ error: "Enter a valid English slug" });
-    const slug = await ensureUniqueSlug(baseSlug);
+    const slug = baseSlug;
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const article = await Article.create({
@@ -174,7 +174,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (requestedSlug || req.body.titleEn) {
       const baseSlug = slugifyEnglish(requestedSlug) || suggestNewsSlug(req.body.titleEn || existing.titleEn);
       if (!baseSlug) return res.status(400).json({ error: "An English title or valid slug is required" });
-      const slug = await ensureUniqueSlug(baseSlug, existing._id);
+      const slug = baseSlug;
       updateData.slug = slug;
       updateData.engSlug = slug;
       if (slug !== existing.slug) {

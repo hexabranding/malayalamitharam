@@ -104,27 +104,17 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => {
-      const next = {
-        ...prev,
-        [name]: type === "checkbox" ? checked : value
-      };
-      if (name === "titleEn" && !prev.slugManuallyEdited) {
-        if (value && value.trim()) {
-          next.slug = frontendSlugify(value);
-        } else {
-          next.slug = "";
-        }
-      }
-      return next;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
 
   const handleEngSlugChange = (e) => {
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
-      slug: frontendSlugify(value),
+      slug: value,
       slugManuallyEdited: true,
     }));
   };
