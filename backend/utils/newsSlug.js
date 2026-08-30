@@ -37,12 +37,11 @@ function slugifyManglish(malayalamTitle, englishTitle) {
       .filter(Boolean);
   }
   const meaningful = words.filter((word, index) => index === 0 || !STOP_WORDS.has(word));
-  const limit = /^\d+$/.test(meaningful[0] || "") ? 3 : 5;
-  return meaningful.slice(0, limit).join("-");
+  return stripNewPrefix(meaningful.join("-")).replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-") || "news";
 }
 
 function suggestNewsSlug(englishTitle) {
-  return slugifyManglish(null, englishTitle);
+  return slugifyEnglish(englishTitle);
 }
 
 function isCleanNewsSlug(value) {

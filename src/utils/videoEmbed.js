@@ -1,0 +1,104 @@
+const ALLOWED_HOSTS = new Set([
+  "youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtu.be","youtube-nocookie.com","www.youtube-nocookie.com",
+  "vimeo.com","www.vimeo.com","player.vimeo.com",
+  "dailymotion.com","www.dailymotion.com","dai.ly","www.dai.ly",
+  "facebook.com","www.facebook.com","fb.watch","www.fb.watch","fb.com","www.fb.com",
+  "instagram.com","www.instagram.com",
+  "tiktok.com","www.tiktok.com","vm.tiktok.com","m.tiktok.com","vt.tiktok.com",
+  "x.com","www.x.com","twitter.com","www.twitter.com"
+]);
+
+function isSafeVideoUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (/^(javascript|data|file|vbscript):/i.test(trimmed)) return false;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+    return true;
+  } catch { return false; }
+}
+
+function detectPlatform(url) {
+  if (!isSafeVideoUrl(url)) return "unknown";
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    const href = url.toLowerCase();
+    if (host.includes("youtu.be") || host.includes("youtube.com") || host.includes("youtube-nocookie.com")) {
+      if (href.includes("/shorts/")) return "youtube-shorts";
+      return "youtube";
+    }
+    if (host.includes("vimeo.com")) return "vimeo";
+    if (host.includes("dailymotion.com") || host === "dai.ly") return "dailymotion";
+    if (host.includes("facebook.com") || host.includes("fb.watch") || host === "fb.com") return "facebook";
+    if (host.includes("instagram.com")) return "instagram";
+    if (host.includes("tiktok.com")) return "tiktok";
+    if (host.includes("x.com") || host.includes("twitter.com")) return "twitter";
+    if (href.includes("/embed/") || href.includes("player.")) return "embed";
+    return "generic";
+  } catch { return "unknown"; }
+}
+
+function getEmbedUrl(url) {
+  if (!isSafeVideoUrl(url)) return null;
+  const trimmed = url.trim();
+  try {
+    const parsed = new URL(trimmed);
+    let host = parsed.hostname.toLowerCase();
+    const platform = detectPlatform(trimmed);
+    if (platform === "youtube" || platform === "youtube-shorts") {
+      let id = parsed.searchParams.get("v");
+      if (!id) {
+        const m = trimmed.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([a-zA-Z0-9_-]{6,})/);
+        if (m) id = m[1];
+        else {
+          const pathId = parsed.pathname.split("/").filter(Boolean).pop();
+          if (pathId && /^[a-zA-Z0-9_-]{6,}$/.test(pathId)) id = pathId;
+        }
+      }
+      if (id) {
+        id = id.split(/[?&#]/)[0];
+        return `https://www.youtube.com/embed/${id}`;
+      }
+      if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
+      return null;
+    }
+    if (platform === "vimeo") {
+      const m = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (m) return `https://player.vimeo.com/video/${m[1]}`;
+      if (trimmed.includes("player.vimeo.com")) return trimmed.replace(/^http:/, "https:");
+      return null;
+    }
+    if (platform === "dailymotion") {
+      const m = trimmed.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+      if (m) return `https://www.dailymotion.com/embed/video/${m[1]}`;
+      if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
+      return null;
+    }
+    if (platform === "facebook") {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&width=560`;
+    }
+    if (platform === "instagram") {
+      if (trimmed.endsWith("/embed")) return trimmed.replace(/^http:/, "https:");
+      const clean = trimmed.split("?")[0].replace(/\/$/, "");
+      return `${clean}/embed`;
+    }
+    if (platform === "tiktok") {
+      const m = trimmed.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      if (m) return `https://www.tiktok.com/embed/${m[1]}`;
+      if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
+      return trimmed.replace(/^http:/, "https:");
+    }
+    if (trimmed.includes("/embed/") || trimmed.includes("player.vimeo.com")) return trimmed.replace(/^http:/, "https:");
+    const httpsUrl = trimmed.replace(/^http:/, "https:");
+    try {
+      const h = new URL(httpsUrl).hostname.toLowerCase();
+      if (ALLOWED_HOSTS.has(h) || ALLOWED_HOSTS.has(h.replace(/^www\./, ""))) return httpsUrl;
+    } catch {}
+    return httpsUrl;
+  } catch { return null; }
+}
+
+export { isSafeVideoUrl, detectPlatform, getEmbedUrl, ALLOWED_HOSTS };

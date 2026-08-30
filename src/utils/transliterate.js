@@ -68,10 +68,9 @@ export function generateSlugFromTitle(title, englishTitle) {
     words = source.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').trim().split(/[\s-]+/).filter(Boolean);
   }
   const meaningful = words.filter((word, index) => index === 0 || !STOP_WORDS.has(word));
-  let slug = meaningful.slice(0, 5).join('-');
-  if (/^new-\d{8,}/.test(slug)) {
-    slug = slug.replace(/^new-/, '') || 'news';
-  }
+  let slug = meaningful.join('-');
+  slug = slug.replace(/^new-\d{8,}-?/, '') || 'news';
+  slug = slug.replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
   return slug;
 }
 

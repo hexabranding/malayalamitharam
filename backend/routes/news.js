@@ -3,6 +3,7 @@ const Article = require("../models/Article");
 const { authMiddleware } = require("../middleware/auth");
 const { isCleanNewsSlug } = require("../utils/newsSlug");
 const { englishSlugSource } = require("../utils/englishNewsSlug");
+const { sanitizeRelatedVideos } = require("../utils/videoEmbed");
 
 const router = express.Router();
 
@@ -144,6 +145,7 @@ router.post("/", authMiddleware, async (req, res) => {
     const slug = await ensureUniqueSlug(slugSource.baseSlug);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
+    const sanitizedVideos = sanitizeRelatedVideos(relatedVideos);
     const article = await Article.create({
       slug,
       engSlug: slug,
@@ -166,7 +168,7 @@ router.post("/", authMiddleware, async (req, res) => {
       published: published !== false,
       media: media || "standard",
       videoUrl: videoUrl || "",
-      relatedVideos: relatedVideos || [],
+      relatedVideos: sanitizedVideos,
       categoryMl: categoryMl || "",
       readTime: readTime || "3 മിനിറ്റ്",
       views: views || 0,
@@ -189,18 +191,34 @@ router.put("/:id", authMiddleware, async (req, res) => {
     const updateData = { ...req.body, updatedAt: new Date().toISOString() };
     const existing = await Article.findOne(filter);
     if (!existing) return res.status(404).json({ error: "Article not found" });
-    const requestedSlug = req.body.slug !== undefined ? req.body.slug : (req.body.engSlug || "");
-    const shouldUpdateSlug = requestedSlug || req.body.titleEn || req.body.title;
+    const slugFieldProvided = req.body.slug !== undefined || req.body.engSlug !== undefined;
+    const requestedSlugRaw = req.body.slug !== undefined ? req.body.slug : (req.body.engSlug !== undefined ? req.body.engSlug : undefined);
     let computedLegacy = null;
-    if (shouldUpdateSlug) {
-      const slugSource = await englishSlugSource(req.body.title || existing.title, req.body.titleEn || existing.titleEn, requestedSlug);
-      const slug = await ensureUniqueSlug(slugSource.baseSlug, existing._id);
-      updateData.slug = slug;
-      updateData.engSlug = slug;
-      updateData.titleEn = slugSource.englishTitle;
-      if (slug !== existing.slug) {
-        computedLegacy = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
+    if (slugFieldProvided) {
+      const requestedSlug = String(requestedSlugRaw || "").trim();
+      if (requestedSlug === "" && !req.body.titleEn && !req.body.title) {
+        // slug explicitly cleared but no title to generate from - keep existing slug
+      } else {
+        let slugSource;
+        const effectiveRequested = requestedSlug;
+        const titleForSlug = req.body.title || existing.title;
+        const titleEnForSlug = req.body.titleEn !== undefined ? req.body.titleEn : existing.titleEn;
+        if (effectiveRequested) {
+          slugSource = await englishSlugSource(titleForSlug, titleEnForSlug, effectiveRequested);
+        } else {
+          slugSource = await englishSlugSource(titleForSlug, titleEnForSlug, "");
+        }
+        const slug = await ensureUniqueSlug(slugSource.baseSlug, existing._id);
+        updateData.slug = slug;
+        updateData.engSlug = slug;
+        if (slugSource.englishTitle) updateData.titleEn = slugSource.englishTitle;
+        if (slug !== existing.slug) {
+          computedLegacy = [...new Set([...(existing.legacySlugs || []), existing.slug].filter(Boolean))];
+        }
       }
+    }
+    if (req.body.relatedVideos !== undefined) {
+      updateData.relatedVideos = sanitizeRelatedVideos(req.body.relatedVideos);
     }
     delete updateData.legacySlugs;
     delete updateData.slugManuallyEdited;

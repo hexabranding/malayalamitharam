@@ -25,7 +25,8 @@ const articleSchema = new mongoose.Schema({
   relatedVideos: [{
     title: { type: String, default: "" },
     videoUrl: { type: String, required: true },
-    thumbnail: { type: String, default: "" }
+    thumbnail: { type: String, default: "" },
+    platform: { type: String, default: "generic" }
   }],
   views: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },

@@ -4,6 +4,7 @@ import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } 
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
+import { isSafeVideoUrl, detectPlatform, getEmbedUrl } from "../utils/videoEmbed.js";
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -109,7 +110,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       if (name === "titleEn" && !prev.slugManuallyEdited) {
         let base = frontendSlugify(value);
         base = base.replace(/^new-\d{8,}-?/, "");
-        if (base) next.slug = base.split("-").slice(0, 5).join("-");
+        if (base) next.slug = base;
       }
       return next;
     });
@@ -171,10 +172,16 @@ export default function AdminNewsForm({ navigate, newsId }) {
   };
 
   const addRelatedVideo = () => {
-    if (!newVideoUrl.trim()) return;
+    const url = newVideoUrl.trim();
+    if (!url) { alert("Please enter a video URL"); return; }
+    if (!isSafeVideoUrl(url)) { alert("Invalid or unsafe URL. Only https URLs are allowed (no javascript/data)."); return; }
+    const platform = detectPlatform(url);
+    if (platform === "unknown") { alert("Unsupported video URL. Supports YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and https embed links."); return; }
+    const embedCheck = getEmbedUrl(url);
+    if (!embedCheck) { alert("This URL cannot be embedded. Please use a direct video link (e.g., youtube.com/watch?v=...)"); return; }
     setFormData(prev => ({
       ...prev,
-      relatedVideos: [...prev.relatedVideos, { title: newVideoTitle.trim(), videoUrl: newVideoUrl.trim(), thumbnail: "" }]
+      relatedVideos: [...prev.relatedVideos, { title: newVideoTitle.trim(), videoUrl: url, thumbnail: "", platform }]
     }));
     setNewVideoTitle("");
     setNewVideoUrl("");
@@ -415,33 +422,45 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>Related Videos (shown on detail page) — supports YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
-              <div className="related-videos-list">
-                {formData.relatedVideos.map((video, index) => (
-                  <div key={index} className="related-video-item">
-                    <span className="related-video-title">{video.title || "Untitled"}</span>
-                    <span className="related-video-url">{video.videoUrl}</span>
-                    <button type="button" className="btn-remove" onClick={() => removeRelatedVideo(index)}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="add-related-video">
+              <label>Related Videos (shown on detail page) — supports YouTube, YouTube Shorts, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
+              {formData.relatedVideos.length > 0 ? (
+                <div className="related-videos-list" style={{ display: "grid", gap: 8, marginBottom: 10 }}>
+                  {formData.relatedVideos.map((video, index) => (
+                    <div key={index} className="related-video-item" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#f8faf7", border: "1px solid #dfe6db", borderRadius: 6 }}>
+                      <span style={{ minWidth: 0, flex: 1 }}>
+                        <strong style={{ display: "block", fontSize: 13 }}>{video.title || "Untitled"}</strong>
+                        <span style={{ display: "block", fontSize: 11, color: "#666", wordBreak: "break-all" }}>{video.videoUrl}</span>
+                        <span style={{ display: "inline-block", marginTop: 4, fontSize: 10, padding: "2px 6px", borderRadius: 10, background: "#e6f0ff", color: "#1a56db" }}>{video.platform || detectPlatform(video.videoUrl)}</span>
+                      </span>
+                      <button type="button" className="btn-remove" onClick={() => removeRelatedVideo(index)} style={{ flexShrink: 0, padding: 6, borderRadius: 4, border: "1px solid #f0c0c0", background: "#fff", color: "#c91f26", cursor: "pointer" }}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <small style={{ display: "block", marginBottom: 8, color: "#888", fontSize: 12 }}>No related videos yet. Add one below — all will appear on the news detail page.</small>
+              )}
+              <div className="add-related-video" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <input
                   type="text"
                   placeholder="Video title (optional)"
                   value={newVideoTitle}
                   onChange={(e) => setNewVideoTitle(e.target.value)}
+                  style={{ flex: "1 1 140px" }}
                 />
                 <input
                   type="text"
-                  placeholder="Paste any video link: YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
+                  placeholder="Paste any video link: YouTube, Shorts, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
                   value={newVideoUrl}
                   onChange={(e) => setNewVideoUrl(e.target.value)}
+                  style={{ flex: "2 1 260px" }}
                 />
-                <button type="button" className="btn-add" onClick={addRelatedVideo}>+ Add</button>
+                <button type="button" className="btn-add" onClick={addRelatedVideo} style={{ padding: "8px 14px", background: "#1a56db", color: "#fff", border: 0, borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>+ Add</button>
               </div>
+              {newVideoUrl && !isSafeVideoUrl(newVideoUrl) && <small style={{ color: "#c91f26", fontSize: 11 }}>Unsafe URL — only https links allowed.</small>}
+              {newVideoUrl && isSafeVideoUrl(newVideoUrl) && !getEmbedUrl(newVideoUrl) && <small style={{ color: "#b7791f", fontSize: 11 }}>This URL may not be embeddable. Use a direct video page URL.</small>}
+              {newVideoUrl && isSafeVideoUrl(newVideoUrl) && getEmbedUrl(newVideoUrl) && <small style={{ color: "#15803d", fontSize: 11 }}>✓ Will embed as: {detectPlatform(newVideoUrl)} → {getEmbedUrl(newVideoUrl)}</small>}
             </div>
 
             <div className="form-row">

@@ -14,19 +14,7 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { getShareUrl } from "../utils/transliterate.js";
-
-function getVideoEmbedUrl(url) {
-  if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (match) return `https://www.youtube.com/embed/${match[1]}`;
-  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
-  if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
-  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com") || url.includes("x.com") || url.includes("twitter.com")) return url;
-  if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
-  return url;
-}
+import { getEmbedUrl, detectPlatform, isSafeVideoUrl } from "../utils/videoEmbed.js";
 
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
@@ -172,46 +160,57 @@ const displayRelated = related.length >= 1
             </h4>
             <div className="article-video-container">
               {showVideo && selectedVideo ? (
-                <div className="article-video-player">
+                <div className="article-video-player" style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: 8 }}>
                   <iframe
-                    src={getVideoEmbedUrl(selectedVideo.videoUrl)}
-                    title={selectedVideo.title}
+                    src={getEmbedUrl(selectedVideo.videoUrl) || selectedVideo.videoUrl}
+                    title={selectedVideo.title || "Video"}
                     frameBorder="0"
-                    allow="autoplay; encrypted-media"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
                   />
-                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
+                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>✕</button>
                 </div>
               ) : (
-                <div className="article-video-grid">
-                  {article.videoUrl && (
+                <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                  {article.videoUrl && isSafeVideoUrl(article.videoUrl) && (
                     <div
                       className="article-video-card clickable"
                       onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
                     >
-                      <div className="article-video-thumb">
-                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "56.25%", background: "#000", borderRadius: 8, overflow: "hidden" }}>
+                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} />}
+                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.35)" }}><Play size={28} fill="#fff" color="#fff" /></div>
+                        <span style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 }}>{detectPlatform(article.videoUrl)}</span>
                       </div>
-                      <span className="article-video-label">{article.title}</span>
+                      <span className="article-video-label" style={{ display: "block", marginTop: 6, fontWeight: 600 }}>{article.title}</span>
                     </div>
                   )}
-                  {(article.relatedVideos || []).map((video, index) => (
+                  {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((video, index) => (
                     <div
                       key={index}
                       className="article-video-card clickable"
                       onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
                     >
-                      <div className="article-video-thumb">
-                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "56.25%", background: "#000", borderRadius: 8, overflow: "hidden" }}>
+                        {video.thumbnail ? <img src={resolveImageUrl(video.thumbnail)} alt={video.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a1a1a,#333)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={32} color="#fff" /></div>}
+                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}><Play size={28} fill="#fff" color="#fff" /></div>
+                        <span style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 }}>{video.platform || detectPlatform(video.videoUrl)}</span>
                       </div>
-                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                      <span className="article-video-label" style={{ display: "block", marginTop: 6, fontWeight: 600 }}>{video.title || "Video " + (index + 1)}</span>
+                      <small style={{ color: "#888", fontSize: 11, wordBreak: "break-all" }}>{video.videoUrl}</small>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+            {showVideo && selectedVideo && (
+              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((v, i) => (
+                  <button key={i} onClick={() => setSelectedVideo(v)} style={{ padding: "6px 10px", borderRadius: 6, border: selectedVideo.videoUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: selectedVideo.videoUrl === v.videoUrl ? "#c91f26" : "#fff", color: selectedVideo.videoUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
