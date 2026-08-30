@@ -3,7 +3,7 @@ const Article = require("../models/Article");
 const { authMiddleware } = require("../middleware/auth");
 const { isCleanNewsSlug } = require("../utils/newsSlug");
 const { englishSlugSource } = require("../utils/englishNewsSlug");
-const { sanitizeRelatedVideos } = require("../utils/videoEmbed");
+const { sanitizeRelatedVideos, isSafeVideoUrl } = require("../utils/videoEmbed");
 
 const router = express.Router();
 
@@ -146,6 +146,7 @@ router.post("/", authMiddleware, async (req, res) => {
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
 
     const sanitizedVideos = sanitizeRelatedVideos(relatedVideos);
+    const safeVideoUrl = isSafeVideoUrl(videoUrl) ? String(videoUrl).trim() : "";
     const article = await Article.create({
       slug,
       engSlug: slug,
@@ -167,7 +168,7 @@ router.post("/", authMiddleware, async (req, res) => {
       popular: popular === true,
       published: published !== false,
       media: media || "standard",
-      videoUrl: videoUrl || "",
+      videoUrl: safeVideoUrl,
       relatedVideos: sanitizedVideos,
       categoryMl: categoryMl || "",
       readTime: readTime || "3 മിനിറ്റ്",
@@ -219,6 +220,9 @@ router.put("/:id", authMiddleware, async (req, res) => {
     }
     if (req.body.relatedVideos !== undefined) {
       updateData.relatedVideos = sanitizeRelatedVideos(req.body.relatedVideos);
+    }
+    if (req.body.videoUrl !== undefined) {
+      updateData.videoUrl = isSafeVideoUrl(req.body.videoUrl) ? String(req.body.videoUrl).trim() : "";
     }
     delete updateData.legacySlugs;
     delete updateData.slugManuallyEdited;

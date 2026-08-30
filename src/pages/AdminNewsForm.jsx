@@ -410,14 +410,17 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
 
               <div className="form-group">
-                <label>Video URL (YouTube, Vimeo, Dailymotion, Facebook, etc.)</label>
+                <label>Video URL (supports YouTube, YouTube Shorts, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link)</label>
                 <input
                   type="text"
                   name="videoUrl"
                   value={formData.videoUrl}
                   onChange={handleChange}
-                  placeholder="Paste any video link: YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
+                  placeholder="Paste any video link: YouTube, Shorts, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
                 />
+                {formData.videoUrl && !isSafeVideoUrl(formData.videoUrl) && <small style={{ color: "#c91f26", fontSize: 11 }}>Unsafe URL — only https links allowed.</small>}
+                {formData.videoUrl && isSafeVideoUrl(formData.videoUrl) && !getEmbedUrl(formData.videoUrl) && <small style={{ color: "#b7791f", fontSize: 11 }}>This URL may not be embeddable.</small>}
+                {formData.videoUrl && isSafeVideoUrl(formData.videoUrl) && getEmbedUrl(formData.videoUrl) && <small style={{ color: "#15803d", fontSize: 11 }}>✓ {detectPlatform(formData.videoUrl)} → {getEmbedUrl(formData.videoUrl)}</small>}
               </div>
             </div>
 
