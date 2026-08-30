@@ -63,8 +63,8 @@ function sanitizeRelatedVideos(videos) {
     if (!v || typeof v.videoUrl !== "string") continue;
     const url = v.videoUrl.trim();
     if (!isSafeVideoUrl(url)) continue;
-    const platform = detectPlatform(url);
-    if (platform === "unknown") continue;
+    let platform = detectPlatform(url);
+    if (platform === "unknown") platform = "generic";
     out.push({
       title: String(v.title || "").trim().slice(0, 200),
       videoUrl: url,
