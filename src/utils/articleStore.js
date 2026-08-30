@@ -35,23 +35,36 @@ export function registerArticles(articles) {
   articles.forEach(registerArticle);
 }
 
+function stripNewPrefix(s) {
+  return String(s || "").replace(/^new-\d{8,}-?/, "");
+}
 function isBadSlug(s) {
   return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
 }
 
 export function getTitleSlug(article) {
   if (!article) return "";
-  if (article.slug && !isBadSlug(article.slug)) return article.slug;
-  if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
+  for (const raw of [article.slug, article.engSlug, article.id]) {
+    if (!raw) continue;
+    const cleaned = stripNewPrefix(raw);
+    if (cleaned && !isBadSlug(cleaned)) return cleaned;
+    if (raw && !isBadSlug(raw)) return raw;
+  }
+  for (const raw of [article.slug, article.engSlug]) {
+    if (!raw) continue;
+    const cleaned = stripNewPrefix(raw);
+    if (cleaned && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleaned) && !cleaned.includes("---")) return cleaned;
+  }
   return "";
 }
 
 export function getArticleBySlug(slug) {
   if (!slug) return null;
+  const cleanedInput = stripNewPrefix(slug);
   const cache = getArticlesCache();
   return cache.find(a => {
-    if (a.slug === slug) return true;
-    if (a.id === slug) return true;
+    const candidates = [a.slug, a.engSlug, a.id].filter(Boolean).flatMap(v => [v, stripNewPrefix(v)]);
+    if (candidates.includes(slug) || candidates.includes(cleanedInput)) return true;
     return false;
   }) || null;
 }

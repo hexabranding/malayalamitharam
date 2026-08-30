@@ -13,7 +13,8 @@ function getRandomBgColor() {
 }
 
 async function ensureUniqueSlug(baseSlug, excludeId) {
-  let candidate = baseSlug;
+  let cleanBase = String(baseSlug || "").replace(/^new-\d{8,}-?/, "") || "news";
+  let candidate = cleanBase;
   let counter = 2;
   while (true) {
     const existing = await Article.findOne({
@@ -21,7 +22,7 @@ async function ensureUniqueSlug(baseSlug, excludeId) {
       ...(excludeId ? { _id: { $ne: excludeId } } : {}),
     });
     if (!existing) return candidate;
-    candidate = baseSlug + "-" + counter;
+    candidate = cleanBase + "-" + counter;
     counter++;
   }
 }
@@ -34,6 +35,14 @@ async function findArticleBySlug(slugParam, isAdmin) {
 
   article = await Article.findOne({ ...filter, legacySlugs: slugParam });
   if (article) return article;
+
+  const stripped = String(slugParam).replace(/^new-\d{8,}-?/, "");
+  if (stripped && stripped !== slugParam) {
+    article = await Article.findOne({ ...filter, slug: stripped });
+    if (article) return article;
+    article = await Article.findOne({ ...filter, legacySlugs: stripped });
+    if (article) return article;
+  }
 
   try {
     const decoded = decodeURIComponent(slugParam);
@@ -92,7 +101,9 @@ router.get("/", async (req, res) => {
 
 router.get("/slug/:slug", async (req, res) => {
   try {
-    if (!isCleanNewsSlug(req.params.slug)) {
+    const rawSlug = String(req.params.slug || "");
+    const cleanedCheck = rawSlug.replace(/^new-\d{8,}-?/, "");
+    if (!isCleanNewsSlug(rawSlug) && !isCleanNewsSlug(cleanedCheck)) {
       return res.status(400).json({ error: "A valid English news slug is required" });
     }
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
@@ -107,7 +118,9 @@ router.get("/slug/:slug", async (req, res) => {
 
 router.get("/:slug", async (req, res) => {
   try {
-    if (!isCleanNewsSlug(req.params.slug) && !/^[0-9a-fA-F]{24}$/.test(req.params.slug)) {
+    const rawSlug = String(req.params.slug || "");
+    const cleanedCheck = rawSlug.replace(/^new-\d{8,}-?/, "");
+    if (!isCleanNewsSlug(rawSlug) && !isCleanNewsSlug(cleanedCheck) && !/^[0-9a-fA-F]{24}$/.test(rawSlug)) {
       return res.status(400).json({ error: "A valid English news slug is required" });
     }
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
@@ -206,16 +219,22 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
 router.patch("/:id/view", async (req, res) => {
   try {
-    const filter = req.params.id.match(/^[0-9a-fA-F]{24}$/)
-      ? { _id: req.params.id }
-      : { slug: req.params.id };
-    const article = await Article.findOneAndUpdate(
-      filter,
-      { $inc: { views: 1 } },
-      { new: true, select: "views slug" }
-    );
-    if (!article) return res.status(404).json({ error: "Article not found" });
-    res.json({ views: article.views });
+    const raw = String(req.params.id || "");
+    if (/^[0-9a-fA-F]{24}$/.test(raw)) {
+      const article = await Article.findOneAndUpdate({ _id: raw }, { $inc: { views: 1 } }, { new: true, select: "views slug" });
+      if (article) return res.json({ views: article.views });
+      return res.status(404).json({ error: "Article not found" });
+    }
+    let article = await Article.findOneAndUpdate({ slug: raw }, { $inc: { views: 1 } }, { new: true, select: "views slug" });
+    if (article) return res.json({ views: article.views });
+    const stripped = raw.replace(/^new-\d{8,}-?/, "");
+    if (stripped && stripped !== raw) {
+      article = await Article.findOneAndUpdate({ slug: stripped }, { $inc: { views: 1 } }, { new: true, select: "views slug" });
+      if (article) return res.json({ views: article.views });
+      article = await Article.findOneAndUpdate({ legacySlugs: raw }, { $inc: { views: 1 } }, { new: true, select: "views slug" });
+      if (article) return res.json({ views: article.views });
+    }
+    return res.status(404).json({ error: "Article not found" });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -239,16 +258,26 @@ router.post("/migrate-slugs", authMiddleware, async (req, res) => {
     const articles = await Article.find({});
     let updated = 0, skipped = 0;
     for (const article of articles) {
+      const stripped = String(article.slug || "").replace(/^new-\d{8,}-?/, "");
       let slugSource;
-      try {
-        slugSource = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
-      } catch (error) {
-        skipped++;
-        continue;
+      let baseSlug = stripped && stripped !== article.slug ? stripped : null;
+      if (!baseSlug) {
+        try {
+          slugSource = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
+          baseSlug = slugSource.baseSlug;
+        } catch (error) {
+          if (stripped && stripped !== article.slug) baseSlug = stripped;
+          else { skipped++; continue; }
+        }
+      } else {
+        try { slugSource = await englishSlugSource(article.title, article.titleEn, stripped, { forceTitleTranslation: false }); baseSlug = slugSource.baseSlug; } catch { baseSlug = stripped; slugSource = { englishTitle: article.titleEn || "" }; }
       }
-      const slug = await ensureUniqueSlug(slugSource.baseSlug, article._id);
-      if (slug !== article.slug || article.titleEn !== slugSource.englishTitle) {
-        await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, titleEn: slugSource.englishTitle, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
+      const slug = await ensureUniqueSlug(baseSlug, article._id);
+      if (slug !== article.slug) {
+        await Article.updateOne({ _id: article._id }, { $set: { slug, engSlug: slug, titleEn: slugSource?.englishTitle || article.titleEn, legacySlugs: [...new Set([...(article.legacySlugs || []), article.slug].filter(Boolean))] } });
+        updated++;
+      } else if (slugSource && article.titleEn !== slugSource.englishTitle) {
+        await Article.updateOne({ _id: article._id }, { $set: { titleEn: slugSource.englishTitle } });
         updated++;
       }
     }

@@ -10,14 +10,16 @@ function containsMalayalam(value) {
  * transliterated: URL text must describe the story in English.
  */
 async function englishSlugSource(title, titleEn, requestedSlug, { forceTitleTranslation = false } = {}) {
-  const suppliedSlug = slugifyEnglish(requestedSlug);
+  let suppliedSlug = slugifyEnglish(requestedSlug);
+  suppliedSlug = suppliedSlug.replace(/^new-\d{8,}-?/, "");
   if (suppliedSlug && isCleanNewsSlug(suppliedSlug)) {
     return { englishTitle: String(titleEn || "").trim(), baseSlug: suppliedSlug };
   }
 
   const suppliedEnglishTitle = String(titleEn || "").trim();
   if (!forceTitleTranslation && suppliedEnglishTitle && !containsMalayalam(suppliedEnglishTitle)) {
-    const baseSlug = slugifyEnglish(suppliedEnglishTitle);
+    let baseSlug = slugifyEnglish(suppliedEnglishTitle);
+    baseSlug = baseSlug.replace(/^new-\d{8,}-?/, "");
     if (baseSlug) return { englishTitle: suppliedEnglishTitle, baseSlug };
   }
 
@@ -25,14 +27,16 @@ async function englishSlugSource(title, titleEn, requestedSlug, { forceTitleTran
   if (!sourceTitle) throw new Error("A title is required to generate a slug");
 
   if (!containsMalayalam(sourceTitle)) {
-    const baseSlug = slugifyEnglish(sourceTitle);
+    let baseSlug = slugifyEnglish(sourceTitle);
+    baseSlug = baseSlug.replace(/^new-\d{8,}-?/, "");
     if (baseSlug) return { englishTitle: sourceTitle, baseSlug };
   }
 
   try {
     const result = await translate(sourceTitle, { from: "ml", to: "en" });
     const englishTitle = String(result.text || "").trim();
-    const baseSlug = slugifyEnglish(englishTitle);
+    let baseSlug = slugifyEnglish(englishTitle);
+    baseSlug = baseSlug.replace(/^new-\d{8,}-?/, "");
     if (!baseSlug) throw new Error("translation did not produce English text");
     return { englishTitle, baseSlug };
   } catch (error) {

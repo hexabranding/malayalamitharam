@@ -75,12 +75,25 @@ export function generateSlugFromTitle(title, englishTitle) {
   return slug;
 }
 
+function stripNewPrefix(s) {
+  return String(s || "").replace(/^new-\d{8,}-?/, "");
+}
 function isBadSlug(s) {
   return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
 }
 
 export function getShareUrl(article) {
-  if (article.slug && !isBadSlug(article.slug)) return article.slug;
-  if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
+  if (!article) return "";
+  for (const raw of [article.slug, article.engSlug]) {
+    if (!raw) continue;
+    const cleaned = stripNewPrefix(raw);
+    if (cleaned && !isBadSlug(cleaned)) return cleaned;
+    if (!isBadSlug(raw)) return raw;
+  }
+  for (const raw of [article.slug, article.engSlug]) {
+    if (!raw) continue;
+    const cleaned = stripNewPrefix(raw);
+    if (cleaned && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleaned) && !cleaned.includes("---")) return cleaned;
+  }
   return "";
 }

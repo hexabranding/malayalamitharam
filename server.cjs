@@ -245,11 +245,14 @@ const BASE = (process.env.API_BASE_URL || (isAbsolute ? process.env.VITE_API_URL
       return null;
     }
 
+    const strippedIds = identifiers.map(s => String(s).replace(/^new-\d{8,}-?/, "")).filter(s => s && !identifiers.includes(s));
+    const allIds = [...new Set([...identifiers, ...strippedIds])];
+
     let article = await Article.findOne({
       published: true,
       $or: [
-        { slug: { $in: identifiers } },
-        { legacySlugs: { $in: identifiers } },
+        { slug: { $in: allIds } },
+        { legacySlugs: { $in: allIds } },
       ],
     }).lean();
 

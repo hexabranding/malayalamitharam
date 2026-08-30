@@ -2,14 +2,18 @@ const { transliterateMalayalam } = require("./malayalamTransliterate");
 
 const STOP_WORDS = new Set(["a", "an", "and", "announced", "are", "as", "at", "be", "by", "for", "from", "in", "into", "is", "of", "on", "or", "the", "to", "with"]);
 
+function stripNewPrefix(value) {
+  return String(value || "").replace(/^new-\d{8,}-?/, "");
+}
 function slugifyEnglish(value) {
-  return String(value || "")
+  const raw = String(value || "")
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, " ")
     .trim()
     .split(/[\s-]+/)
     .filter(Boolean)
     .join("-");
+  return stripNewPrefix(raw);
 }
 
 function slugifyManglish(malayalamTitle, englishTitle) {
@@ -48,4 +52,4 @@ function isCleanNewsSlug(value) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v);
 }
 
-module.exports = { slugifyEnglish, suggestNewsSlug, slugifyManglish, isCleanNewsSlug };
+module.exports = { slugifyEnglish, suggestNewsSlug, slugifyManglish, isCleanNewsSlug, stripNewPrefix };

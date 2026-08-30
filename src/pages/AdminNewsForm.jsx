@@ -107,7 +107,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setFormData(prev => {
       const next = { ...prev, [name]: type === "checkbox" ? checked : value };
       if (name === "titleEn" && !prev.slugManuallyEdited) {
-        const base = frontendSlugify(value);
+        let base = frontendSlugify(value);
+        base = base.replace(/^new-\d{8,}-?/, "");
         if (base) next.slug = base.split("-").slice(0, 5).join("-");
       }
       return next;
@@ -115,7 +116,9 @@ export default function AdminNewsForm({ navigate, newsId }) {
   };
 
   const handleEngSlugChange = (e) => {
-    const value = e.target.value;
+    let value = frontendSlugify(e.target.value);
+    value = value.replace(/^new-\d{8,}-?/, "");
+    if (!value) value = e.target.value.replace(/^new-\d{8,}-?/, "");
     setFormData(prev => ({
       ...prev,
       slug: value,
