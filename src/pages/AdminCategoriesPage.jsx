@@ -110,13 +110,19 @@ export default function AdminCategoriesPage({ navigate }) {
   };
 
   const handleAddSubcategory = async (groupSlug) => {
-    const slug = `new-${Date.now()}`;
+    const baseLabel = "New Category";
+    let baseSlug = frontendSlugify(baseLabel) || "new-category";
+    if (baseSlug.startsWith("new-")) baseSlug = baseSlug.replace(/^new-/, "") || "category";
+    let slug = baseSlug;
+    const existingSlugs = new Set(categories.flatMap(g => [g.slug, ...(g.children || []).map(c => c.slug)]));
+    let counter = 2;
+    while (existingSlugs.has(slug)) { slug = `${baseSlug}-${counter}`; counter++; }
     setSaving(true);
     try {
-      await createCategory({ label: "New Category", slug, titleMl: "New", parent: groupSlug });
+      await createCategory({ label: baseLabel, slug, titleMl: "New", parent: groupSlug });
       await refresh();
       setEditingId(`child-${groupSlug}__${slug}`);
-      setEditLabel("New Category");
+      setEditLabel(baseLabel);
       setEditMl("New");
       setExpandedGroups(prev => ({ ...prev, [groupSlug]: true }));
     } catch (err) {
@@ -126,13 +132,19 @@ export default function AdminCategoriesPage({ navigate }) {
   };
 
   const handleAddGroup = async () => {
-    const slug = `new-group-${Date.now()}`;
+    const baseLabel = "New Group";
+    let baseSlug = frontendSlugify(baseLabel) || "new-group";
+    if (baseSlug.startsWith("new-")) baseSlug = baseSlug.replace(/^new-/, "") || "group";
+    let slug = baseSlug;
+    const existingSlugs = new Set(categories.flatMap(g => [g.slug, ...(g.children || []).map(c => c.slug)]));
+    let counter = 2;
+    while (existingSlugs.has(slug)) { slug = `${baseSlug}-${counter}`; counter++; }
     setSaving(true);
     try {
-      await createCategory({ label: "New Group", slug, titleMl: "" });
+      await createCategory({ label: baseLabel, slug, titleMl: "" });
       await refresh();
       setEditingId(`group-${slug}`);
-      setEditLabel("New Group");
+      setEditLabel(baseLabel);
       setEditMl("");
     } catch (err) {
       alert("Error adding group: " + err.message);

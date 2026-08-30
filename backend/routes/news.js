@@ -280,19 +280,31 @@ router.post("/migrate-slugs", authMiddleware, async (req, res) => {
     const articles = await Article.find({});
     let updated = 0, skipped = 0;
     for (const article of articles) {
-      const stripped = String(article.slug || "").replace(/^new-\d{8,}-?/, "");
+      const isOldSlug = /^new-\d{8,}/.test(String(article.slug || ""));
+      const stripped = String(article.slug || "").replace(/^new-\d{8,}-?/, "").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
       let slugSource;
-      let baseSlug = stripped && stripped !== article.slug ? stripped : null;
-      if (!baseSlug) {
+      let baseSlug;
+      if (isOldSlug) {
         try {
           slugSource = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
           baseSlug = slugSource.baseSlug;
         } catch (error) {
-          if (stripped && stripped !== article.slug) baseSlug = stripped;
+          if (stripped && stripped !== article.slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(stripped) && !stripped.includes("---")) baseSlug = stripped;
           else { skipped++; continue; }
         }
       } else {
-        try { slugSource = await englishSlugSource(article.title, article.titleEn, stripped, { forceTitleTranslation: false }); baseSlug = slugSource.baseSlug; } catch { baseSlug = stripped; slugSource = { englishTitle: article.titleEn || "" }; }
+        if (stripped && stripped !== article.slug) baseSlug = stripped;
+        if (!baseSlug) {
+          try {
+            slugSource = await englishSlugSource(article.title, article.titleEn, "", { forceTitleTranslation: true });
+            baseSlug = slugSource.baseSlug;
+          } catch (error) {
+            if (stripped && stripped !== article.slug) baseSlug = stripped;
+            else { skipped++; continue; }
+          }
+        } else {
+          try { slugSource = await englishSlugSource(article.title, article.titleEn, stripped, { forceTitleTranslation: false }); baseSlug = slugSource.baseSlug; } catch { baseSlug = stripped; slugSource = { englishTitle: article.titleEn || "" }; }
+        }
       }
       const slug = await ensureUniqueSlug(baseSlug, article._id);
       if (slug !== article.slug) {
