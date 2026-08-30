@@ -13,7 +13,7 @@ function slugifyEnglish(value) {
     .split(/[\s-]+/)
     .filter(Boolean)
     .join("-");
-  return stripNewPrefix(raw);
+  return stripNewPrefix(raw).replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
 }
 
 function slugifyManglish(malayalamTitle, englishTitle) {

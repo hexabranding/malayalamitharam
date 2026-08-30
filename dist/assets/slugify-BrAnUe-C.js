@@ -1,0 +1,1 @@
+function a(e){return String(e||"").toLowerCase().replace(/[^a-z0-9\s-]/g," ").trim().split(/[\s-]+/).filter(Boolean).join("-").replace(/^new-\d{8,}-?/,"").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-")}export{a as s};

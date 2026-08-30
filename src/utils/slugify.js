@@ -6,5 +6,5 @@ export function slugify(text) {
     .split(/[\s-]+/)
     .filter(Boolean)
     .join("-");
-  return raw.replace(/^new-\d{8,}-?/, "");
+  return raw.replace(/^new-\d{8,}-?/, "").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
 }
