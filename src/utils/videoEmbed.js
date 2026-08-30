@@ -91,7 +91,13 @@ function getEmbedUrl(url) {
       if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
       return trimmed.replace(/^http:/, "https:");
     }
-    if (trimmed.includes("/embed/") || trimmed.includes("player.vimeo.com")) return trimmed.replace(/^http:/, "https:");
+    if (platform === "twitter") {
+      const m = trimmed.match(/(?:x\.com|twitter\.com)\/\w+\/status\/(\d+)/i);
+      if (m) return `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}`;
+      if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
+      return `https://twitframe.com/show?url=${encodeURIComponent(trimmed)}`;
+    }
+    if (trimmed.includes("/embed/") || trimmed.includes("player.vimeo.com") || trimmed.includes("platform.twitter.com")) return trimmed.replace(/^http:/, "https:");
     const httpsUrl = trimmed.replace(/^http:/, "https:");
     try {
       const h = new URL(httpsUrl).hostname.toLowerCase();

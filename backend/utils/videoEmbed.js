@@ -41,6 +41,21 @@ function detectPlatform(url) {
   } catch { return "unknown"; }
 }
 
+function getEmbedUrl(url) {
+  if (!isSafeVideoUrl(url)) return null;
+  const trimmed = url.trim();
+  try {
+    const platform = detectPlatform(trimmed);
+    if (platform === "twitter") {
+      const m = trimmed.match(/(?:x\.com|twitter\.com)\/\w+\/status\/(\d+)/i);
+      if (m) return `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}`;
+      if (trimmed.includes("/embed/")) return trimmed.replace(/^http:/, "https:");
+      return `https://twitframe.com/show?url=${encodeURIComponent(trimmed)}`;
+    }
+    return trimmed.replace(/^http:/, "https:");
+  } catch { return null; }
+}
+
 function sanitizeRelatedVideos(videos) {
   if (!Array.isArray(videos)) return [];
   const out = [];

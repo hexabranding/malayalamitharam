@@ -154,13 +154,13 @@ const displayRelated = related.length >= 1
         </div>
 
         {(article.relatedVideos?.length > 0 || article.videoUrl) && (
-          <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
-            <h4 className="article-video-title">
+          <div className="article-video-section" data-aos="fade-up" data-aos-delay="230" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+            <h4 className="article-video-title" style={{ textAlign: "center" }}>
               <Play size={20} /> വീഡിയോകൾ (Videos)
             </h4>
-            <div className="article-video-container">
+            <div className="article-video-container" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
               {showVideo && selectedVideo ? (
-                <div className="article-video-player" style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: 8 }}>
+                <div className="article-video-player" style={{ position: "relative", paddingBottom: "62%", height: 0, overflow: "hidden", borderRadius: 12, width: "100%", maxWidth: 860, margin: "0 auto", background: "#000", boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}>
                   <iframe
                     src={getEmbedUrl(selectedVideo.videoUrl) || selectedVideo.videoUrl}
                     title={selectedVideo.title || "Video"}
@@ -169,10 +169,10 @@ const displayRelated = related.length >= 1
                     allowFullScreen
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
                   />
-                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>✕</button>
+                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 10, right: 10, zIndex: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: 0, borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
                 </div>
               ) : (
-                <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, width: "100%", maxWidth: 900, justifyItems: "center" }}>
                   {article.videoUrl && isSafeVideoUrl(article.videoUrl) && (
                     <div
                       className="article-video-card clickable"
@@ -191,23 +191,23 @@ const displayRelated = related.length >= 1
                       key={index}
                       className="article-video-card clickable"
                       onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
+                      style={{ width: "100%", maxWidth: 420 }}
                     >
-                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "56.25%", background: "#000", borderRadius: 8, overflow: "hidden" }}>
-                        {video.thumbnail ? <img src={resolveImageUrl(video.thumbnail)} alt={video.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a1a1a,#333)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={32} color="#fff" /></div>}
-                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}><Play size={28} fill="#fff" color="#fff" /></div>
-                        <span style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 }}>{video.platform || detectPlatform(video.videoUrl)}</span>
+                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "62%", background: "#000", borderRadius: 10, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
+                        {video.thumbnail ? <img src={resolveImageUrl(video.thumbnail)} alt={video.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a1a1a,#333)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={36} color="#fff" /></div>}
+                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}><Play size={32} fill="#fff" color="#fff" /></div>
+                        <span style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>{video.platform || detectPlatform(video.videoUrl)}</span>
                       </div>
-                      <span className="article-video-label" style={{ display: "block", marginTop: 6, fontWeight: 600 }}>{video.title || "Video " + (index + 1)}</span>
-                      <small style={{ color: "#888", fontSize: 11, wordBreak: "break-all" }}>{video.videoUrl}</small>
+                      <span className="article-video-label" style={{ display: "block", marginTop: 8, fontWeight: 600, textAlign: "center" }}>{video.title || "Video " + (index + 1)}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
             {showVideo && selectedVideo && (
-              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                 {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((v, i) => (
-                  <button key={i} onClick={() => setSelectedVideo(v)} style={{ padding: "6px 10px", borderRadius: 6, border: selectedVideo.videoUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: selectedVideo.videoUrl === v.videoUrl ? "#c91f26" : "#fff", color: selectedVideo.videoUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
+                  <button key={i} onClick={() => setSelectedVideo(v)} style={{ padding: "6px 12px", borderRadius: 6, border: selectedVideo.videoUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: selectedVideo.videoUrl === v.videoUrl ? "#c91f26" : "#fff", color: selectedVideo.videoUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
                 ))}
               </div>
             )}

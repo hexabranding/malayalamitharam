@@ -427,12 +427,12 @@ export default function AdminNewsForm({ navigate, newsId }) {
             <div className="form-group">
               <label>Related Videos (shown on detail page) — supports YouTube, YouTube Shorts, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
               {formData.relatedVideos.length > 0 ? (
-                <div className="related-videos-list" style={{ display: "grid", gap: 8, marginBottom: 10 }}>
+                <div className="related-videos-list" style={{ display: "grid", gap: 8, marginBottom: 10, maxWidth: "100%", overflow: "hidden" }}>
                   {formData.relatedVideos.map((video, index) => (
-                    <div key={index} className="related-video-item" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#f8faf7", border: "1px solid #dfe6db", borderRadius: 6 }}>
-                      <span style={{ minWidth: 0, flex: 1 }}>
-                        <strong style={{ display: "block", fontSize: 13 }}>{video.title || "Untitled"}</strong>
-                        <span style={{ display: "block", fontSize: 11, color: "#666", wordBreak: "break-all" }}>{video.videoUrl}</span>
+                    <div key={index} className="related-video-item" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#f8faf7", border: "1px solid #dfe6db", borderRadius: 6, maxWidth: "100%", overflow: "hidden", minWidth: 0 }}>
+                      <span style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+                        <strong style={{ display: "block", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{video.title || "Untitled"}</strong>
+                        <span style={{ display: "block", fontSize: 11, color: "#666", wordBreak: "break-all", overflowWrap: "anywhere", lineBreak: "anywhere", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={video.videoUrl}>{video.videoUrl.length > 80 ? video.videoUrl.slice(0, 80) + "…" : video.videoUrl}</span>
                         <span style={{ display: "inline-block", marginTop: 4, fontSize: 10, padding: "2px 6px", borderRadius: 10, background: "#e6f0ff", color: "#1a56db" }}>{video.platform || detectPlatform(video.videoUrl)}</span>
                       </span>
                       <button type="button" className="btn-remove" onClick={() => removeRelatedVideo(index)} style={{ flexShrink: 0, padding: 6, borderRadius: 4, border: "1px solid #f0c0c0", background: "#fff", color: "#c91f26", cursor: "pointer" }}>
