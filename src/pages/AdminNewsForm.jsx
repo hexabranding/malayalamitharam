@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Save, X, Upload } from "lucide-react";
-import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } from "../services/api.js";
+import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, translateText } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
@@ -43,10 +43,52 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const [menuGroupsData, setMenuGroupsData] = useState([]);
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [translating, setTranslating] = useState(false);
+  const translateTimeoutRef = useRef(null);
 
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
   }, []);
+
+  // Auto-translate Malayalam title to English and generate slug
+  useEffect(() => {
+    if (isEditing || !formData.title) return;
+    if (formData.titleEn || formData.slugManuallyEdited) return;
+    
+    // Check if title contains Malayalam characters
+    const hasMalayalam = /[\u0D00-\u0D7F]/.test(formData.title);
+    if (!hasMalayalam) return;
+
+    // Clear previous timeout
+    if (translateTimeoutRef.current) {
+      clearTimeout(translateTimeoutRef.current);
+    }
+
+    // Debounce translation
+    translateTimeoutRef.current = setTimeout(async () => {
+      setTranslating(true);
+      try {
+        const result = await translateText(formData.title);
+        if (result.translatedText) {
+          const slug = frontendSlugify(result.translatedText);
+          setFormData(prev => ({
+            ...prev,
+            titleEn: result.translatedText,
+            slug: slug || prev.slug,
+          }));
+        }
+      } catch (err) {
+        console.error("Translation failed:", err);
+      }
+      setTranslating(false);
+    }, 800);
+
+    return () => {
+      if (translateTimeoutRef.current) {
+        clearTimeout(translateTimeoutRef.current);
+      }
+    };
+  }, [formData.title, isEditing]);
 
   useEffect(() => {
     async function load() {
@@ -290,8 +332,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 name="slug"
                 value={formData.slug}
                 onChange={handleEngSlugChange}
-                placeholder="Auto-generated from English title (e.g., heavy-rain-kerala-coast)"
+                placeholder={translating ? "Translating..." : "Auto-generated from English title (e.g., heavy-rain-kerala-coast)"}
               />
+              {translating && (
+                <small style={{ display: "block", marginTop: 4, color: "#1a56db", fontSize: 13 }}>
+                  Translating Malayalam title to English...
+                </small>
+              )}
               {formData.slug && (
                 <small style={{ display: "block", marginTop: 4, color: "#666", fontSize: 13, wordBreak: "break-all" }}>
                   URL Preview: /news/{formData.slug}

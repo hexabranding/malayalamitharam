@@ -19,6 +19,7 @@ const adsRoutes = require("./routes/ads");
 const uploadRoutes = require("./routes/upload");
 const Ad = require("./models/Ad");
 const Image = require("./models/Image");
+const { translate } = require("@vitalets/google-translate-api");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -76,6 +77,20 @@ app.use("/api/authors", authorsRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/upload", uploadRoutes);
+
+// Translation endpoint for auto-generating English slugs from Malayalam titles
+app.post("/api/translate", async (req, res) => {
+  try {
+    const { text, from = "ml", to = "en" } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Text is required" });
+    }
+    const result = await translate(text, { from, to });
+    res.json({ translatedText: result.text });
+  } catch (error) {
+    res.status(500).json({ error: "Translation failed" });
+  }
+});
 
 app.get("/api/health", async (_req, res) => {
   const dbState = mongoose.connection.readyState;

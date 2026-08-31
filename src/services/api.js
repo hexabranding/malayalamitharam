@@ -53,6 +53,11 @@ function safeEncode(str) {
   }
 }
 
+// Translation
+export async function translateText(text, from = "ml", to = "en") {
+  return request("/translate", { method: "POST", headers: headers(), body: JSON.stringify({ text, from, to }) });
+}
+
 // News / Articles
 export async function fetchNews(params = {}) {
   const q = new URLSearchParams();
