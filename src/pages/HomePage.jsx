@@ -98,17 +98,17 @@ export default function HomePage({ navigate }) {
     return false;
   }
 
-  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 8);
+  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 6);
   const keralaLead = keralaStories[0];
-  const keralaSide = keralaStories.slice(1, 6);
+  const keralaSide = keralaStories.slice(1, 5);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 8);
+  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
   const nationalLead = nationalStories[0];
-  const nationalSide = nationalStories.slice(1, 6);
+  const nationalSide = nationalStories.slice(1, 5);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 8);
+  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
   const internationalLead = internationalStories[0];
-  const internationalSide = internationalStories.slice(1, 6);
+  const internationalSide = internationalStories.slice(1, 5);
 
   const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
   const gulfTop = gulfStories.slice(0, 2);
@@ -129,13 +129,13 @@ export default function HomePage({ navigate }) {
       const sectionArticles = articles.filter(a =>
         childSlugs.includes(a.category) || a.category === group.slug ||
         (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
-      ).slice(0, 8);
+      ).slice(0, 6);
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
         articles: sectionArticles,
         lead: sectionArticles[0],
-        side: sectionArticles.slice(1, 6),
+        side: sectionArticles.slice(1, 5),
       };
     });
 
