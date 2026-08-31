@@ -53,17 +53,25 @@ export default function HomePage({ navigate }) {
     }).catch(() => {});
   }, []);
 
-  const leadStory = articles[0];
-  const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
-  const fallbackEditorial = articles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
+  function parseDate(a) {
+    if (a?.createdAt) { const t = new Date(a.createdAt).getTime(); if (!isNaN(t)) return t; }
+    if (a?.updatedAt) { const t = new Date(a.updatedAt).getTime(); if (!isNaN(t)) return t; }
+    if (a?.date) { const t = new Date(a.date).getTime(); if (!isNaN(t)) return t; }
+    return 0;
+  }
+  const sortedArticles = [...articles].sort((a, b) => parseDate(b) - parseDate(a));
+
+  const leadStory = sortedArticles[0];
+  const editorialStories = sortedArticles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
+  const fallbackEditorial = sortedArticles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
   const leftColumnStories = editorialStories.length ? editorialStories : fallbackEditorial;
 
-  const selectedMainStories = articles.filter((article) => article.mainNews && article.id !== leadStory?.id).slice(0, 4);
-  const briefStories = articles.filter((article) => article.id !== leadStory?.id && !leftColumnStories.some((l) => l.id === article.id)).slice(0, 4);
-  const rightColumnStories = selectedMainStories.length ? selectedMainStories : briefStories.length ? briefStories : articles.slice(1, 5);
+  const selectedMainStories = sortedArticles.filter((article) => article.mainNews && article.id !== leadStory?.id).slice(0, 4);
+  const briefStories = sortedArticles.filter((article) => article.id !== leadStory?.id && !leftColumnStories.some((l) => l.id === article.id)).slice(0, 4);
+  const rightColumnStories = selectedMainStories.length ? selectedMainStories : briefStories.length ? briefStories : sortedArticles.slice(1, 5);
 
-  const breakingStories = articles.filter((a) => a.breaking);
-  const tickerStories = breakingStories.length > 0 ? breakingStories : articles.slice(0, 5);
+  const breakingStories = sortedArticles.filter((a) => a.breaking);
+  const tickerStories = breakingStories.length > 0 ? breakingStories : sortedArticles.slice(0, 5);
 
   const allChildSlugs = categoryGroups.flatMap(g => (g.children || []).map(c => c.slug));
 
@@ -98,25 +106,25 @@ export default function HomePage({ navigate }) {
     return false;
   }
 
-  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 6);
+  const keralaStories = sortedArticles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 6);
   const keralaLead = keralaStories[0];
   const keralaSide = keralaStories.slice(1, 5);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
+  const nationalStories = sortedArticles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
   const nationalLead = nationalStories[0];
   const nationalSide = nationalStories.slice(1, 5);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
+  const internationalStories = sortedArticles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
   const internationalLead = internationalStories[0];
   const internationalSide = internationalStories.slice(1, 5);
 
-  const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
+  const gulfStories = sortedArticles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
   const gulfTop = gulfStories.slice(0, 2);
   const gulfBottomLeft = gulfStories.slice(2, 5);
   const gulfBottomRight = gulfStories.slice(5, 8);
 
-  const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
-  const latestUpdates = articles.slice(0, 6);
+  const displayMedia = sortedArticles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
+  const latestUpdates = sortedArticles.slice(0, 6);
 
   const handledSlugs = new Set([
     ...keralaSlugs, ...indiaSlugs, ...worldSlugs, ...gulfSlugs,
@@ -126,7 +134,7 @@ export default function HomePage({ navigate }) {
     .filter(group => !handledSlugs.has(group.slug))
     .map((group) => {
       const childSlugs = (group.children || []).map(c => c.slug);
-      const sectionArticles = articles.filter(a =>
+      const sectionArticles = sortedArticles.filter(a =>
         childSlugs.includes(a.category) || a.category === group.slug ||
         (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
       ).slice(0, 6);
@@ -160,7 +168,7 @@ export default function HomePage({ navigate }) {
         <AdSlot slot="top-leaderboard" label="Top Leaderboard Ad (1280 x 250)" slider />
       </div>
 
-      <NewsCarousel articles={articles} navigate={navigate} latestUpdates={latestUpdates} />
+      <NewsCarousel articles={sortedArticles} navigate={navigate} latestUpdates={latestUpdates} />
 
       <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up" style={{ display: "none" }}>
         <div className="latest-strip-title">
@@ -201,7 +209,7 @@ export default function HomePage({ navigate }) {
             <div className="lead-mini-grid">
               {(() => {
                 const usedIds = new Set([leadStory?.id, ...leftColumnStories.map(s => s.id), ...rightColumnStories.map(s => s.id)]);
-                const miniNews = articles.filter(a => !usedIds.has(a.id)).slice(0, 4);
+                const miniNews = sortedArticles.filter(a => !usedIds.has(a.id)).slice(0, 4);
                 return miniNews.map((article) => (
                   <div key={article.id} className="lead-mini-card clickable" onClick={() => navigate("/news/" + getTitleSlug(article))}>
                     {article.image && <ArticleImage article={article} alt={article.title} />}
@@ -353,18 +361,18 @@ export default function HomePage({ navigate }) {
               ))}
             </div>
           )}
-          <VideoSection articles={articles} navigate={navigate} />
+          <VideoSection articles={sortedArticles} navigate={navigate} />
         </div>
       </section>
 
-      <PhotoGallery articles={articles} navigate={navigate} />
+      <PhotoGallery articles={sortedArticles} navigate={navigate} />
 
       <section className="container section-block" style={{ borderBottom: "none" }} data-aos="fade-up">
         <div className="section-block-title" data-aos="fade-left">
           <span>കൂടുതൽ വാർത്തകൾ</span>
         </div>
         <div className="list-feed">
-          {articles.slice(0, 12).map((article, i) => (
+          {sortedArticles.slice(0, 12).map((article, i) => (
             <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={i * 50} />
           ))}
         </div>
