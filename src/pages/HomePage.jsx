@@ -130,6 +130,7 @@ export default function HomePage({ navigate }) {
         childSlugs.includes(a.category) || a.category === group.slug ||
         (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
       ).slice(0, 6);
+      if (sectionArticles.length === 0) return null;
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
@@ -137,7 +138,8 @@ export default function HomePage({ navigate }) {
         lead: sectionArticles[0],
         side: sectionArticles.slice(1, 5),
       };
-    });
+    })
+    .filter(Boolean);
 
   return (
     <div className="home-page">
@@ -318,9 +320,6 @@ export default function HomePage({ navigate }) {
               <span>{section.title}</span>
               <button className="view-all-btn" onClick={() => navigate("/category/" + section.slug)}>View All</button>
             </div>
-            {section.articles.length === 0 ? (
-              <div style={{ padding: "20px", textAlign: "center", color: "#888", background: "#fff", border: "1px dashed #dfe6db", borderRadius: 8 }}>No news in this category yet</div>
-            ) : (
             <div className={`news-split-layout${i % 2 === 0 ? "" : " reversed"}`}>
               <div className="news-split-main">
                 <ArticleCard article={section.lead} navigate={navigate} variant="feature-card" dataAosDelay={0} />
@@ -331,7 +330,6 @@ export default function HomePage({ navigate }) {
                 ))}
               </div>
             </div>
-            )}
           </section>
         ))}
       </PageLayout>
