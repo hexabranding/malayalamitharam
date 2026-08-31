@@ -32,7 +32,7 @@ export default function HomePage({ navigate }) {
     preloadCategories();
     registerArticles(fallback);
     function loadArticles() {
-      fetchNews({ limit: 100 }).then(data => {
+      fetchNews({ limit: 200 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) {
           setArticles(fetched);
