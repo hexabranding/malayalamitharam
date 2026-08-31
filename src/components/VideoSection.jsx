@@ -26,9 +26,14 @@ export default function VideoSection({ articles, navigate }) {
   const settings = useSettings();
   const youtubeChannelUrl = settings.youtube_url || "";
 
-  const videoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
+  const videoArticlesRaw = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
+  const videoArticles = (() => {
+    if (videoArticlesRaw.length >= 6) return videoArticlesRaw.slice(0, 6);
+    const fill = articles.filter((a) => a.image && !videoArticlesRaw.some((v) => v.id === a.id));
+    return [...videoArticlesRaw, ...fill].slice(0, 6);
+  })();
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
-  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : [];
+  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
   const embedUrl = useMemo(() => getVideoEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;

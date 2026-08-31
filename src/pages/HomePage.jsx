@@ -98,24 +98,33 @@ export default function HomePage({ navigate }) {
     return false;
   }
 
-  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"]));
+  let keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"]));
+  if (keralaStories.length < 5) { const fill = articles.filter(a => !keralaStories.some(s => s.id === a.id)); keralaStories = [...keralaStories, ...fill].slice(0, 6); }
   const keralaLead = keralaStories[0] || articles[1];
-  const keralaSide = keralaStories.slice(1, 5).length ? keralaStories.slice(1, 5) : articles.slice(2, 6);
+  const keralaSide = keralaStories.slice(1, 5);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
+  let nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
+  if (nationalStories.length < 5) { const fill = articles.filter(a => !nationalStories.some(s => s.id === a.id)); nationalStories = [...nationalStories, ...fill].slice(0, 6); }
   const nationalLead = nationalStories[0] || articles[2];
-  const nationalSide = nationalStories.slice(1, 5).length ? nationalStories.slice(1, 5) : articles.slice(3, 7);
+  const nationalSide = nationalStories.slice(1, 5);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
+  let internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
+  if (internationalStories.length < 5) { const fill = articles.filter(a => !internationalStories.some(s => s.id === a.id)); internationalStories = [...internationalStories, ...fill].slice(0, 6); }
   const internationalLead = internationalStories[0] || articles[3];
-  const internationalSide = internationalStories.slice(1, 5).length ? internationalStories.slice(1, 5) : articles.slice(4, 8);
+  const internationalSide = internationalStories.slice(1, 5);
 
-  const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
+  let gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
+  if (gulfStories.length < 6) { const fill = articles.filter(a => !gulfStories.some(s => s.id === a.id)); gulfStories = [...gulfStories, ...fill].slice(0, 8); }
   const gulfTop = gulfStories.slice(0, 2);
   const gulfBottomLeft = gulfStories.slice(2, 5);
   const gulfBottomRight = gulfStories.slice(5, 8);
 
-  const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
+  const displayMedia = (() => {
+    const media = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image);
+    if (media.length >= 4) return media.slice(0, 4);
+    const fill = articles.filter((a) => a.image && !media.some((m) => m.id === a.id));
+    return [...media, ...fill].slice(0, 4);
+  })();
   const latestUpdates = articles.slice(0, 6);
 
   const handledSlugs = new Set([
@@ -126,11 +135,15 @@ export default function HomePage({ navigate }) {
     .filter(group => !handledSlugs.has(group.slug))
     .map((group) => {
       const childSlugs = (group.children || []).map(c => c.slug);
-      const sectionArticles = articles.filter(a =>
+      let sectionArticles = articles.filter(a =>
         childSlugs.includes(a.category) || a.category === group.slug ||
         (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
       ).slice(0, 6);
-      if (sectionArticles.length === 0) return null;
+      if (sectionArticles.length === 0) sectionArticles = articles.slice(0, 6);
+      else if (sectionArticles.length < 5) {
+        const fill = articles.filter(a => !sectionArticles.some(s => s.id === a.id));
+        sectionArticles = [...sectionArticles, ...fill].slice(0, 6);
+      }
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
@@ -248,8 +261,7 @@ export default function HomePage({ navigate }) {
           </div>
         </section>
 
-        {nationalStories.length > 0 && (
-          <section className="section-block" data-aos="fade-up">
+        <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ദേശിയം</span>
               <button className="view-all-btn" onClick={() => navigate("/category/india")}>View All</button>
@@ -265,9 +277,7 @@ export default function HomePage({ navigate }) {
               </div>
             </div>
           </section>
-        )}
 
-        {internationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>അന്തർദേശിയം</span>
@@ -284,39 +294,30 @@ export default function HomePage({ navigate }) {
               </div>
             </div>
           </section>
-        )}
 
-        {gulfStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ഗൾഫ്</span>
               <button className="view-all-btn" onClick={() => navigate("/category/gulf")}>View All</button>
             </div>
-            {gulfTop.length > 0 && (
               <div className="gulf-top-row">
                 {gulfTop.map((article, i) => (
                   <ArticleCard key={article.id} article={article} navigate={navigate} variant="default" dataAosDelay={i * 50} />
                 ))}
               </div>
-            )}
             <div className="gulf-bottom-row">
-              {gulfBottomLeft.length > 0 && (
                 <div className="gulf-bottom-col">
                   {gulfBottomLeft.map((article, i) => (
                     <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={100 + i * 50} />
                   ))}
                 </div>
-              )}
-              {gulfBottomRight.length > 0 && (
                 <div className="gulf-bottom-col">
                   {gulfBottomRight.map((article, i) => (
                     <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={250 + i * 50} />
                   ))}
                 </div>
-              )}
             </div>
           </section>
-        )}
 
         {dynamicCategorySections.map((section, i) => (
           <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
