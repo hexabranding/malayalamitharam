@@ -98,17 +98,17 @@ export default function HomePage({ navigate }) {
     return false;
   }
 
-  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 6);
+  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"])).slice(0, 8);
   const keralaLead = keralaStories[0];
-  const keralaSide = keralaStories.slice(1, 5);
+  const keralaSide = keralaStories.slice(1, 6);
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
+  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 8);
   const nationalLead = nationalStories[0];
-  const nationalSide = nationalStories.slice(1, 5);
+  const nationalSide = nationalStories.slice(1, 6);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
+  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 8);
   const internationalLead = internationalStories[0];
-  const internationalSide = internationalStories.slice(1, 5);
+  const internationalSide = internationalStories.slice(1, 6);
 
   const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
   const gulfTop = gulfStories.slice(0, 2);
@@ -129,14 +129,14 @@ export default function HomePage({ navigate }) {
       const sectionArticles = articles.filter(a =>
         childSlugs.includes(a.category) || a.category === group.slug ||
         (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
-      ).slice(0, 6);
+      ).slice(0, 8);
       if (sectionArticles.length === 0) return null;
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
         articles: sectionArticles,
         lead: sectionArticles[0],
-        side: sectionArticles.slice(1, 5),
+        side: sectionArticles.slice(1, 6),
       };
     })
     .filter(Boolean);
