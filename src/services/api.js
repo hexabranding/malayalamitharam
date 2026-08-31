@@ -335,22 +335,24 @@ export const flatMenuItems = menuGroups.flatMap((group) => group.children ? grou
 
 function getMenuCache() {
   try {
-    const raw = localStorage.getItem("mm_menu_cache");
+    const raw = localStorage.getItem("mm_menu_cache_v2");
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (Date.now() - parsed.time < 5 * 60 * 1000) return parsed.data;
+    if (Date.now() - parsed.time < 60 * 1000) return parsed.data;
   } catch {}
   return null;
 }
 
 function setMenuCache(data) {
   try {
-    localStorage.setItem("mm_menu_cache", JSON.stringify({ data, time: Date.now() }));
+    localStorage.setItem("mm_menu_cache_v2", JSON.stringify({ data, time: Date.now() }));
+    localStorage.removeItem("mm_menu_cache");
   } catch {}
 }
 
 export function clearMenuCache() {
   localStorage.removeItem("mm_menu_cache");
+  localStorage.removeItem("mm_menu_cache_v2");
 }
 
 export async function loadMenuGroups() {
