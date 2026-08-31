@@ -335,7 +335,7 @@ export const flatMenuItems = menuGroups.flatMap((group) => group.children ? grou
 
 function getMenuCache() {
   try {
-    const raw = localStorage.getItem("mm_menu_cache_v2");
+    const raw = localStorage.getItem("mm_menu_cache_v3");
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.time < 60 * 1000) return parsed.data;
@@ -345,14 +345,16 @@ function getMenuCache() {
 
 function setMenuCache(data) {
   try {
-    localStorage.setItem("mm_menu_cache_v2", JSON.stringify({ data, time: Date.now() }));
+    localStorage.setItem("mm_menu_cache_v3", JSON.stringify({ data, time: Date.now() }));
     localStorage.removeItem("mm_menu_cache");
+    localStorage.removeItem("mm_menu_cache_v2");
   } catch {}
 }
 
 export function clearMenuCache() {
   localStorage.removeItem("mm_menu_cache");
   localStorage.removeItem("mm_menu_cache_v2");
+  localStorage.removeItem("mm_menu_cache_v3");
 }
 
 export async function loadMenuGroups() {
