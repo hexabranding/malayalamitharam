@@ -26,14 +26,11 @@ export default function VideoSection({ articles, navigate }) {
   const settings = useSettings();
   const youtubeChannelUrl = settings.youtube_url || "";
 
-  const videoArticlesRaw = articles.filter((a) => a.media === "video" && a.image && !(a.videoUrl && /youtu\.?be/i.test(a.videoUrl)));
+  const videoArticlesRaw = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
   const videoArticles = (() => {
     if (videoArticlesRaw.length >= 6) return videoArticlesRaw.slice(0, 6);
-    if (videoArticlesRaw.length > 0) {
-      const fill = articles.filter((a) => a.image && !videoArticlesRaw.some((v) => v.id === a.id) && !(a.videoUrl && /youtu\.?be/i.test(a.videoUrl)));
-      return [...videoArticlesRaw, ...fill].slice(0, 6);
-    }
-    return [];
+    const fill = articles.filter((a) => a.image && !videoArticlesRaw.some((v) => v.id === a.id));
+    return [...videoArticlesRaw, ...fill].slice(0, 6);
   })();
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
