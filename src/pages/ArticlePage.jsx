@@ -139,7 +139,7 @@ const displayRelated = related.length >= 1
         </blockquote>
 
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
-          {(article.body || []).map((paragraph, index) => (
+          {(article.body || []).slice(0, 2).map((paragraph, index) => (
             <div key={index}>
               {index === 1 && (
                 <div className="in-article-ads">
@@ -213,6 +213,14 @@ const displayRelated = related.length >= 1
             )}
           </div>
         )}
+
+        <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
+          {(article.body || []).slice(2).map((paragraph, index) => (
+            <div key={index + 2}>
+              <p>{parseLinks(paragraph)}</p>
+            </div>
+          ))}
+        </div>
 
         <div className="tags" data-aos="fade-up" data-aos-delay="250">
           {(article.tags || []).map((tag) => (

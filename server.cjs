@@ -59,9 +59,9 @@ app.get("/og-image", async (req, res) => {
     } else if (src.startsWith("/uploads/")) {
       imageUrl = UPLOADS_URL + src;
     } else if (src.startsWith("/")) {
-      imageUrl = SITE_URL + src;
+      imageUrl = `${req.protocol}://${req.get("host")}${src}`;
     } else {
-      imageUrl = SITE_URL + "/" + src;
+      imageUrl = `${req.protocol}://${req.get("host")}/${src}`;
     }
 
     const upstream = await fetch(imageUrl, { redirect: "follow" });
@@ -137,24 +137,19 @@ function articleDescription(article) {
   return truncate(stripHtml(article.excerpt || article.content || body || article.title || ""), 155);
 }
 
-function buildArticleMeta(article) {
+function buildArticleMeta(article, baseUrl) {
   const title = String(article.title || "").trim();
   let description = articleDescription(article);
   if (!description) description = title;
   const rawImage = (article.image || article.thumbnail || "").trim();
 
-  // Build an absolute image URL for social crawlers.
-  // For /uploads/ images we route through the same-domain /og-image proxy so
-  // WhatsApp/Facebook don't hit cross-origin issues.  For other relative paths
-  // we fall back to the direct absolute URL.
-  let image;
-  if (rawImage && rawImage.startsWith("/uploads/")) {
-    image = `${SITE_URL}/og-image?src=${encodeURIComponent(rawImage)}`;
-  } else {
-    image = resolveAbsoluteImage(rawImage || DEFAULT_SOCIAL_IMAGE);
-  }
+  // Always route og:image through the same-domain /og-image proxy so
+  // social crawlers (WhatsApp/Facebook/Twitter) can fetch it without
+  // cross-origin issues.
+  const imgSrc = rawImage || DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
+  const image = `${baseUrl}/og-image?src=${encodeURIComponent(imgSrc)}`;
 
-  const url = `${SITE_URL}/news/${article.slug || ""}`;
+  const url = `${baseUrl}/news/${article.slug || ""}`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
@@ -237,7 +232,8 @@ const isAbsolute = process.env.VITE_API_URL && /^https?:\/\//i.test(process.env.
 const BASE = (process.env.API_BASE_URL || (isAbsolute ? process.env.VITE_API_URL : null) || "https://api.malayalamitharam.in/api").replace(/\/+$/, "");
         const res = await fetch(`${BASE}/news/${encodeURIComponent(slug)}`);
         if (res.ok) {
-          return await res.json();
+          const data = await res.json();
+          return data?.article || data?.news || data?.data || data;
         }
       } catch (e) {
         console.error("API fallback fetch failed:", e.message);
@@ -295,10 +291,12 @@ async function articlePageHandler(req, res) {
     } catch {}
   }
 
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+
   const cached = articleCache.get(slug);
   if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) {
     if (cached.article.slug !== slug) return res.redirect(301, `/news/${cached.article.slug}`);
-    const meta = buildArticleMeta(cached.article);
+    const meta = buildArticleMeta(cached.article, baseUrl);
     res.type("html");
     return res.send(injectMeta(indexHtml, meta));
   }
@@ -310,7 +308,7 @@ async function articlePageHandler(req, res) {
   if (slug !== article.slug) return res.redirect(301, `/news/${article.slug}`);
 
   articleCache.set(slug, { article, at: Date.now() });
-  const meta = buildArticleMeta(article);
+  const meta = buildArticleMeta(article, baseUrl);
   res.type("html");
   res.send(injectMeta(indexHtml, meta));
 }
