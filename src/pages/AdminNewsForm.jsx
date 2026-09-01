@@ -53,7 +53,12 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
-    fetchAuthors().then(data => setAuthorsList(Array.isArray(data) ? data : [])).catch(() => {});
+    fetchAuthors().then(data => {
+      if (Array.isArray(data)) setAuthorsList(data);
+      else if (Array.isArray(data?.authors)) setAuthorsList(data.authors);
+      else if (Array.isArray(data?.data)) setAuthorsList(data.data);
+      else setAuthorsList([]);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -63,6 +68,16 @@ export default function AdminNewsForm({ navigate, newsId }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (showAuthorDropdown) {
+      fetchAuthors().then(data => {
+        if (Array.isArray(data)) setAuthorsList(data);
+        else if (Array.isArray(data?.authors)) setAuthorsList(data.authors);
+        else if (Array.isArray(data?.data)) setAuthorsList(data.data);
+      }).catch(() => {});
+    }
+  }, [showAuthorDropdown]);
 
   // Auto-translate Malayalam title to English and generate slug
   useEffect(() => {
