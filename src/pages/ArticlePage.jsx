@@ -167,7 +167,14 @@ const displayRelated = related.length >= 1
           ))}
         </div>
 
-        {article.relatedVideos?.length > 0 && (
+        {(() => {
+          const related = (article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl));
+          const mainVideoUrl = article.videoUrl && isSafeVideoUrl(article.videoUrl) ? article.videoUrl : "";
+          const allVideos = mainVideoUrl && !related.some(v => v.videoUrl === mainVideoUrl)
+            ? [{ videoUrl: mainVideoUrl, title: article.title, thumbnail: "", platform: detectPlatform(mainVideoUrl) }, ...related]
+            : related;
+          if (allVideos.length === 0) return null;
+          return (
           <div className="article-video-section" data-aos="fade-up" data-aos-delay="230" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
             <h4 className="article-video-title" style={{ textAlign: "center" }}>
               <Play size={20} /> വീഡിയോകൾ (Videos)
@@ -182,7 +189,7 @@ const displayRelated = related.length >= 1
                 </div>
               ) : (
                 <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, width: "100%", maxWidth: 900, justifyItems: "center" }}>
-                  {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((video, index) => (
+                  {allVideos.map((video, index) => (
                     <div
                       key={index}
                       className="article-video-card clickable"
@@ -202,13 +209,14 @@ const displayRelated = related.length >= 1
             </div>
             {showVideo && selectedVideo && (
               <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-                {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((v, i) => (
+                {allVideos.map((v, i) => (
                   <button key={i} onClick={() => setSelectedVideo(v)} style={{ padding: "6px 12px", borderRadius: 6, border: selectedVideo.videoUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: selectedVideo.videoUrl === v.videoUrl ? "#c91f26" : "#fff", color: selectedVideo.videoUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
                 ))}
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(article.body || []).slice(3).map((paragraph, index) => (

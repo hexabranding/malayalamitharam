@@ -143,12 +143,15 @@ function isCleanSlug(s) { return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(s||"")
 function pickEnglishSlug(article) {
   const candidates = [article.slug, article.engSlug].map(v=>String(v||"").trim()).filter(Boolean);
   for (const c of candidates) { const cleaned = c.replace(/^new-\d{8,}-?/, ""); if (cleaned && isCleanSlug(cleaned)) return cleaned; if (isCleanSlug(c)) return c; }
-  for (const c of candidates) { const cleaned = c.replace(/^new-\d{8,}-?/, ""); if (cleaned && /^[a-z0-9-]+$/.test(cleaned) && !cleaned.includes("---")) return cleaned; }
-  if (article.titleEn && isCleanSlug(String(article.titleEn).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""))) return String(article.titleEn).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
-  let base = String(article.titleEn || article.title || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
-  base = base.replace(/^new-\d{8,}-?/, "");
+  for (const c of candidates) { const cleaned = c.replace(/^new-\d{8,}-?/, ""); if (cleaned && /^[a-z0-9-]+$/.test(cleaned) && !cleaned.includes("---")) return cleaned.replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-"); }
+  let base = "";
+  if (article.titleEn) base = String(article.titleEn).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-").replace(/^new-\d{8,}-?/, "");
   if (base && isCleanSlug(base)) return base;
-  return article.slug ? String(article.slug).replace(/^new-\d{8,}-?/, "") : "";
+  base = String(article.title || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-").replace(/^new-\d{8,}-?/, "");
+  if (base && base !== "news" && /^[a-z]+(?:-[a-z0-9]+)*$/.test(base) && !/^new-\d{8,}/.test(base)) return base;
+  const fallback = String(article.titleEn || article.title || "").toLowerCase().replace(/[^a-z0-9\s-]+/g," ").trim().split(/[\s-]+/).filter(Boolean).join("-").replace(/^new-\d{8,}-?/, "").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
+  if (fallback && isCleanSlug(fallback)) return fallback;
+  return "";
 }
 function buildArticleMeta(article, baseUrl) {
   const title = String(article.title || "").trim();

@@ -94,7 +94,7 @@ export function getShareUrl(article) {
     const cleaned = stripNewPrefix(raw);
     if (cleaned && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleaned) && !cleaned.includes("---")) return cleaned;
   }
-  const fallback = generateSlugFromTitle(article.titleEn || article.title, article.titleEn);
-  if (fallback && !isBadSlug(fallback)) return fallback;
+  const fallback = generateSlugFromTitle(article.title, article.titleEn);
+  if (fallback && !isBadSlug(fallback)) return fallback.replace(/^new-\d{8,}-?/, "").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
   return "";
 }

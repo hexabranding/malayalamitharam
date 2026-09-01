@@ -44,7 +44,7 @@ function isBadSlug(s) {
 
 export function getTitleSlug(article) {
   if (!article) return "";
-  for (const raw of [article.slug, article.engSlug, article.id]) {
+  for (const raw of [article.slug, article.engSlug]) {
     if (!raw) continue;
     const cleaned = stripNewPrefix(raw);
     if (cleaned && !isBadSlug(cleaned)) return cleaned;
@@ -57,7 +57,18 @@ export function getTitleSlug(article) {
   }
   const fallback = String(article.titleEn || article.title || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-").replace(/^new-\d{8,}-?/, "");
   if (fallback && !isBadSlug(fallback)) return fallback;
-  return "";
+  const manglish = (() => {
+    try {
+      const src = article.titleEn || article.title || "";
+      if (/[\u0D00-\u0D7F]/.test(src)) {
+        let t = src;
+        const map = { '\u0D15':'ka','\u0D16':'kha','\u0D17':'ga','\u0D1A':'cha','\u0D2A':'pa','\u0D2E':'ma','\u0D2F':'ya','\u0D30':'ra','\u0D32':'la','\u0D38':'sa' };
+        return t;
+      }
+      return fallback;
+    } catch { return fallback; }
+  })();
+  return manglish || "";
 }
 
 export function getArticleBySlug(slug) {
