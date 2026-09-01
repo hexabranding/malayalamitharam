@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
-import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
+import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -18,6 +18,7 @@ import { getEmbedUrl, detectPlatform, isSafeVideoUrl } from "../utils/videoEmbed
 
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
+  const [authorDetails, setAuthorDetails] = useState(null);
 
   const fallbackBySlug = fallback.find(a => a.slug === slug || a.id === slug);
   const fallbackById = fallback.find(a => a.id === slug);
@@ -95,6 +96,18 @@ export default function ArticlePage({ slug, navigate }) {
     if (slug) load();
     return () => { cancelled = true; };
   }, [slug]);
+
+  useEffect(() => {
+    if (!article?.author) { setAuthorDetails(null); return; }
+    let cancelled = false;
+    fetchAuthors().then(data => {
+      if (cancelled) return;
+      const list = Array.isArray(data) ? data : [];
+      const found = list.find(a => a.name && a.name.toLowerCase() === article.author.toLowerCase());
+      setAuthorDetails(found || null);
+    }).catch(() => { if (!cancelled) setAuthorDetails(null); });
+    return () => { cancelled = true; };
+  }, [article?.author]);
 
   if (loading) {
     return (
@@ -265,10 +278,18 @@ const displayRelated = related.length >= 1
         </div>
 
         <div className="article-author-card" data-aos="fade-up" data-aos-delay="350">
-          <div className="author-avatar">{article.author.charAt(0)}</div>
+          {authorDetails?.photo ? (
+            <img src={resolveImageUrl(authorDetails.photo)} alt={article.author || "Author"} className="author-avatar" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <div className="author-avatar">{(article.author || "M").charAt(0).toUpperCase()}</div>
+          )}
           <div className="author-details">
-            <h4>{article.author}</h4>
-            <p>മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു.</p>
+            <h4>{article.author || "Malayalamitram"}</h4>
+            {authorDetails?.role ? (
+              <p>{authorDetails.roleMl || authorDetails.role}</p>
+            ) : (
+              <p>മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു.</p>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Save, X, Upload } from "lucide-react";
-import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, translateText } from "../services/api.js";
+import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, translateText, fetchAuthors, createAuthor } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
@@ -45,9 +45,15 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [translating, setTranslating] = useState(false);
   const translateTimeoutRef = useRef(null);
+  const [authorsList, setAuthorsList] = useState([]);
+  const [authorSearch, setAuthorSearch] = useState("");
+  const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
+  const [creatingAuthor, setCreatingAuthor] = useState(false);
+  const authorRef = useRef(null);
 
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
+    fetchAuthors().then(data => setAuthorsList(Array.isArray(data) ? data : [])).catch(() => {});
   }, []);
 
   // Auto-translate Malayalam title to English and generate slug
@@ -199,6 +205,36 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setFormData(prev => ({ ...prev, image: url }));
     setImagePreview(url);
   };
+
+  const handleAuthorSelect = (author) => {
+    setFormData(prev => ({ ...prev, author: author.name }));
+    setAuthorSearch(author.name);
+    setShowAuthorDropdown(false);
+  };
+
+  const handleAuthorInputChange = (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, author: value }));
+    setAuthorSearch(value);
+    setShowAuthorDropdown(true);
+  };
+
+  const handleCreateAuthor = async () => {
+    const name = authorSearch.trim();
+    if (!name) return;
+    setCreatingAuthor(true);
+    try {
+      const newAuthor = await createAuthor({ name });
+      setAuthorsList(prev => [...prev, newAuthor]);
+      setFormData(prev => ({ ...prev, author: name }));
+      setShowAuthorDropdown(false);
+    } catch {}
+    setCreatingAuthor(false);
+  };
+
+  const filteredAuthors = authorsList.filter(a =>
+    a.name && a.name.toLowerCase().includes(authorSearch.toLowerCase())
+  );
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -364,16 +400,46 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" ref={authorRef} style={{ position: "relative" }}>
                 <label>Author</label>
                 <input
                   type="text"
                   name="author"
                   value={formData.author}
-                  onChange={handleChange}
+                  onChange={handleAuthorInputChange}
+                  onFocus={() => setShowAuthorDropdown(true)}
                   required
-                  placeholder="Author name"
+                  placeholder="Type to search or create author..."
+                  autoComplete="off"
                 />
+                {showAuthorDropdown && authorSearch && (
+                  <div className="author-dropdown" style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #ddd", borderRadius: 6, maxHeight: 200, overflow: "auto", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                    {filteredAuthors.length > 0 && filteredAuthors.map(a => (
+                      <div
+                        key={a._id}
+                        onClick={() => handleAuthorSelect(a)}
+                        style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0", fontSize: 14 }}
+                        onMouseEnter={e => e.target.style.background = "#f5f5f5"}
+                        onMouseLeave={e => e.target.style.background = "#fff"}
+                      >
+                        <strong>{a.name}</strong>
+                        {a.nameMl && <span style={{ marginLeft: 8, color: "#666" }}>{a.nameMl}</span>}
+                        {a.role && <span style={{ marginLeft: 8, color: "#999", fontSize: 12 }}>({a.role})</span>}
+                      </div>
+                    ))}
+                    {filteredAuthors.length === 0 && !creatingAuthor && (
+                      <div
+                        onClick={handleCreateAuthor}
+                        style={{ padding: "8px 12px", cursor: "pointer", color: "#1a56db", fontSize: 14 }}
+                      >
+                        + Create "{authorSearch}" as new author
+                      </div>
+                    )}
+                    {creatingAuthor && (
+                      <div style={{ padding: "8px 12px", color: "#666", fontSize: 14 }}>Creating...</div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

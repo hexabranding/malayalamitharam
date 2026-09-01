@@ -2,17 +2,28 @@ import { useState, useEffect } from "react";
 import { fetchNews } from "../services/api.js";
 import { articles as fallback } from "../data/news.js";
 import { ArticleImage } from "../services/images.jsx";
-import { Newspaper, Eye, MessageSquare, TrendingUp, Calendar, Heart } from "lucide-react";
+import { Newspaper, Eye, MessageSquare, TrendingUp, Calendar, Heart, Zap } from "lucide-react";
 
 export default function AdminDashboard({ navigate }) {
   const [articles, setArticles] = useState(fallback);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    function loadArticles() {
-      fetchNews({ limit: 50 }).then(data => {
-        const fetched = data.news || [];
-        if (fetched.length > 0) setArticles(fetched);
-      }).catch(() => {});
+    async function loadArticles() {
+      try {
+        let allArticles = [];
+        let page = 1;
+        let hasMore = true;
+        while (hasMore) {
+          const data = await fetchNews({ limit: 100, page });
+          const batch = data.news || [];
+          allArticles = [...allArticles, ...batch];
+          setTotalCount(data.total || allArticles.length);
+          if (batch.length < 100) hasMore = false;
+          else page++;
+        }
+        if (allArticles.length > 0) setArticles(allArticles);
+      } catch {}
     }
     loadArticles();
     const interval = setInterval(loadArticles, 30000);
@@ -23,8 +34,9 @@ export default function AdminDashboard({ navigate }) {
     };
   }, []);
 
-  const totalNews = articles.length;
+  const totalNews = totalCount || articles.length;
   const featuredNews = articles.filter(a => a.featured).length;
+  const breakingNews = articles.filter(a => a.breaking).length;
   const totalViews = articles.reduce((acc, a) => acc + (a.views || 0), 0);
   const totalComments = articles.reduce((acc, a) => acc + (a.comments || 0), 0);
 
@@ -81,6 +93,16 @@ export default function AdminDashboard({ navigate }) {
           <div className="stat-info">
             <strong>{totalComments}</strong>
             <span>Total Comments</span>
+          </div>
+        </div>
+
+        <div className="stat-card-large">
+          <div className="stat-icon" style={{ background: "#c91f26" }}>
+            <Zap size={24} />
+          </div>
+          <div className="stat-info">
+            <strong>{breakingNews}</strong>
+            <span>Breaking News</span>
           </div>
         </div>
       </div>
