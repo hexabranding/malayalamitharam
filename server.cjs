@@ -383,6 +383,6 @@ function start() {
     });
 }
 
-if (require.main === module) start();
+start();
 
 module.exports = { articleDescription, buildArticleMeta, injectMeta, resolveAbsoluteImage, start };
