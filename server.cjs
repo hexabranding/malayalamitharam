@@ -21,10 +21,11 @@ const distPath = path.join(__dirname, "dist");
 const indexPath = path.join(distPath, "index.html");
 const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
-const SITE_URL = (process.env.SITE_URL || "https://demo.malayalamitharam.in").replace(/\/+$/, "");
-const SITE_NAME = process.env.SITE_NAME || "Malayalamitram";
+const SITE_URL = (process.env.SITE_URL || "https://bangaloremalayali.in").replace(/\/+$/, "");
+const SITE_NAME = process.env.SITE_NAME || "TodayExpress";
 const UPLOADS_URL = (process.env.UPLOADS_URL || "https://api.malayalamitharam.in").replace(/\/+$/, "");
 const DEFAULT_SOCIAL_IMAGE = process.env.DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
+app.set("trust proxy", true);
 
 const ARTICLE_CACHE_TTL = 10 * 60 * 1000;
 const articleCache = new Map();
@@ -53,15 +54,16 @@ app.get("/og-image", async (req, res) => {
     const src = String(req.query.src || "").trim();
     if (!src) return res.status(400).end();
 
+    const baseUrl = getBaseUrl(req);
     let imageUrl;
     if (src.startsWith("http")) {
       imageUrl = src;
     } else if (src.startsWith("/uploads/")) {
       imageUrl = UPLOADS_URL + src;
     } else if (src.startsWith("/")) {
-      imageUrl = `${req.protocol}://${req.get("host")}${src}`;
+      imageUrl = `${baseUrl}${src}`;
     } else {
-      imageUrl = `${req.protocol}://${req.get("host")}/${src}`;
+      imageUrl = `${baseUrl}/${src}`;
     }
 
     const upstream = await fetch(imageUrl, { redirect: "follow" });
@@ -141,15 +143,13 @@ function buildArticleMeta(article, baseUrl) {
   const title = String(article.title || "").trim();
   let description = articleDescription(article);
   if (!description) description = title;
+  description = truncate(description, 150);
   const rawImage = (article.image || article.thumbnail || "").trim();
-
-  // Always route og:image through the same-domain /og-image proxy so
-  // social crawlers (WhatsApp/Facebook/Twitter) can fetch it without
-  // cross-origin issues.
   const imgSrc = rawImage || DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
   const image = `${baseUrl}/og-image?src=${encodeURIComponent(imgSrc)}`;
-
-  const url = `${baseUrl}/news/${article.slug || ""}`;
+  const cat = String(article.category || "news").trim().replace(/^\/+|\/+$/g, "") || "news";
+  const slug = String(article.slug || "").trim().replace(/^\/+|\/+$/g, "");
+  const url = slug ? `${baseUrl}/${cat}/${slug}/` : `${baseUrl}/`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
@@ -276,9 +276,15 @@ function spaNotFound(_req, res) {
   res.status(404).send(indexHtml);
 }
 
+function getBaseUrl(req) {
+  const proto = req.get("x-forwarded-proto") ? req.get("x-forwarded-proto").split(",")[0].trim() : req.protocol;
+  return `${proto}://${req.get("host")}`;
+}
+
 async function articlePageHandler(req, res) {
-  const slug = req.params.slug || "";
+  let slug = String(req.params.slug || "").replace(/\/+$/g, "");
   if (!slug) return spa(req, res);
+  slug = slug.split("/").pop();
 
   if (slug.match(/^[0-9a-fA-F]{24}$/)) {
     try {
@@ -291,11 +297,14 @@ async function articlePageHandler(req, res) {
     } catch {}
   }
 
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
 
   const cached = articleCache.get(slug);
   if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) {
-    if (cached.article.slug !== slug) return res.redirect(301, `/news/${cached.article.slug}`);
+    if (cached.article.slug !== slug) {
+      const cat = cached.article.category || "news";
+      return res.redirect(301, `/${cat}/${cached.article.slug}/`);
+    }
     const meta = buildArticleMeta(cached.article, baseUrl);
     res.type("html");
     return res.send(injectMeta(indexHtml, meta));
@@ -305,18 +314,33 @@ async function articlePageHandler(req, res) {
 
   if (!article) return spaNotFound(req, res);
 
-  if (slug !== article.slug) return res.redirect(301, `/news/${article.slug}`);
+  if (slug !== article.slug) {
+    const cat = article.category || "news";
+    return res.redirect(301, `/${cat}/${article.slug}/`);
+  }
 
   articleCache.set(slug, { article, at: Date.now() });
+  articleCache.set(article.slug, { article, at: Date.now() });
   const meta = buildArticleMeta(article, baseUrl);
   res.type("html");
   res.send(injectMeta(indexHtml, meta));
 }
 
+async function categoryArticleHandler(req, res, next) {
+  const slug = String(req.params.slug || "").replace(/\/+$/g, "");
+  if (!slug) return next();
+  const article = await findArticleFromDB(slug);
+  if (!article) return next();
+  req.params.slug = article.slug;
+  return articlePageHandler(req, res);
+}
+
 app.get("/post/:slug", (req, res) => {
-  res.redirect(301, `/news/${req.params.slug}`);
+  const cat = "news";
+  res.redirect(301, `/${cat}/${req.params.slug}/`);
 });
 app.get("/news/:slug", articlePageHandler);
+app.get("/news/:slug/", articlePageHandler);
 
 app.get("/category/:slug", spa);
 app.get("/author/:name", spa);
@@ -325,6 +349,9 @@ app.get("/news", spa);
 app.get("/login", spa);
 app.get("/admin", spa);
 app.get("/admin/*splat", spa);
+
+app.get("/:category/:slug", categoryArticleHandler);
+app.get("/:category/:slug/", categoryArticleHandler);
 
 app.use(spa);
 

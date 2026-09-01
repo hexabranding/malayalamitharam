@@ -3,8 +3,8 @@ import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getShareUrl } from "../utils/transliterate.js";
 
-const SITE_NAME = "Malayalamitram";
-const SITE_URL = "https://demo.malayalamitharam.in";
+const SITE_NAME = "TodayExpress";
+const SITE_URL = "https://bangaloremalayali.in";
 
 export default function Meta({ article }) {
   useEffect(() => {

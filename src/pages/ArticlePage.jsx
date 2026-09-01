@@ -166,7 +166,7 @@ const displayRelated = related.length >= 1
           ))}
         </div>
 
-        {(article.relatedVideos?.length > 0 || article.videoUrl) && (
+        {article.relatedVideos?.length > 0 && (
           <div className="article-video-section" data-aos="fade-up" data-aos-delay="230" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
             <h4 className="article-video-title" style={{ textAlign: "center" }}>
               <Play size={20} /> വീഡിയോകൾ (Videos)
@@ -186,19 +186,6 @@ const displayRelated = related.length >= 1
                 </div>
               ) : (
                 <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, width: "100%", maxWidth: 900, justifyItems: "center" }}>
-                  {article.videoUrl && isSafeVideoUrl(article.videoUrl) && (
-                    <div
-                      className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
-                    >
-                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "56.25%", background: "#000", borderRadius: 8, overflow: "hidden" }}>
-                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} />}
-                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.35)" }}><Play size={28} fill="#fff" color="#fff" /></div>
-                        <span style={{ position: "absolute", bottom: 6, left: 6, background: "rgba(0,0,0,0.7)", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 }}>{detectPlatform(article.videoUrl)}</span>
-                      </div>
-                      <span className="article-video-label" style={{ display: "block", marginTop: 6, fontWeight: 600 }}>{article.title}</span>
-                    </div>
-                  )}
                   {(article.relatedVideos || []).filter(v => isSafeVideoUrl(v.videoUrl)).map((video, index) => (
                     <div
                       key={index}
