@@ -18,12 +18,12 @@ export default function VideoSection({ articles, navigate }) {
   const getMainVideoUrl = (v) => v?.videoUrl?.trim() || v?.relatedVideos?.[0]?.videoUrl || "";
   const videoArticlesRaw = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim()) || (a.relatedVideos && a.relatedVideos.length > 0)) && a.image);
   const videoArticles = (() => {
-    if (videoArticlesRaw.length >= 6) return videoArticlesRaw.slice(0, 6);
+    if (videoArticlesRaw.length >= 8) return videoArticlesRaw.slice(0, 8);
     const fill = articles.filter((a) => a.image && !videoArticlesRaw.some((v) => v.id === a.id));
-    return [...videoArticlesRaw, ...fill].slice(0, 6);
+    return [...videoArticlesRaw, ...fill].slice(0, 8);
   })();
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
-  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
+  const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 7) : videoArticles.slice(0, 7);
   const rawUrl = useMemo(() => getMainVideoUrl(mainVideo), [mainVideo]);
   const embedUrl = useMemo(() => getEmbedUrl(rawUrl), [rawUrl]);
   const platform = useMemo(() => detectPlatform(rawUrl), [rawUrl]);
