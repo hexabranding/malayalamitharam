@@ -26,7 +26,8 @@ export default function VideoSection({ articles, navigate }) {
   const settings = useSettings();
   const youtubeChannelUrl = settings.youtube_url || "";
 
-  const videoArticlesRaw = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
+  const getMainVideoUrl = (v) => v?.videoUrl?.trim() || v?.relatedVideos?.[0]?.videoUrl || "";
+  const videoArticlesRaw = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim()) || (a.relatedVideos && a.relatedVideos.length > 0)) && a.image);
   const videoArticles = (() => {
     if (videoArticlesRaw.length >= 6) return videoArticlesRaw.slice(0, 6);
     const fill = articles.filter((a) => a.image && !videoArticlesRaw.some((v) => v.id === a.id));
@@ -34,7 +35,7 @@ export default function VideoSection({ articles, navigate }) {
   })();
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
-  const embedUrl = useMemo(() => getVideoEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);
+  const embedUrl = useMemo(() => getVideoEmbedUrl(getMainVideoUrl(mainVideo)), [mainVideo]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;
 
@@ -86,7 +87,7 @@ export default function VideoSection({ articles, navigate }) {
                     <div className="video-play-overlay">
                       <Play size={48} />
                     </div>
-                    <span className="video-duration">{mainVideo.videoUrl ? "Watch" : "Live"}</span>
+                    <span className="video-duration">{getMainVideoUrl(mainVideo) ? "Watch" : "Live"}</span>
                   </div>
                 )}
                 <h3 className="video-title">{mainVideo.title}</h3>
@@ -110,7 +111,7 @@ export default function VideoSection({ articles, navigate }) {
                   >
                     <div className="suggestion-thumb">
                       <ArticleImage article={video} alt={video.title} className="suggestion-img" />
-                      <span className="suggestion-duration">{video.videoUrl ? "Watch" : "Live"}</span>
+                      <span className="suggestion-duration">{getMainVideoUrl(video) ? "Watch" : "Live"}</span>
                     </div>
                     <div className="suggestion-info">
                       <h5>{video.title}</h5>
