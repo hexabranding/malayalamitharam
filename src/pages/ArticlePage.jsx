@@ -180,38 +180,28 @@ const displayRelated = related.length >= 1
               <Play size={20} /> വീഡിയോകൾ (Videos)
             </h4>
             <div className="article-video-container" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-              {showVideo && selectedVideo ? (
+              {(() => {
+                const active = showVideo && selectedVideo ? selectedVideo : allVideos[0];
+                return (
                 <div style={{ width: "100%", maxWidth: 860, margin: "0 auto", position: "relative" }}>
                   <VideoEmbedContainer>
-                    <UnifiedVideoPlayer url={selectedVideo.videoUrl} title={selectedVideo.title || "Video"} />
+                    <UnifiedVideoPlayer url={active.videoUrl} title={active.title || "Video"} />
                   </VideoEmbedContainer>
-                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 10, right: 10, zIndex: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: 0, borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+                  {showVideo && selectedVideo && (
+                    <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 10, right: 10, zIndex: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: 0, borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+                  )}
                 </div>
-              ) : (
-                <div className="article-video-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, width: "100%", maxWidth: 900, justifyItems: "center" }}>
-                  {allVideos.map((video, index) => (
-                    <div
-                      key={index}
-                      className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
-                      style={{ width: "100%", maxWidth: 420 }}
-                    >
-                      <div className="article-video-thumb" style={{ position: "relative", paddingBottom: "62%", background: "#000", borderRadius: 10, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }}>
-                        {video.thumbnail ? <img src={resolveImageUrl(video.thumbnail)} alt={video.title} style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a1a1a,#333)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={36} color="#fff" /></div>}
-                        <div className="article-video-play" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}><Play size={32} fill="#fff" color="#fff" /></div>
-                        <span style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>{video.platform || detectPlatform(video.videoUrl)}</span>
-                      </div>
-                      <span className="article-video-label" style={{ display: "block", marginTop: 8, fontWeight: 600, textAlign: "center" }}>{video.title || "Video " + (index + 1)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                );
+              })()}
             </div>
-            {showVideo && selectedVideo && (
+            {allVideos.length > 1 && (
               <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-                {allVideos.map((v, i) => (
-                  <button key={i} onClick={() => setSelectedVideo(v)} style={{ padding: "6px 12px", borderRadius: 6, border: selectedVideo.videoUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: selectedVideo.videoUrl === v.videoUrl ? "#c91f26" : "#fff", color: selectedVideo.videoUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
-                ))}
+                {allVideos.map((v, i) => {
+                  const activeUrl = (showVideo && selectedVideo ? selectedVideo.videoUrl : allVideos[0].videoUrl);
+                  return (
+                  <button key={i} onClick={() => { setSelectedVideo(v); setShowVideo(true); }} style={{ padding: "6px 12px", borderRadius: 6, border: activeUrl === v.videoUrl ? "2px solid #c91f26" : "1px solid #ddd", background: activeUrl === v.videoUrl ? "#c91f26" : "#fff", color: activeUrl === v.videoUrl ? "#fff" : "#333", fontSize: 12, cursor: "pointer" }}>{v.title || `Video ${i+1}`}</button>
+                  );
+                })}
               </div>
             )}
           </div>
