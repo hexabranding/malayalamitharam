@@ -3,7 +3,7 @@ import { ThumbsUp, Play, Clock, Youtube } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 import { getTitleSlug } from "../utils/articleStore.js";
-import { getEmbedUrl } from "../utils/videoEmbed.js";
+import { getEmbedUrl, detectPlatform } from "../utils/videoEmbed.js";
 import { VideoEmbedContainer, UnifiedVideoPlayer } from "./VideoEmbedContainer.jsx";
 import AdSlot from "./AdSlot.jsx";
 
@@ -26,6 +26,7 @@ export default function VideoSection({ articles, navigate }) {
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
   const rawUrl = useMemo(() => getMainVideoUrl(mainVideo), [mainVideo]);
   const embedUrl = useMemo(() => getEmbedUrl(rawUrl), [rawUrl]);
+  const platform = useMemo(() => detectPlatform(rawUrl), [rawUrl]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;
 
@@ -55,11 +56,24 @@ export default function VideoSection({ articles, navigate }) {
             <>
               <div className="video-main">
                 {embedUrl && showVideo ? (
-                  <div className="video-player" style={{ padding: 0, overflow: "hidden" }}>
-                    <VideoEmbedContainer>
-                      <UnifiedVideoPlayer url={rawUrl} title={mainVideo.title} />
-                    </VideoEmbedContainer>
-                  </div>
+                  platform === "twitter" ? (
+                    <div className="video-player" style={{ padding: 0, overflow: "hidden", background: "#000" }}>
+                      <VideoEmbedContainer>
+                        <UnifiedVideoPlayer url={rawUrl} title={mainVideo.title} />
+                      </VideoEmbedContainer>
+                    </div>
+                  ) : (
+                    <div className="video-player">
+                      <iframe
+                        src={embedUrl + (embedUrl.includes("?") ? "&" : "?") + "autoplay=1"}
+                        title={mainVideo.title}
+                        frameBorder="0"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        style={{ width: "100%", height: "100%", position: "absolute", inset: 0, border: 0 }}
+                      />
+                    </div>
+                  )
                 ) : (
                   <div
                     className="video-player clickable"
