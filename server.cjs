@@ -369,18 +369,17 @@ app.get("/:category/:slug/", categoryArticleHandler);
 app.use(spa);
 
 function start() {
-  articleMongoose.connect(process.env.MONGO_URI, {})
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log("Frontend server running on port " + PORT);
+  });
+
+  articleMongoose
+    .connect(process.env.MONGO_URI, {})
     .then(() => {
       console.log("MongoDB connected for frontend server");
-      app.listen(PORT, () => {
-        console.log("Frontend server running on port " + PORT);
-      });
     })
     .catch((err) => {
       console.error("MongoDB connection failed:", err.message);
-      app.listen(PORT, () => {
-        console.log("Frontend server running on port " + PORT + " (no MongoDB)");
-      });
     });
 }
 
