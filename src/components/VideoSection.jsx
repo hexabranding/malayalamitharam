@@ -3,20 +3,9 @@ import { ThumbsUp, Play, Clock, Youtube } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 import { getTitleSlug } from "../utils/articleStore.js";
+import { getEmbedUrl } from "../utils/videoEmbed.js";
+import { VideoEmbedContainer, UnifiedVideoPlayer } from "./VideoEmbedContainer.jsx";
 import AdSlot from "./AdSlot.jsx";
-
-function getVideoEmbedUrl(url) {
-  if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
-  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
-  const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
-  if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
-  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com") || url.includes("x.com") || url.includes("twitter.com")) return url;
-  if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
-  return url;
-}
 
 export default function VideoSection({ articles, navigate }) {
   const [liked, setLiked] = useState(false);
@@ -35,7 +24,8 @@ export default function VideoSection({ articles, navigate }) {
   })();
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : videoArticles.slice(0, 5);
-  const embedUrl = useMemo(() => getVideoEmbedUrl(getMainVideoUrl(mainVideo)), [mainVideo]);
+  const rawUrl = useMemo(() => getMainVideoUrl(mainVideo), [mainVideo]);
+  const embedUrl = useMemo(() => getEmbedUrl(rawUrl), [rawUrl]);
 
   if (!mainVideo && !youtubeChannelUrl) return null;
 
@@ -65,15 +55,10 @@ export default function VideoSection({ articles, navigate }) {
             <>
               <div className="video-main">
                 {embedUrl && showVideo ? (
-                  <div className="video-player">
-                    <iframe
-                      src={embedUrl}
-                      title={mainVideo.title}
-                      frameBorder="0"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
-                    />
+                  <div className="video-player" style={{ padding: 0, overflow: "hidden" }}>
+                    <VideoEmbedContainer>
+                      <UnifiedVideoPlayer url={rawUrl} title={mainVideo.title} />
+                    </VideoEmbedContainer>
                   </div>
                 ) : (
                   <div

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, X, Upload } from "lucide-react";
+import { Save, X, Upload, ChevronDown } from "lucide-react";
 import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, translateText, fetchAuthors, createAuthor } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -54,6 +54,14 @@ export default function AdminNewsForm({ navigate, newsId }) {
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
     fetchAuthors().then(data => setAuthorsList(Array.isArray(data) ? data : [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (authorRef.current && !authorRef.current.contains(e.target)) setShowAuthorDropdown(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Auto-translate Malayalam title to English and generate slug
@@ -133,6 +141,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               views: found.views || 0,
             });
             setImagePreview(found.image || "");
+            setAuthorSearch(found.author || "");
           }
         } catch (err) {
           console.error("Failed to load article:", err);
@@ -232,9 +241,9 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setCreatingAuthor(false);
   };
 
-  const filteredAuthors = authorsList.filter(a =>
-    a.name && a.name.toLowerCase().includes(authorSearch.toLowerCase())
-  );
+  const filteredAuthors = authorSearch.trim()
+    ? authorsList.filter(a => a.name && a.name.toLowerCase().includes(authorSearch.toLowerCase()))
+    : authorsList;
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -401,43 +410,48 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
 
               <div className="form-group" ref={authorRef} style={{ position: "relative" }}>
-                <label>Author</label>
-                <input
-                  type="text"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleAuthorInputChange}
-                  onFocus={() => setShowAuthorDropdown(true)}
-                  required
-                  placeholder="Type to search or create author..."
-                  autoComplete="off"
-                />
-                {showAuthorDropdown && authorSearch && (
-                  <div className="author-dropdown" style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #ddd", borderRadius: 6, maxHeight: 200, overflow: "auto", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-                    {filteredAuthors.length > 0 && filteredAuthors.map(a => (
+                <label>Author <span style={{ color: "#999", fontWeight: 400, fontSize: 12 }}>— select from existing or create new</span></label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleAuthorInputChange}
+                    onFocus={() => setShowAuthorDropdown(true)}
+                    required
+                    placeholder="Select or type author..."
+                    autoComplete="off"
+                    style={{ flex: 1, paddingRight: 36 }}
+                  />
+                  <button type="button" onClick={() => setShowAuthorDropdown(v => !v)} style={{ position: "absolute", right: 6, background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 4, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Toggle authors">
+                    <ChevronDown size={16} style={{ transform: showAuthorDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                  </button>
+                </div>
+                {showAuthorDropdown && (
+                  <div className="author-dropdown" style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #ddd", borderRadius: 6, maxHeight: 220, overflow: "auto", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4 }}>
+                    {authorsList.length === 0 ? (
+                      <div style={{ padding: "12px", color: "#999", fontSize: 13, textAlign: "center" }}>No authors created yet. Type a name and create.</div>
+                    ) : filteredAuthors.length > 0 ? filteredAuthors.map(a => (
                       <div
                         key={a._id}
                         onClick={() => handleAuthorSelect(a)}
-                        style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0", fontSize: 14 }}
-                        onMouseEnter={e => e.target.style.background = "#f5f5f5"}
-                        onMouseLeave={e => e.target.style.background = "#fff"}
+                        style={{ padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0", fontSize: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                        onMouseLeave={e => e.currentTarget.style.background = "#fff"}
                       >
-                        <strong>{a.name}</strong>
-                        {a.nameMl && <span style={{ marginLeft: 8, color: "#666" }}>{a.nameMl}</span>}
-                        {a.role && <span style={{ marginLeft: 8, color: "#999", fontSize: 12 }}>({a.role})</span>}
+                        <span><strong>{a.name}</strong>{a.nameMl && <span style={{ marginLeft: 8, color: "#666" }}>{a.nameMl}</span>}</span>
+                        {a.role && <span style={{ color: "#999", fontSize: 12 }}>{a.role}</span>}
                       </div>
-                    ))}
-                    {filteredAuthors.length === 0 && !creatingAuthor && (
-                      <div
-                        onClick={handleCreateAuthor}
-                        style={{ padding: "8px 12px", cursor: "pointer", color: "#1a56db", fontSize: 14 }}
-                      >
-                        + Create "{authorSearch}" as new author
+                    )) : null}
+                    {authorSearch.trim() && filteredAuthors.length === 0 && !creatingAuthor && (
+                      <div onClick={handleCreateAuthor} style={{ padding: "9px 12px", cursor: "pointer", color: "#1a56db", fontSize: 14, fontWeight: 600, background: "#f0f6ff" }}>
+                        + Create "{authorSearch.trim()}" as new author
                       </div>
                     )}
-                    {creatingAuthor && (
-                      <div style={{ padding: "8px 12px", color: "#666", fontSize: 14 }}>Creating...</div>
+                    {authorSearch.trim() && filteredAuthors.length === 0 && creatingAuthor && (
+                      <div style={{ padding: "9px 12px", color: "#666", fontSize: 14 }}>Creating...</div>
                     )}
+                    {authorsList.length > 0 && <div style={{ padding: "6px 12px", fontSize: 11, color: "#999", borderTop: "1px solid #eee", background: "#fafafa" }}>{filteredAuthors.length} author{filteredAuthors.length !== 1 ? "s" : ""} {authorSearch.trim() ? "matched" : "available"} — click to select</div>}
                   </div>
                 )}
               </div>
