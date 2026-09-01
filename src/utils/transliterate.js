@@ -87,12 +87,14 @@ export function getShareUrl(article) {
     if (!raw) continue;
     const cleaned = stripNewPrefix(raw);
     if (cleaned && !isBadSlug(cleaned)) return cleaned;
-    if (!isBadSlug(raw)) return raw;
+    if (raw && !isBadSlug(raw)) return raw;
   }
   for (const raw of [article.slug, article.engSlug]) {
     if (!raw) continue;
     const cleaned = stripNewPrefix(raw);
     if (cleaned && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleaned) && !cleaned.includes("---")) return cleaned;
   }
+  const fallback = generateSlugFromTitle(article.titleEn || article.title, article.titleEn);
+  if (fallback && !isBadSlug(fallback)) return fallback;
   return "";
 }

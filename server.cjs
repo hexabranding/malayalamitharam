@@ -21,8 +21,8 @@ const distPath = path.join(__dirname, "dist");
 const indexPath = path.join(distPath, "index.html");
 const indexHtml = fs.readFileSync(indexPath, "utf-8");
 
-const SITE_URL = (process.env.SITE_URL || "https://bangaloremalayali.in").replace(/\/+$/, "");
-const SITE_NAME = process.env.SITE_NAME || "TodayExpress";
+const SITE_URL = (process.env.SITE_URL || "https://www.malayalamithramonline.com").replace(/\/+$/, "");
+const SITE_NAME = process.env.SITE_NAME || "Malayalamithram";
 const UPLOADS_URL = (process.env.UPLOADS_URL || "https://api.malayalamitharam.in").replace(/\/+$/, "");
 const DEFAULT_SOCIAL_IMAGE = process.env.DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
 app.set("trust proxy", true);
@@ -139,6 +139,17 @@ function articleDescription(article) {
   return truncate(stripHtml(article.excerpt || article.content || body || article.title || ""), 155);
 }
 
+function isCleanSlug(s) { return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(s||"")) && !/^new-\d{8,}/.test(String(s||"")) && !String(s||"").includes("---"); }
+function pickEnglishSlug(article) {
+  const candidates = [article.slug, article.engSlug].map(v=>String(v||"").trim()).filter(Boolean);
+  for (const c of candidates) { const cleaned = c.replace(/^new-\d{8,}-?/, ""); if (cleaned && isCleanSlug(cleaned)) return cleaned; if (isCleanSlug(c)) return c; }
+  for (const c of candidates) { const cleaned = c.replace(/^new-\d{8,}-?/, ""); if (cleaned && /^[a-z0-9-]+$/.test(cleaned) && !cleaned.includes("---")) return cleaned; }
+  if (article.titleEn && isCleanSlug(String(article.titleEn).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""))) return String(article.titleEn).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  let base = String(article.titleEn || article.title || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-");
+  base = base.replace(/^new-\d{8,}-?/, "");
+  if (base && isCleanSlug(base)) return base;
+  return article.slug ? String(article.slug).replace(/^new-\d{8,}-?/, "") : "";
+}
 function buildArticleMeta(article, baseUrl) {
   const title = String(article.title || "").trim();
   let description = articleDescription(article);
@@ -147,9 +158,8 @@ function buildArticleMeta(article, baseUrl) {
   const rawImage = (article.image || article.thumbnail || "").trim();
   const imgSrc = rawImage || DEFAULT_SOCIAL_IMAGE || "/images/malayala-mitra-banner.jpeg";
   const image = `${baseUrl}/og-image?src=${encodeURIComponent(imgSrc)}`;
-  const cat = String(article.category || "news").trim().replace(/^\/+|\/+$/g, "") || "news";
-  const slug = String(article.slug || "").trim().replace(/^\/+|\/+$/g, "");
-  const url = slug ? `${baseUrl}/${cat}/${slug}/` : `${baseUrl}/`;
+  const slug = pickEnglishSlug(article);
+  const url = slug ? `${baseUrl}/news/${slug}` : `${baseUrl}/`;
   const publishedTime = toIso(article.createdAt || article.updatedAt || "");
   return { title, description, image, url, publishedTime };
 }
@@ -298,13 +308,12 @@ async function articlePageHandler(req, res) {
   }
 
   const baseUrl = getBaseUrl(req);
-
-  const cached = articleCache.get(slug);
+  const cleanSlug = slug.replace(/^new-\d{8,}-?/, "");
+  const cacheKey = articleCache.get(slug) ? slug : (articleCache.get(cleanSlug) ? cleanSlug : slug);
+  const cached = articleCache.get(cacheKey);
   if (cached && Date.now() - cached.at < ARTICLE_CACHE_TTL) {
-    if (cached.article.slug !== slug) {
-      const cat = cached.article.category || "news";
-      return res.redirect(301, `/${cat}/${cached.article.slug}/`);
-    }
+    const engSlug = pickEnglishSlug(cached.article);
+    if (engSlug && engSlug !== slug && engSlug !== cleanSlug) return res.redirect(301, `/news/${engSlug}`);
     const meta = buildArticleMeta(cached.article, baseUrl);
     res.type("html");
     return res.send(injectMeta(indexHtml, meta));
@@ -314,12 +323,13 @@ async function articlePageHandler(req, res) {
 
   if (!article) return spaNotFound(req, res);
 
-  if (slug !== article.slug) {
-    const cat = article.category || "news";
-    return res.redirect(301, `/${cat}/${article.slug}/`);
+  const engSlug = pickEnglishSlug(article);
+  if (engSlug && engSlug !== slug && slug.replace(/^new-\d{8,}-?/, "") !== engSlug) {
+    return res.redirect(301, `/news/${engSlug}`);
   }
 
   articleCache.set(slug, { article, at: Date.now() });
+  if (engSlug) articleCache.set(engSlug, { article, at: Date.now() });
   articleCache.set(article.slug, { article, at: Date.now() });
   const meta = buildArticleMeta(article, baseUrl);
   res.type("html");
@@ -331,7 +341,7 @@ async function categoryArticleHandler(req, res, next) {
   if (!slug) return next();
   const article = await findArticleFromDB(slug);
   if (!article) return next();
-  req.params.slug = article.slug;
+  req.params.slug = pickEnglishSlug(article) || article.slug;
   return articlePageHandler(req, res);
 }
 

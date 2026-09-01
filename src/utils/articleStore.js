@@ -55,6 +55,8 @@ export function getTitleSlug(article) {
     const cleaned = stripNewPrefix(raw);
     if (cleaned && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleaned) && !cleaned.includes("---")) return cleaned;
   }
+  const fallback = String(article.titleEn || article.title || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").replace(/-{2,}/g,"-").replace(/^new-\d{8,}-?/, "");
+  if (fallback && !isBadSlug(fallback)) return fallback;
   return "";
 }
 
