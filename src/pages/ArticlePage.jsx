@@ -14,7 +14,8 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { getShareUrl } from "../utils/transliterate.js";
-import { getEmbedUrl, detectPlatform, isSafeVideoUrl } from "../utils/videoEmbed.js";
+import { detectPlatform, isSafeVideoUrl } from "../utils/videoEmbed.js";
+import { VideoEmbedContainer, UnifiedVideoPlayer } from "../components/VideoEmbedContainer.jsx";
 
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
@@ -152,7 +153,7 @@ const displayRelated = related.length >= 1
         </blockquote>
 
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
-          {(article.body || []).slice(0, 2).map((paragraph, index) => (
+          {(article.body || []).slice(0, 3).map((paragraph, index) => (
             <div key={index}>
               {index === 1 && (
                 <div className="in-article-ads">
@@ -173,15 +174,10 @@ const displayRelated = related.length >= 1
             </h4>
             <div className="article-video-container" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
               {showVideo && selectedVideo ? (
-                <div className="article-video-player" style={{ position: "relative", paddingBottom: "62%", height: 0, overflow: "hidden", borderRadius: 12, width: "100%", maxWidth: 860, margin: "0 auto", background: "#000", boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}>
-                  <iframe
-                    src={getEmbedUrl(selectedVideo.videoUrl) || selectedVideo.videoUrl}
-                    title={selectedVideo.title || "Video"}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
-                  />
+                <div style={{ width: "100%", maxWidth: 860, margin: "0 auto", position: "relative" }}>
+                  <VideoEmbedContainer>
+                    <UnifiedVideoPlayer url={selectedVideo.videoUrl} title={selectedVideo.title || "Video"} />
+                  </VideoEmbedContainer>
                   <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }} style={{ position: "absolute", top: 10, right: 10, zIndex: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: 0, borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
                 </div>
               ) : (
@@ -215,8 +211,8 @@ const displayRelated = related.length >= 1
         )}
 
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
-          {(article.body || []).slice(2).map((paragraph, index) => (
-            <div key={index + 2}>
+          {(article.body || []).slice(3).map((paragraph, index) => (
+            <div key={index + 3}>
               <p>{parseLinks(paragraph)}</p>
             </div>
           ))}
