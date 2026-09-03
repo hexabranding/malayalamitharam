@@ -1,4 +1,12 @@
-import { AtSign, ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, Twitter, X, Youtube } from "lucide-react";
+import { AtSign, ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, X, Youtube } from "lucide-react";
+
+function XIcon({ size = 18, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 import { useState, useEffect, useRef } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
@@ -144,7 +152,7 @@ export default function Header({ navigate, activeSlug }) {
         <div className="social-links" aria-label="Social links">
           <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined}><Facebook size={18} /></a>
           <a href={social.youtube && social.youtube !== "#" ? social.youtube : "#"} target={social.youtube && social.youtube !== "#" ? "_blank" : undefined} rel={social.youtube && social.youtube !== "#" ? "noopener noreferrer" : undefined}><Youtube size={19} /></a>
-          <a href={social.twitter && social.twitter !== "#" ? social.twitter : "#"} target={social.twitter && social.twitter !== "#" ? "_blank" : undefined} rel={social.twitter && social.twitter !== "#" ? "noopener noreferrer" : undefined}><Twitter size={18} /></a>
+          <a href={social.twitter && social.twitter !== "#" ? social.twitter : "#"} target={social.twitter && social.twitter !== "#" ? "_blank" : undefined} rel={social.twitter && social.twitter !== "#" ? "noopener noreferrer" : undefined} aria-label="X"><XIcon size={18} /></a>
           <a href={social.instagram && social.instagram !== "#" ? social.instagram : "#"} target={social.instagram && social.instagram !== "#" ? "_blank" : undefined} rel={social.instagram && social.instagram !== "#" ? "noopener noreferrer" : undefined}><Instagram size={18} /></a>
           <a href={social.whatsapp && social.whatsapp !== "#" ? social.whatsapp : "#"} target={social.whatsapp && social.whatsapp !== "#" ? "_blank" : undefined} rel={social.whatsapp && social.whatsapp !== "#" ? "noopener noreferrer" : undefined}><MessageCircle size={18} /></a>
           <a href={social.telegram && social.telegram !== "#" ? social.telegram : "#"} target={social.telegram && social.telegram !== "#" ? "_blank" : undefined} rel={social.telegram && social.telegram !== "#" ? "noopener noreferrer" : undefined}><Send size={18} /></a>

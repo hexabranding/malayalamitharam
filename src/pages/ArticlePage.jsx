@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
+
+function XIcon({ size = 20, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
@@ -249,7 +257,7 @@ const displayRelated = related.length >= 1
             return (
               <>
                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
+                <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on X"><XIcon size={20} /></a>
                 <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
                 <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
                 <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
@@ -279,7 +287,7 @@ const displayRelated = related.length >= 1
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <a href={settings.facebook_url && settings.facebook_url !== "#" ? settings.facebook_url : "#"} target={settings.facebook_url && settings.facebook_url !== "#" ? "_blank" : undefined} rel={settings.facebook_url && settings.facebook_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1877f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Facebook size={16} /> Facebook</a>
             <a href={settings.youtube_url && settings.youtube_url !== "#" ? settings.youtube_url : "#"} target={settings.youtube_url && settings.youtube_url !== "#" ? "_blank" : undefined} rel={settings.youtube_url && settings.youtube_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#ff0000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Youtube size={16} /> YouTube</a>
-            <a href={settings.twitter_url && settings.twitter_url !== "#" ? settings.twitter_url : "#"} target={settings.twitter_url && settings.twitter_url !== "#" ? "_blank" : undefined} rel={settings.twitter_url && settings.twitter_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1da1f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Twitter size={16} /> Twitter</a>
+            <a href={settings.twitter_url && settings.twitter_url !== "#" ? settings.twitter_url : "#"} target={settings.twitter_url && settings.twitter_url !== "#" ? "_blank" : undefined} rel={settings.twitter_url && settings.twitter_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><XIcon size={16} /> X</a>
             <a href={settings.instagram_url && settings.instagram_url !== "#" ? settings.instagram_url : "#"} target={settings.instagram_url && settings.instagram_url !== "#" ? "_blank" : undefined} rel={settings.instagram_url && settings.instagram_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#e4405f", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Instagram size={16} /> Instagram</a>
             <a href={settings.whatsapp_url && settings.whatsapp_url !== "#" ? settings.whatsapp_url : "#"} target={settings.whatsapp_url && settings.whatsapp_url !== "#" ? "_blank" : undefined} rel={settings.whatsapp_url && settings.whatsapp_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#25d366", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><MessageCircle size={16} /> WhatsApp</a>
             <a href={settings.telegram_url && settings.telegram_url !== "#" ? settings.telegram_url : "#"} target={settings.telegram_url && settings.telegram_url !== "#" ? "_blank" : undefined} rel={settings.telegram_url && settings.telegram_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#0088cc", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Send size={16} /> Telegram</a>
