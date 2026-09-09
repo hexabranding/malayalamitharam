@@ -114,16 +114,15 @@ export async function createCategory(data) {
   });
 }
 
-export async function updateCategory(slug, data) {
+export async function updateCategory(id, data) {
   const payload = {
-    id: String(data?.id || "").trim(),
     label: String(data?.label || "").trim(),
     slug: String(data?.slug || "").trim(),
     titleMl: String(data?.titleMl || "").trim(),
     parent: data?.parent ? String(data.parent).trim() : null,
   };
 
-  return request("/categories/" + encodeURIComponent(slug), {
+  return request("/categories/" + encodeURIComponent(id), {
     method: "PUT",
     headers: headers(),
     body: JSON.stringify(payload),
