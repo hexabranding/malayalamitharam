@@ -99,7 +99,19 @@ export async function fetchCategories() {
 }
 
 export async function createCategory(data) {
-  return request("/categories", { method: "POST", headers: headers(), body: JSON.stringify(data) });
+  const payload = {
+    id: String(data?.id || "").trim(),
+    label: String(data?.label || "").trim(),
+    slug: String(data?.slug || "").trim(),
+    titleMl: String(data?.titleMl || "").trim(),
+    parent: data?.parent ? String(data.parent).trim() : null,
+  };
+
+  return request("/categories", {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function updateCategory(slug, data) {
