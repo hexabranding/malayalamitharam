@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { label, slug, titleMl, parent } = req.body;
+    const { id, label, slug, titleMl, parent } = req.body;
 
     if (!label || !slug) {
       return res.status(400).json({
@@ -50,6 +50,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     const category = await Category.create({
+      id: id || `new-${Date.now()}`,
       label: label.trim(),
       slug: slug.trim(),
       titleMl: titleMl || "",

@@ -111,11 +111,13 @@ export default function AdminCategoriesPage({ navigate }) {
 
   const handleAddSubcategory = async (groupSlug) => {
     const slug = `new-${Date.now()}`;
+    const id = `new-sub-${Date.now()}`;
 
     setSaving(true);
 
     try {
       await createCategory({
+        id,
         label: "New Category",
         slug,
         titleMl: "New",
@@ -142,11 +144,13 @@ export default function AdminCategoriesPage({ navigate }) {
   const handleAddGroup = async () => {
     const label = "New Group";
     const slug = `new-group-${Date.now()}`;
+    const id = `new-group-${Date.now()}`;
 
     setSaving(true);
 
     try {
       await createCategory({
+        id,
         label,
         slug,
         titleMl: ""
