@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
@@ -14,6 +14,14 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { getShareUrl } from "../utils/transliterate.js";
+
+function XLogo({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 function getVideoEmbedUrl(url) {
   if (!url) return null;
@@ -39,8 +47,6 @@ export default function ArticlePage({ slug, navigate }) {
 
   const [article, setArticle] = useState(fallbackArticle || cachedArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
-  const [selectedVideo, setSelectedVideo] = useState(null);
-  const [showVideo, setShowVideo] = useState(false);
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
@@ -171,46 +177,40 @@ const displayRelated = related.length >= 1
               <Play size={20} /> വീഡിയോകൾ (Videos)
             </h4>
             <div className="article-video-container">
-              {showVideo && selectedVideo ? (
-                <div className="article-video-player">
-                  <iframe
-                    src={getVideoEmbedUrl(selectedVideo.videoUrl)}
-                    title={selectedVideo.title}
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
-                </div>
-              ) : (
-                <div className="article-video-grid">
-                  {article.videoUrl && (
-                    <div
-                      className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
-                    >
-                      <div className="article-video-thumb">
-                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                      </div>
-                      <span className="article-video-label">{article.title}</span>
+              <div className="article-video-grid">
+                {article.videoUrl && (
+                  <div
+                    className="article-video-card clickable"
+                    onClick={() => navigate("/news/" + (article.slug || article.id))}
+                  >
+                    <div className="article-video-thumb">
+                      {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
+                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
                     </div>
-                  )}
-                  {(article.relatedVideos || []).map((video, index) => (
-                    <div
-                      key={index}
-                      className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
-                    >
-                      <div className="article-video-thumb">
-                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                      </div>
-                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                    <span className="article-video-label">{article.title}</span>
+                  </div>
+                )}
+                {(article.relatedVideos || []).map((video, index) => (
+                  <div
+                    key={index}
+                    className="article-video-card clickable"
+                    onClick={() => {
+                      const url = video.videoUrl || "";
+                      if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com") || url.includes("dailymotion.com")) {
+                        window.open(url, "_blank");
+                      } else {
+                        navigate("/news/" + (article.slug || article.id));
+                      }
+                    }}
+                  >
+                    <div className="article-video-thumb">
+                      {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
+                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -248,7 +248,7 @@ const displayRelated = related.length >= 1
             return (
               <>
                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(shareImage)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter"><Twitter size={20} /></a>
+                <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on X"><XLogo size={20} /></a>
                 <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
                 <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
                 <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
@@ -270,12 +270,13 @@ const displayRelated = related.length >= 1
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <a href={settings.facebook_url && settings.facebook_url !== "#" ? settings.facebook_url : "#"} target={settings.facebook_url && settings.facebook_url !== "#" ? "_blank" : undefined} rel={settings.facebook_url && settings.facebook_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1877f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Facebook size={16} /> Facebook</a>
             <a href={settings.youtube_url && settings.youtube_url !== "#" ? settings.youtube_url : "#"} target={settings.youtube_url && settings.youtube_url !== "#" ? "_blank" : undefined} rel={settings.youtube_url && settings.youtube_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#ff0000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Youtube size={16} /> YouTube</a>
-            <a href={settings.twitter_url && settings.twitter_url !== "#" ? settings.twitter_url : "#"} target={settings.twitter_url && settings.twitter_url !== "#" ? "_blank" : undefined} rel={settings.twitter_url && settings.twitter_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1da1f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Twitter size={16} /> Twitter</a>
+            <a href={settings.twitter_url && settings.twitter_url !== "#" ? settings.twitter_url : "#"} target={settings.twitter_url && settings.twitter_url !== "#" ? "_blank" : undefined} rel={settings.twitter_url && settings.twitter_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><XLogo size={16} /> X</a>
             <a href={settings.instagram_url && settings.instagram_url !== "#" ? settings.instagram_url : "#"} target={settings.instagram_url && settings.instagram_url !== "#" ? "_blank" : undefined} rel={settings.instagram_url && settings.instagram_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#e4405f", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Instagram size={16} /> Instagram</a>
             <a href={settings.whatsapp_url && settings.whatsapp_url !== "#" ? settings.whatsapp_url : "#"} target={settings.whatsapp_url && settings.whatsapp_url !== "#" ? "_blank" : undefined} rel={settings.whatsapp_url && settings.whatsapp_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#25d366", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><MessageCircle size={16} /> WhatsApp</a>
             <a href={settings.telegram_url && settings.telegram_url !== "#" ? settings.telegram_url : "#"} target={settings.telegram_url && settings.telegram_url !== "#" ? "_blank" : undefined} rel={settings.telegram_url && settings.telegram_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#0088cc", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Send size={16} /> Telegram</a>
             <a href={settings.linkedin_url && settings.linkedin_url !== "#" ? settings.linkedin_url : "#"} target={settings.linkedin_url && settings.linkedin_url !== "#" ? "_blank" : undefined} rel={settings.linkedin_url && settings.linkedin_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#0a66c2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Linkedin size={16} /> LinkedIn</a>
             <a href={settings.threads_url && settings.threads_url !== "#" ? settings.threads_url : "#"} target={settings.threads_url && settings.threads_url !== "#" ? "_blank" : undefined} rel={settings.threads_url && settings.threads_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><AtSign size={16} /> Threads</a>
+            <a href="https://aratt.ai/@malayalamithram_online" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#6b21a8", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}>Aratt</a>
           </div>
         </div>
       </article>
