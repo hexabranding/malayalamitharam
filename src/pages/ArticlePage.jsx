@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play } from "lucide-react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2 } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
@@ -51,6 +51,7 @@ export default function ArticlePage({ slug, navigate }) {
   const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
@@ -131,7 +132,29 @@ export default function ArticlePage({ slug, navigate }) {
 
   if (!article) return <NotFoundPage navigate={navigate} />;
 
-const displayRelated = related.length >= 1
+  const shareUrl = window.location.origin + "/news/" + getShareUrl(article);
+  const shareTitle = article.title;
+  const shareText = article.title + "\n\n" + shareUrl;
+
+  async function handleNativeShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+      } catch {}
+    } else {
+      handleCopyLink();
+    }
+  }
+
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+
+  const displayRelated = related.length >= 1
     ? related
     : [];
 
@@ -252,15 +275,18 @@ const displayRelated = related.length >= 1
 
         <div className="article-share" data-aos="fade-up" data-aos-delay="300">
           <span>Share:</span>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + "/news/" + getShareUrl(article))}&picture=${encodeURIComponent(resolveImageUrl(article.image || article.thumbnail || "") || "")}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-          <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(window.location.origin + "/news/" + getShareUrl(article))}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on X"><XLogo size={20} /></a>
-          <a href={`https://wa.me/?text=${encodeURIComponent(article.title + "\n\n" + window.location.origin + "/news/" + getShareUrl(article))}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + "/news/" + getShareUrl(article))}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin + "/news/" + getShareUrl(article))}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
-          <a href={`https://www.youtube.com/`} target="_blank" rel="noopener noreferrer" aria-label="Share on YouTube"><Youtube size={20} /></a>
-          <a href={`https://www.instagram.com/`} target="_blank" rel="noopener noreferrer" aria-label="Share on Instagram"><Instagram size={20} /></a>
-          <a href={`https://www.threads.net/`} target="_blank" rel="noopener noreferrer" aria-label="Share on Threads"><AtSign size={20} /></a>
-          <a href={`https://aratt.ai/@malayalamithram_online`} target="_blank" rel="noopener noreferrer" aria-label="Share on Aratt" style={{ fontSize: "13px", fontWeight: 600 }}>Aratt</a>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(resolveImageUrl(article.image || article.thumbnail || "") || "")}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
+          <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on X"><XLogo size={20} /></a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
+          <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
+          <a href={`https://www.youtube.com/`} target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={20} /></a>
+          <button onClick={handleNativeShare} aria-label="Share on Instagram" title="Share on Instagram"><Instagram size={20} /></button>
+          <a href={`https://www.threads.net/intent/post?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Threads"><AtSign size={20} /></a>
+          <a href={`https://aratt.ai/@malayalamithram_online`} target="_blank" rel="noopener noreferrer" aria-label="Aratt" style={{ fontSize: "13px", fontWeight: 600 }}>Aratt</a>
+          <button onClick={handleCopyLink} aria-label="Copy link" title="Copy link to clipboard">
+            {copied ? <span style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700 }}>Copied!</span> : <Link2 size={20} />}
+          </button>
         </div>
 
         <div className="article-author-card" data-aos="fade-up" data-aos-delay="350">
