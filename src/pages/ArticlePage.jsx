@@ -47,6 +47,8 @@ export default function ArticlePage({ slug, navigate }) {
 
   const [article, setArticle] = useState(fallbackArticle || cachedArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [showVideo, setShowVideo] = useState(false);
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
@@ -177,40 +179,46 @@ const displayRelated = related.length >= 1
               <Play size={20} /> വീഡിയോകൾ (Videos)
             </h4>
             <div className="article-video-container">
-              <div className="article-video-grid">
-                {article.videoUrl && (
-                  <div
-                    className="article-video-card clickable"
-                    onClick={() => navigate("/news/" + (article.slug || article.id))}
-                  >
-                    <div className="article-video-thumb">
-                      {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+              {showVideo && selectedVideo ? (
+                <div className="article-video-player">
+                  <iframe
+                    src={getVideoEmbedUrl(selectedVideo.videoUrl)}
+                    title={selectedVideo.title}
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
+                </div>
+              ) : (
+                <div className="article-video-grid">
+                  {article.videoUrl && (
+                    <div
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
+                    >
+                      <div className="article-video-thumb">
+                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
+                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                      </div>
+                      <span className="article-video-label">{article.title}</span>
                     </div>
-                    <span className="article-video-label">{article.title}</span>
-                  </div>
-                )}
-                {(article.relatedVideos || []).map((video, index) => (
-                  <div
-                    key={index}
-                    className="article-video-card clickable"
-                    onClick={() => {
-                      const url = video.videoUrl || "";
-                      if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com") || url.includes("dailymotion.com")) {
-                        window.open(url, "_blank");
-                      } else {
-                        navigate("/news/" + (article.slug || article.id));
-                      }
-                    }}
-                  >
-                    <div className="article-video-thumb">
-                      {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                  )}
+                  {(article.relatedVideos || []).map((video, index) => (
+                    <div
+                      key={index}
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
+                    >
+                      <div className="article-video-thumb">
+                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
+                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                      </div>
+                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
                     </div>
-                    <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
