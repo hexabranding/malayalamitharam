@@ -273,10 +273,7 @@ const displayRelated = related.length >= 1
               </>
             );
           })()}
-        </div>
-
-        <div className="article-follow-social" data-aos="fade-up" data-aos-delay="320" style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 0", flexWrap: "wrap" }}>
-          <span style={{ fontWeight: 800, fontSize: "14px", color: "#4b554d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Follow:</span>
+          <span style={{ marginLeft: "8px", borderLeft: "1px solid #ccc", paddingLeft: "12px" }}>Follow:</span>
           {settings.facebook_url && settings.facebook_url !== "#" && <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on Facebook" className="article-share-follow"><Facebook size={18} /></a>}
           {settings.youtube_url && settings.youtube_url !== "#" && <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on YouTube" className="article-share-follow"><Youtube size={18} /></a>}
           {settings.twitter_url && settings.twitter_url !== "#" && <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on X" className="article-share-follow"><XLogo size={18} /></a>}
