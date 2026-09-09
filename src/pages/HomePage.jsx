@@ -22,7 +22,7 @@ const SECTION_LABELS = {
   more: "മറ്റുള്ളവ",
 };
 
-const SKIP_SECTIONS = ["news"];
+const SKIP_SECTIONS = ["news", "keralam"];
 
 export default function HomePage({ navigate }) {
   const [articles, setArticles] = useState(fallback);
@@ -115,11 +115,22 @@ export default function HomePage({ navigate }) {
   const gulfBottomLeft = gulfStories.slice(2, 5);
   const gulfBottomRight = gulfStories.slice(5, 8);
 
+  const viewsSlugs = findChildSlugsByLabel(["Views", "അഭിപ്രായം"]);
+  const viewsStories = articles.filter(a =>
+    a.category === "views" || a.category === "opinion" || a.category === "column" ||
+    viewsSlugs.includes(a.category) ||
+    (a.categories && a.categories.some(c => c === "views" || c === "opinion" || c === "column" || viewsSlugs.includes(c))) ||
+    ["അഭിപ്രായം", "വീക്ഷണം", "_views"].some(l => a.categoryMl?.toLowerCase() === l.toLowerCase())
+  ).slice(0, 6);
+  const viewsLead = viewsStories[0];
+  const viewsSide = viewsStories.slice(1, 5);
+
   const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
   const handledSlugs = new Set([
-    ...keralaSlugs, ...indiaSlugs, ...worldSlugs, ...gulfSlugs,
+    ...keralaSlugs, ...indiaSlugs, ...worldSlugs, ...gulfSlugs, ...viewsSlugs,
+    "views", "opinion", "column",
     ...categoryGroups.filter(g => g.label === "NEWS" || g.slug === "news").map(g => g.slug)
   ]);
   const dynamicCategorySections = categoryGroups
@@ -314,6 +325,25 @@ export default function HomePage({ navigate }) {
                   ))}
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {viewsLead && (
+          <section className="section-block" data-aos="fade-up">
+            <div className="section-block-title" data-aos="fade-left">
+              <span>അഭിപ്രായം</span>
+              <button className="view-all-btn" onClick={() => navigate("/category/opinion")}>View All</button>
+            </div>
+            <div className="news-split-layout reversed">
+              <div className="news-split-main">
+                <ArticleCard article={viewsLead} navigate={navigate} variant="feature-card" dataAosDelay={0} />
+              </div>
+              <div className="news-split-side">
+                {viewsSide.map((article, i) => (
+                  <ArticleCard key={article.id} article={article} navigate={navigate} variant="compact" dataAosDelay={100 + i * 50} />
+                ))}
+              </div>
             </div>
           </section>
         )}
