@@ -30,6 +30,8 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
       let foundTitleMl = "";
       let foundLabel = "";
+      let foundChildLabel = "";
+      let foundChildTitleMl = "";
 
       for (const group of apiCats) {
         const groupLabel = (group.label || "").toLowerCase();
@@ -53,13 +55,13 @@ export default function CategoryPage({ categoryItem, navigate }) {
             allSlugs.add(group.slug);
             allLabels.add((child.label || "").toLowerCase());
             allTitleMls.add((child.titleMl || "").toLowerCase());
-            if (!foundTitleMl && group.titleMl) foundTitleMl = group.titleMl;
-            if (!foundLabel && group.label) foundLabel = group.label;
+            if (child.titleMl) foundChildTitleMl = child.titleMl;
+            if (child.label) foundChildLabel = child.label;
           }
         }
       }
 
-      setDisplayName(foundTitleMl || foundLabel || label || slug);
+      setDisplayName(foundChildTitleMl || foundChildLabel || foundTitleMl || foundLabel || label || slug);
 
       fetchNews({ limit: 500 }).then(data => {
         const fetched = data.news || [];
