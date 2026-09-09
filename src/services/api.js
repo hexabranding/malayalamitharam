@@ -383,7 +383,18 @@ export async function loadMenuGroups() {
     const data = await fetchCategories();
     if (Array.isArray(data) && data.length > 0) {
       const home = { label: "HOME", slug: "home", path: "/" };
-      const result = [home, ...data];
+      let result;
+      if (data[0]?.children || data.some(c => c.parent)) {
+        result = data;
+      } else {
+        const parents = data.filter(c => !c.parent);
+        const children = data.filter(c => c.parent);
+        result = parents.map(p => ({
+          ...p,
+          children: children.filter(c => c.parent === p.slug || c.parent === p.id),
+        }));
+      }
+      result = [home, ...result];
       setMenuCache(result);
       return result;
     }
