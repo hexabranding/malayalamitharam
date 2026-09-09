@@ -58,13 +58,18 @@ export default function AdminCategoriesPage({ navigate }) {
     try {
       if (editingId.startsWith("group-")) {
         const oldSlug = editingId.replace("group-", "");
-        await updateCategory(oldSlug, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
+        const g = categories.find(c => c.slug === oldSlug);
+        const catId = g?.id || oldSlug;
+        await updateCategory(catId, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
       } else if (editingId.startsWith("child-")) {
         const raw = editingId.replace("child-", "");
         const sepIdx = raw.indexOf("__");
         const groupSlug = raw.substring(0, sepIdx);
         const childSlug = raw.substring(sepIdx + 2);
-        await updateCategory(childSlug, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
+        const g = categories.find(c => c.slug === groupSlug);
+        const child = g?.children?.find(ch => ch.slug === childSlug);
+        const catId = child?.id || childSlug;
+        await updateCategory(catId, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
       }
       await refresh();
     } catch (err) {
@@ -89,7 +94,9 @@ export default function AdminCategoriesPage({ navigate }) {
     if (!confirm("Are you sure you want to delete this category group and all its subcategories?")) return;
     setSaving(true);
     try {
-      await deleteCategory(slug);
+      const g = categories.find(c => c.slug === slug);
+      const catId = g?.id || slug;
+      await deleteCategory(catId);
       await refresh();
     } catch (err) {
       alert("Error deleting: " + err.message);
@@ -101,7 +108,10 @@ export default function AdminCategoriesPage({ navigate }) {
     if (!confirm("Are you sure you want to delete this subcategory?")) return;
     setSaving(true);
     try {
-      await deleteCategory(childSlug);
+      const g = categories.find(c => c.slug === groupSlug);
+      const child = g?.children?.find(ch => ch.slug === childSlug);
+      const catId = child?.id || childSlug;
+      await deleteCategory(catId);
       await refresh();
     } catch (err) {
       alert("Error deleting: " + err.message);
