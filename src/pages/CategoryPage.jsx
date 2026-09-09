@@ -1,22 +1,9 @@
 import { useState, useEffect } from "react";
-import { fetchNews, fetchCategories } from "../services/api.js";
+import { fetchNews, loadMenuGroups } from "../services/api.js";
 import { articles as fallback, flatMenuItems } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
-
-function flattenApiCategories(categories) {
-  const flat = [];
-  for (const cat of categories) {
-    if (cat.children) {
-      for (const child of cat.children) {
-        flat.push(child);
-      }
-    }
-    flat.push(cat);
-  }
-  return flat;
-}
 
 export default function CategoryPage({ categoryItem, navigate }) {
   const [articles, setArticles] = useState([]);
@@ -32,7 +19,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
     const titleMl = categoryItem.titleMl || "";
     const slug = categoryItem.slug || "";
 
-    fetchCategories().then(apiCats => {
+    loadMenuGroups().then(apiCats => {
       const allSlugs = new Set();
       const allLabels = new Set();
       const allTitleMls = new Set();

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, Suspense, lazy } from "react";
 import AOS from "aos";
 import Layout from "./components/Layout.jsx";
 import { articles, flatMenuItems as defaultFlatMenuItems } from "./data/news.js";
-import { loadFlatMenuItems } from "./services/api.js";
+import { loadFlatMenuItems, clearMenuCache } from "./services/api.js";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage.jsx"));
@@ -141,6 +141,7 @@ export default function App() {
   useEffect(() => {
     loadFlatMenuItems().then(setDynamicFlatItems).catch(() => {});
     function refresh() {
+      clearMenuCache();
       loadFlatMenuItems().then(setDynamicFlatItems).catch(() => {});
     }
     window.addEventListener("mm-data-updated", refresh);
