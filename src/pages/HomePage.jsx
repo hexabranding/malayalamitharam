@@ -22,7 +22,7 @@ const SECTION_LABELS = {
   more: "മറ്റുള്ളവ",
 };
 
-const SKIP_SECTIONS = ["news", "keralam"];
+const SKIP_SECTIONS = ["news", "News", "Keralam", "keralam"];
 
 export default function HomePage({ navigate }) {
   const [articles, setArticles] = useState(fallback);
@@ -79,7 +79,7 @@ export default function HomePage({ navigate }) {
     return found;
   }
 
-  const keralaSlugs = findChildSlugsByLabel(["Kerala"]);
+  const keralaSlugs = findChildSlugsByLabel(["Kerala", "Keralam"]);
   const indiaSlugs = findChildSlugsByLabel(["India"]);
   const worldSlugs = findChildSlugsByLabel(["World"]);
 
@@ -131,7 +131,8 @@ export default function HomePage({ navigate }) {
   const handledSlugs = new Set([
     ...keralaSlugs, ...indiaSlugs, ...worldSlugs, ...gulfSlugs, ...viewsSlugs,
     "views", "opinion", "column",
-    ...categoryGroups.filter(g => g.label === "NEWS" || g.slug === "news").map(g => g.slug)
+    ...categoryGroups.filter(g => g.label?.toLowerCase() === "news" || g.slug?.toLowerCase() === "news").map(g => g.slug),
+    ...categoryGroups.filter(g => g.label?.toLowerCase() === "keralam" || g.slug?.toLowerCase() === "keralam").map(g => g.slug)
   ]);
   const dynamicCategorySections = categoryGroups
     .filter(group => !handledSlugs.has(group.slug))
