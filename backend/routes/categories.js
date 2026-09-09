@@ -34,17 +34,36 @@ router.get("/", async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { label, slug, titleMl, parent } = req.body;
+
     if (!label || !slug) {
-      return res.status(400).json({ error: "label and slug are required" });
+      return res.status(400).json({
+        error: "label and slug are required"
+      });
     }
+
     const existing = await Category.findOne({ slug });
+
     if (existing) {
-      return res.status(409).json({ error: "Category already exists" });
+      return res.status(409).json({
+        error: "Category already exists"
+      });
     }
-    const cat = await Category.create({ label, slug, titleMl: titleMl || "", parent: parent || null });
-    res.status(201).json(cat);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+
+    const category = await Category.create({
+      label: label.trim(),
+      slug: slug.trim(),
+      titleMl: titleMl || "",
+      parent: parent || null
+    });
+
+    return res.status(201).json(category);
+
+  } catch (error) {
+    console.error("Error creating category:", error);
+
+    return res.status(500).json({
+      error: error.message || "Failed to create category"
+    });
   }
 });
 
