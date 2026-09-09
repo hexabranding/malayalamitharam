@@ -13,13 +13,11 @@ function getVideoEmbedUrl(url) {
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
   const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
   if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
+  const twitterMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  if (twitterMatch) return `https://platform.twitter.com/embed/Tweet.html?id=${twitterMatch[1]}&dnt=true&embedVersion=2a`;
   if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com")) return url;
   if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
-}
-
-function isTwitterUrl(url) {
-  return url && (url.includes("twitter.com") || url.includes("x.com"));
 }
 
 export default function VideoSection({ articles, navigate }) {
@@ -77,13 +75,8 @@ export default function VideoSection({ articles, navigate }) {
                   <div
                     className="video-player clickable"
                     onClick={() => {
-                      if (isTwitterUrl(mainVideo?.videoUrl)) {
-                        window.open(mainVideo.videoUrl, "_blank");
-                      } else if (embedUrl) {
-                        setShowVideo(true);
-                      } else {
-                        navigate("/news/" + getTitleSlug(mainVideo));
-                      }
+                      if (embedUrl) setShowVideo(true);
+                      else navigate("/news/" + getTitleSlug(mainVideo));
                     }}
                   >
                     <ArticleImage article={mainVideo} alt={mainVideo.title} className="video-thumbnail" />

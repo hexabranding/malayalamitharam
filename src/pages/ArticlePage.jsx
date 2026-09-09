@@ -31,23 +31,11 @@ function getVideoEmbedUrl(url) {
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
   if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
+  const twitterMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  if (twitterMatch) return `https://platform.twitter.com/embed/Tweet.html?id=${twitterMatch[1]}&dnt=true&embedVersion=2a`;
   if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com")) return url;
   if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
-}
-
-function isTwitterUrl(url) {
-  return url && (url.includes("twitter.com") || url.includes("x.com"));
-}
-
-function handleVideoClick(video, setSelectedVideo, setShowVideo, navigate) {
-  const url = video.videoUrl || "";
-  if (isTwitterUrl(url)) {
-    window.open(url, "_blank");
-    return;
-  }
-  setSelectedVideo(video);
-  setShowVideo(true);
 }
 
 export default function ArticlePage({ slug, navigate }) {
@@ -189,9 +177,6 @@ const displayRelated = related.length >= 1
 
         {(article.relatedVideos?.length > 0 || article.videoUrl) && (
           <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
-            <h4 className="article-video-title">
-              <Play size={20} /> വീഡിയോകൾ (Videos)
-            </h4>
             <div className="article-video-container">
               {showVideo && selectedVideo ? (
                 <div className="article-video-player">
@@ -205,35 +190,46 @@ const displayRelated = related.length >= 1
                   <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
                 </div>
               ) : (
-                <div className="article-video-grid">
-                  {article.videoUrl && (
-                    <div
-                      className="article-video-card clickable"
-                      onClick={() => handleVideoClick({ videoUrl: article.videoUrl, title: article.title }, setSelectedVideo, setShowVideo, navigate)}
-                    >
-                      <div className="article-video-thumb">
-                        {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                      </div>
-                      <span className="article-video-label">{article.title}</span>
-                    </div>
-                  )}
-                  {(article.relatedVideos || []).map((video, index) => (
-                    <div
-                      key={index}
-                      className="article-video-card clickable"
-                      onClick={() => handleVideoClick(video, setSelectedVideo, setShowVideo, navigate)}
-                    >
-                      <div className="article-video-thumb">
-                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                      </div>
-                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
-                    </div>
-                  ))}
+                <div
+                  className="article-video-player clickable"
+                  onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
+                >
+                  {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+                    <Play size={36} fill="#fff" color="#fff" />
+                  </div>
                 </div>
               )}
             </div>
+            {(article.relatedVideos || []).length > 0 && showVideo && selectedVideo && (
+              <div className="article-video-grid" style={{ marginTop: "16px" }}>
+                {article.videoUrl && selectedVideo.videoUrl !== article.videoUrl && (
+                  <div
+                    className="article-video-card clickable"
+                    onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); }}
+                  >
+                    <div className="article-video-thumb">
+                      {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
+                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                    </div>
+                    <span className="article-video-label">{article.title}</span>
+                  </div>
+                )}
+                {(article.relatedVideos || []).map((video, index) => (
+                  <div
+                    key={index}
+                    className="article-video-card clickable"
+                    onClick={() => { setSelectedVideo(video); }}
+                  >
+                    <div className="article-video-thumb">
+                      {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
+                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                    </div>
+                    <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
