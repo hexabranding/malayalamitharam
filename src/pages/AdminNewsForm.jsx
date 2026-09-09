@@ -117,12 +117,12 @@ export default function AdminNewsForm({ navigate, newsId }) {
     });
   };
 
-  const handleEngSlugChange = (e) => {
+  const handleSlugInput = (e) => {
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
       slug: value,
-      slugManuallyEdited: true,
+      slugManuallyEdited: value.trim().length > 0,
     }));
   };
 
@@ -194,8 +194,18 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const bodyText = formData.body.trim();
     const bodyParagraphs = bodyText ? bodyText.split("\n\n").filter(para => para.trim()) : [];
     const derivedContent = bodyParagraphs.length > 0 ? bodyParagraphs.join("\n\n") : formData.excerpt;
+    
+    let finalSlug = formData.slug.trim();
+    if (!finalSlug) {
+      const englishTitle = formData.titleEn;
+      const malayalamTitle = formData.title;
+      const base = englishTitle ? frontendSlugify(englishTitle) : generateSlugFromTitle(malayalamTitle);
+      if (base) finalSlug = base.split("-").slice(0, 5).join("-");
+    }
+    
     const newsData = {
       ...formData,
+      slug: finalSlug,
       categories: formData.categories.length > 0 ? formData.categories : [formData.category].filter(Boolean),
       content: derivedContent,
       body: bodyParagraphs,
@@ -204,7 +214,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
       views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
-      slug: formData.slug || "",
     };
     delete newsData.id;
     delete newsData.slugManuallyEdited;
@@ -283,7 +292,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 type="text"
                 name="slug"
                 value={formData.slug}
-                onChange={handleEngSlugChange}
+                onChange={handleSlugInput}
                 placeholder="Auto-generated from English title (e.g., heavy-rain-kerala-coast)"
               />
               {formData.slug && (
