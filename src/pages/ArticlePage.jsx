@@ -31,9 +31,23 @@ function getVideoEmbedUrl(url) {
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
   if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
-  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com") || url.includes("x.com") || url.includes("twitter.com")) return url;
+  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com")) return url;
   if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
+}
+
+function isTwitterUrl(url) {
+  return url && (url.includes("twitter.com") || url.includes("x.com"));
+}
+
+function handleVideoClick(video, setSelectedVideo, setShowVideo, navigate) {
+  const url = video.videoUrl || "";
+  if (isTwitterUrl(url)) {
+    window.open(url, "_blank");
+    return;
+  }
+  setSelectedVideo(video);
+  setShowVideo(true);
 }
 
 export default function ArticlePage({ slug, navigate }) {
@@ -195,7 +209,7 @@ const displayRelated = related.length >= 1
                   {article.videoUrl && (
                     <div
                       className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
+                      onClick={() => handleVideoClick({ videoUrl: article.videoUrl, title: article.title }, setSelectedVideo, setShowVideo, navigate)}
                     >
                       <div className="article-video-thumb">
                         {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
@@ -208,7 +222,7 @@ const displayRelated = related.length >= 1
                     <div
                       key={index}
                       className="article-video-card clickable"
-                      onClick={() => { setSelectedVideo(video); setShowVideo(true); }}
+                      onClick={() => handleVideoClick(video, setSelectedVideo, setShowVideo, navigate)}
                     >
                       <div className="article-video-thumb">
                         {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
@@ -260,6 +274,15 @@ const displayRelated = related.length >= 1
                 <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
                 <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
                 <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
+                {settings.facebook_url && settings.facebook_url !== "#" && <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on Facebook" style={{ fontSize: "12px", color: "#1877f2" }}>Follow FB</a>}
+                {settings.youtube_url && settings.youtube_url !== "#" && <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on YouTube" style={{ fontSize: "12px", color: "#ff0000" }}>Follow YT</a>}
+                {settings.twitter_url && settings.twitter_url !== "#" && <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on X" style={{ fontSize: "12px", color: "#000" }}>Follow X</a>}
+                {settings.instagram_url && settings.instagram_url !== "#" && <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on Instagram" style={{ fontSize: "12px", color: "#e4405f" }}>Follow IG</a>}
+                {settings.whatsapp_url && settings.whatsapp_url !== "#" && <a href={settings.whatsapp_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on WhatsApp" style={{ fontSize: "12px", color: "#25d366" }}>Follow WA</a>}
+                {settings.telegram_url && settings.telegram_url !== "#" && <a href={settings.telegram_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on Telegram" style={{ fontSize: "12px", color: "#0088cc" }}>Follow TG</a>}
+                {settings.linkedin_url && settings.linkedin_url !== "#" && <a href={settings.linkedin_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on LinkedIn" style={{ fontSize: "12px", color: "#0a66c2" }}>Follow LI</a>}
+                {settings.threads_url && settings.threads_url !== "#" && <a href={settings.threads_url} target="_blank" rel="noopener noreferrer" aria-label="Follow on Threads" style={{ fontSize: "12px", color: "#000" }}>Follow Threads</a>}
+                <a href="https://aratt.ai/@malayalamithram_online" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6b21a8" }}>Follow Aratt</a>
               </>
             );
           })()}
