@@ -98,7 +98,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const allCategories = menuGroupsData.flatMap(group => 
     group.children ? group.children.map(child => ({
       slug: child.slug,
-      label: child.label,
+      label: group.label + " > " + child.label,
       labelMl: child.titleMl
     })) : []
   );
