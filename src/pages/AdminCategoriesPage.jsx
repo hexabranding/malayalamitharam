@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Check, X, Loader2 } from "lucide-react";
-import { loadMenuGroups, createCategory, updateCategory, deleteCategory, clearMenuCache } from "../services/api.js";
+import { loadMenuGroups, createCategory, updateCategory, deleteCategory, clearMenuCache, saveParentMapping } from "../services/api.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
 import AdminPagination from "../components/AdminPagination.jsx";
 
@@ -69,7 +69,10 @@ export default function AdminCategoriesPage({ navigate }) {
         const g = categories.find(c => c.slug === groupSlug);
         const child = g?.children?.find(ch => ch.slug === childSlug);
         const catId = child?.id || childSlug;
-        await updateCategory(catId, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug });
+        await updateCategory(catId, { label: editLabel.trim(), titleMl: editMl.trim(), slug: newSlug, parent: groupSlug });
+        if (newSlug !== childSlug) {
+          saveParentMapping(newSlug, groupSlug);
+        }
       }
       await refresh();
     } catch (err) {
@@ -134,6 +137,7 @@ export default function AdminCategoriesPage({ navigate }) {
         parent: groupSlug
       });
 
+      saveParentMapping(slug, groupSlug);
       await refresh();
 
       setEditingId(`child-${groupSlug}__${slug}`);

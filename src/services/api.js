@@ -376,6 +376,22 @@ export function clearMenuCache() {
   localStorage.removeItem("mm_menu_cache");
 }
 
+function getParentMap() {
+  try {
+    const raw = localStorage.getItem("mm_parent_map");
+    return raw ? JSON.parse(raw) : {};
+  } catch {}
+  return {};
+}
+
+export function saveParentMapping(childSlug, parentSlug) {
+  try {
+    const map = getParentMap();
+    map[childSlug] = parentSlug;
+    localStorage.setItem("mm_parent_map", JSON.stringify(map));
+  } catch {}
+}
+
 export async function loadMenuGroups() {
   const cached = getMenuCache();
   if (cached) return cached;
@@ -384,11 +400,16 @@ export async function loadMenuGroups() {
     if (Array.isArray(data) && data.length > 0) {
       const home = { label: "HOME", slug: "home", path: "/" };
       let result;
-      if (data[0]?.children || data.some(c => c.parent)) {
+      if (data[0]?.children) {
         result = data;
       } else {
-        const parents = data.filter(c => !c.parent);
-        const children = data.filter(c => c.parent);
+        const parentMap = getParentMap();
+        const enriched = data.map(c => ({
+          ...c,
+          parent: c.parent || parentMap[c.slug] || null,
+        }));
+        const parents = enriched.filter(c => !c.parent);
+        const children = enriched.filter(c => c.parent);
         result = parents.map(p => ({
           ...p,
           children: children.filter(c => c.parent === p.slug || c.parent === p.id),
