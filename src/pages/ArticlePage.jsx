@@ -260,6 +260,7 @@ const displayRelated = related.length >= 1
           <a href={`https://www.youtube.com/`} target="_blank" rel="noopener noreferrer" aria-label="Share on YouTube"><Youtube size={20} /></a>
           <a href={`https://www.instagram.com/`} target="_blank" rel="noopener noreferrer" aria-label="Share on Instagram"><Instagram size={20} /></a>
           <a href={`https://www.threads.net/`} target="_blank" rel="noopener noreferrer" aria-label="Share on Threads"><AtSign size={20} /></a>
+          <a href={`https://aratt.ai/@malayalamithram_online`} target="_blank" rel="noopener noreferrer" aria-label="Share on Aratt" style={{ fontSize: "13px", fontWeight: 600 }}>Aratt</a>
         </div>
 
         <div className="article-author-card" data-aos="fade-up" data-aos-delay="350">
