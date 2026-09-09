@@ -52,7 +52,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     async function load() {
       if (isEditing) {
         try {
-          const article = await fetchNews({ limit: 200 });
+          const article = await fetchNews({ limit: 1000 });
           let found = (article.news || []).find(a => a.id === newsId);
           if (!found) found = fallback.find(a => a.id === newsId);
           if (found) {

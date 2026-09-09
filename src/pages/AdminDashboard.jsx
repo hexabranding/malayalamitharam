@@ -9,7 +9,7 @@ export default function AdminDashboard({ navigate }) {
 
   useEffect(() => {
     function loadArticles() {
-      fetchNews({ limit: 50 }).then(data => {
+      fetchNews({ limit: 1000 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) setArticles(fetched);
       }).catch(() => {});

@@ -28,7 +28,7 @@ export default function AdminNewsPage({ navigate }) {
   }, []);
 
   useEffect(() => {
-    fetchNews({ limit: 200 }).then(data => {
+    fetchNews({ limit: 1000 }).then(data => {
       const fetched = data.news || [];
       if (fetched.length > 0) setNewsList(fetched);
     }).catch(() => {});
