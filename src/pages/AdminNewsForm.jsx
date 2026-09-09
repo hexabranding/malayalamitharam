@@ -204,6 +204,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
+      slug: formData.slug || "",
     };
     delete newsData.id;
     delete newsData.slugManuallyEdited;
