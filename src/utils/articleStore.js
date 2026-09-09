@@ -36,7 +36,13 @@ export function registerArticles(articles) {
 }
 
 function isBadSlug(s) {
-  return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
+  if (!s) return true;
+  if (/^new-\d{8,}/.test(s)) return true;
+  if (s.includes("---")) return true;
+  if (/\s/.test(s)) return true;
+  if (/[^a-z0-9-]/.test(s)) return true;
+  if (s.length > 80) return true;
+  return false;
 }
 
 function slugifyEnglishLocal(value) {
@@ -49,6 +55,10 @@ export function getTitleSlug(article) {
   if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
   if (article.titleEn) {
     const s = slugifyEnglishLocal(article.titleEn);
+    if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
+  }
+  if (article.title) {
+    const s = slugifyEnglishLocal(article.title);
     if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
   }
   return article.id || "";

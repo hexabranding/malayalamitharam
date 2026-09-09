@@ -118,11 +118,12 @@ export default function AdminNewsForm({ navigate, newsId }) {
   };
 
   const handleSlugInput = (e) => {
-    const value = e.target.value;
+    const raw = e.target.value;
+    const value = raw.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
     setFormData(prev => ({
       ...prev,
       slug: value,
-      slugManuallyEdited: value.trim().length > 0,
+      slugManuallyEdited: raw.trim().length > 0,
     }));
   };
 

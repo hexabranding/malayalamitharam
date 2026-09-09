@@ -76,13 +76,23 @@ export function generateSlugFromTitle(title, englishTitle) {
 }
 
 function isBadSlug(s) {
-  return !s || /^new-\d{8,}/.test(s) || s.includes("---") || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
+  if (!s) return true;
+  if (/^new-\d{8,}/.test(s)) return true;
+  if (s.includes("---")) return true;
+  if (/\s/.test(s)) return true;
+  if (/[^a-z0-9-]/.test(s)) return true;
+  if (s.length > 80) return true;
+  return false;
 }
 
 export function getShareUrl(article) {
   if (article.slug && !isBadSlug(article.slug)) return article.slug;
   if (article.engSlug && !isBadSlug(article.engSlug)) return article.engSlug;
+  if (article.titleEn) {
+    const s = article.titleEn.toLowerCase().replace(/[^a-z0-9\s-]/g, " ").trim().split(/[\s-]+/).filter(Boolean).join("-");
+    if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
+  }
   const fallback = generateSlugFromTitle(article.title, article.titleEn);
-  if (fallback) return fallback;
+  if (fallback && !isBadSlug(fallback)) return fallback;
   return article.id || "";
 }
