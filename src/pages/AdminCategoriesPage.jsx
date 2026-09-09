@@ -110,10 +110,36 @@ export default function AdminCategoriesPage({ navigate }) {
   };
 
   const handleAddSubcategory = async (groupSlug) => {
-    const slug = `new-${Date.now()}`;
-    setSaving(true);
-    try {
-      await createCategory({ label: "New Category", slug, titleMl: "New", parent: groupSlug });
+  const slug = `new-${Date.now()}`;
+  const id = crypto.randomUUID();
+
+  setSaving(true);
+
+  try {
+    await createCategory({
+      id,
+      label: "New Category",
+      slug,
+      titleMl: "New",
+      parent: groupSlug
+    });
+
+    await refresh();
+
+    setEditingId(`child-${groupSlug}__${slug}`);
+    setEditLabel("New Category");
+    setEditMl("New");
+    setEditSlug(slug);
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupSlug]: true
+    }));
+  } catch (err) {
+    alert("Error adding subcategory: " + err.message);
+  } finally {
+    setSaving(false);
+  }
+};
       await refresh();
       setEditingId(`child-${groupSlug}__${slug}`);
       setEditLabel("New Category");
@@ -126,19 +152,32 @@ export default function AdminCategoriesPage({ navigate }) {
   };
 
   const handleAddGroup = async () => {
-    const slug = `new-group-${Date.now()}`;
-    setSaving(true);
-    try {
-      await createCategory({ label: "New Group", slug, titleMl: "" });
-      await refresh();
-      setEditingId(`group-${slug}`);
-      setEditLabel("New Group");
-      setEditMl("");
-    } catch (err) {
-      alert("Error adding group: " + err.message);
-    }
+  const label = "New Group";
+  const slug = `new-group-${Date.now()}`;
+  const id = crypto.randomUUID();
+
+  setSaving(true);
+
+  try {
+    await createCategory({
+      id,
+      label,
+      slug,
+      titleMl: ""
+    });
+
+    await refresh();
+
+    setEditingId(`group-${slug}`);
+    setEditLabel(label);
+    setEditMl("");
+    setEditSlug(slug);
+  } catch (err) {
+    alert("Error adding group: " + err.message);
+  } finally {
     setSaving(false);
-  };
+  }
+};
 
   const totalPages = Math.ceil(categories.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
