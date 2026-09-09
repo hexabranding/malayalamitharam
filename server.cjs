@@ -328,21 +328,30 @@ app.get("/admin/*splat", spa);
 app.use(spa);
 
 function start() {
-  articleMongoose.connect(process.env.MONGO_URI, {})
+  // Start Express immediately so Hostinger can detect the application.
+  app.listen(PORT, () => {
+    console.log("Frontend server running on port " + PORT);
+  });
+
+  // Connect to MongoDB after the server has started.
+  articleMongoose
+    .connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    })
     .then(() => {
       console.log("MongoDB connected for frontend server");
-      app.listen(PORT, () => {
-        console.log("Frontend server running on port " + PORT);
-      });
     })
     .catch((err) => {
       console.error("MongoDB connection failed:", err.message);
-      app.listen(PORT, () => {
-        console.log("Frontend server running on port " + PORT + " (no MongoDB)");
-      });
     });
 }
 
-if (require.main === module) start();
+start();
 
-module.exports = { articleDescription, buildArticleMeta, injectMeta, resolveAbsoluteImage, start };
+module.exports = {
+  articleDescription,
+  buildArticleMeta,
+  injectMeta,
+  resolveAbsoluteImage,
+  start
+};
