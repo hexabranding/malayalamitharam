@@ -33,15 +33,15 @@ function getVideoEmbedUrl(url) {
   if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
   const twitterMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
   if (twitterMatch) return `https://platform.twitter.com/embed/Tweet.html?id=${twitterMatch[1]}&dnt=true&embedVersion=2a`;
-  if (url.includes("facebook.com")) {
-    const fbVideoMatch = url.match(/videos\/(\d+)/);
-    if (fbVideoMatch) return `https://www.facebook.com/video/embed?video_id=${fbVideoMatch[1]}`;
-    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}`;
-  }
+  if (url.includes("facebook.com")) return null;
   if (url.includes("instagram.com")) return `https://www.instagram.com/p/${url.match(/\/p\/([^/]+)/)?.[1] || ""}/embed/`;
   if (url.includes("tiktok.com")) return `https://www.tiktok.com/embed/v2/${url.match(/\/video\/(\d+)/)?.[1] || ""}`;
   if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
+}
+
+function isFacebookUrl(url) {
+  return url && url.includes("facebook.com");
 }
 
 function isVideoUrl(url) {
@@ -268,6 +268,15 @@ export default function ArticlePage({ slug, navigate }) {
                           alt={selectedVideo.title}
                           style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
                         />
+                      ) : isFacebookUrl(selectedVideo.videoUrl) ? (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#1877f2", color: "#fff", padding: "24px", textAlign: "center", position: "absolute", inset: 0 }}>
+                          <svg width="64" height="64" viewBox="0 0 24 24" fill="white" style={{ marginBottom: "16px" }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                          <p style={{ fontSize: "16px", fontWeight: 600, marginBottom: "8px" }}>Facebook Video</p>
+                          <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: "#fff", color: "#1877f2", borderRadius: "8px", fontWeight: 600, textDecoration: "none", fontSize: "15px" }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                            Watch on Facebook
+                          </a>
+                        </div>
                       ) : (
                         <iframe
                           src={getVideoEmbedUrl(selectedVideo.videoUrl)}
@@ -285,9 +294,15 @@ export default function ArticlePage({ slug, navigate }) {
                       onClick={() => { setSelectedVideo({ videoUrl: mainVideoUrl, title: article.title }); setShowVideo(true); }}
                     >
                       {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
-                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
-                        <Play size={36} fill="#fff" color="#fff" />
-                      </div>
+                      {isFacebookUrl(mainVideoUrl) ? (
+                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "#1877f2", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </div>
+                      ) : (
+                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+                          <Play size={36} fill="#fff" color="#fff" />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
