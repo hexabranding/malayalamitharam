@@ -44,6 +44,35 @@ function getVideoEmbedUrl(url) {
   return url;
 }
 
+function isVideoUrl(url) {
+  if (!url) return false;
+  return /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)/.test(url) ||
+    /(?:vimeo\.com\/)(\d+)/.test(url) ||
+    /(?:dailymotion\.com\/video\/|dai\.ly\/)/.test(url) ||
+    /(?:twitter\.com|x\.com)\/\w+\/status\/\d+/.test(url) ||
+    /facebook\.com\/.*(?:video|reel)/.test(url) ||
+    /instagram\.com\/(?:p|reel)\//.test(url) ||
+    /tiktok\.com\/@.*\/video\//.test(url);
+}
+
+function extractVideoUrls(body) {
+  if (!body || !Array.isArray(body)) return [];
+  const urls = [];
+  const urlRegex = /https?:\/\/[^\s)>\]]+/g;
+  body.forEach(paragraph => {
+    const matches = paragraph.match(urlRegex);
+    if (matches) {
+      matches.forEach(url => {
+        const cleanUrl = url.replace(/[.,;!?]+$/, "");
+        if (isVideoUrl(cleanUrl) && !urls.includes(cleanUrl)) {
+          urls.push(cleanUrl);
+        }
+      });
+    }
+  });
+  return urls;
+}
+
 export default function ArticlePage({ slug, navigate }) {
   const settings = useSettings();
 
@@ -204,63 +233,62 @@ export default function ArticlePage({ slug, navigate }) {
           ))}
         </div>
 
-        {(article.relatedVideos?.length > 0 || article.videoUrl) && (
-          <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
-            <div className="article-video-container">
-              {showVideo && selectedVideo ? (
-                <div className="article-video-player">
-                  <iframe
-                    src={getVideoEmbedUrl(selectedVideo.videoUrl)}
-                    title={selectedVideo.title}
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                  <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
-                </div>
-              ) : (
-                <div
-                  className="article-video-player clickable"
-                  onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); setShowVideo(true); }}
-                >
-                  {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
-                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
-                    <Play size={36} fill="#fff" color="#fff" />
+        {(() => {
+          const extractedUrls = extractVideoUrls(article.body);
+          const extractedVideos = extractedUrls.map((url, i) => ({ videoUrl: url, title: article.title + " - Video " + (i + 1) }));
+          const allRelatedVideos = [...(article.relatedVideos || []), ...extractedVideos];
+          const hasMainVideo = article.videoUrl || allRelatedVideos.length > 0;
+
+          if (!hasMainVideo) return null;
+
+          const mainVideoUrl = article.videoUrl || allRelatedVideos[0]?.videoUrl;
+
+          return (
+            <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
+              <div className="article-video-container">
+                {showVideo && selectedVideo ? (
+                  <div className="article-video-player">
+                    <iframe
+                      src={getVideoEmbedUrl(selectedVideo.videoUrl)}
+                      title={selectedVideo.title}
+                      frameBorder="0"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                    <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
                   </div>
+                ) : (
+                  <div
+                    className="article-video-player clickable"
+                    onClick={() => { setSelectedVideo({ videoUrl: mainVideoUrl, title: article.title }); setShowVideo(true); }}
+                  >
+                    {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+                      <Play size={36} fill="#fff" color="#fff" />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {allRelatedVideos.length > 0 && showVideo && selectedVideo && (
+                <div className="article-video-grid" style={{ marginTop: "16px" }}>
+                  {allRelatedVideos.map((video, index) => (
+                    <div
+                      key={index}
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo(video); }}
+                    >
+                      <div className="article-video-thumb">
+                        {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
+                        <div className="article-video-play"><Play size={28} fill="#fff" /></div>
+                      </div>
+                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {(article.relatedVideos || []).length > 0 && showVideo && selectedVideo && (
-              <div className="article-video-grid" style={{ marginTop: "16px" }}>
-                {article.videoUrl && selectedVideo.videoUrl !== article.videoUrl && (
-                  <div
-                    className="article-video-card clickable"
-                    onClick={() => { setSelectedVideo({ videoUrl: article.videoUrl, title: article.title }); }}
-                  >
-                    <div className="article-video-thumb">
-                      {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} />}
-                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                    </div>
-                    <span className="article-video-label">{article.title}</span>
-                  </div>
-                )}
-                {(article.relatedVideos || []).map((video, index) => (
-                  <div
-                    key={index}
-                    className="article-video-card clickable"
-                    onClick={() => { setSelectedVideo(video); }}
-                  >
-                    <div className="article-video-thumb">
-                      {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
-                      <div className="article-video-play"><Play size={28} fill="#fff" /></div>
-                    </div>
-                    <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          );
+        })()}
 
         <div className="tags" data-aos="fade-up" data-aos-delay="250">
           {(article.tags || []).map((tag) => (
