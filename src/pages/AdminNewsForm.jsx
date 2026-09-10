@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Save, X, Upload } from "lucide-react";
-import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage } from "../services/api.js";
+import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, fetchAuthors } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
@@ -43,9 +43,14 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const [menuGroupsData, setMenuGroupsData] = useState([]);
   const [newVideoTitle, setNewVideoTitle] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [authorsList, setAuthorsList] = useState([]);
 
   useEffect(() => {
     loadMenuGroups().then(setMenuGroupsData).catch(() => {});
+    fetchAuthors().then(res => {
+      const list = res?.authors || res || [];
+      setAuthorsList(Array.isArray(list) ? list : []);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -323,14 +328,24 @@ export default function AdminNewsForm({ navigate, newsId }) {
 
               <div className="form-group">
                 <label>Author</label>
-                <input
-                  type="text"
+                <select
                   name="author"
                   value={formData.author}
                   onChange={handleChange}
                   required
-                  placeholder="Author name"
-                />
+                >
+                  <option value="">Select Author</option>
+                  {authorsList.map((a, i) => (
+                    <option key={a.id || a._id || i} value={a.name || a}>
+                      {a.name || a}
+                    </option>
+                  ))}
+                </select>
+                {authorsList.length === 0 && (
+                  <small style={{ display: "block", marginTop: 4, color: "#999", fontSize: 13 }}>
+                    No authors found. Add authors from the Authors section.
+                  </small>
+                )}
               </div>
             </div>
 
