@@ -33,7 +33,13 @@ function getVideoEmbedUrl(url) {
   if (dailymotionMatch) return `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
   const twitterMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
   if (twitterMatch) return `https://platform.twitter.com/embed/Tweet.html?id=${twitterMatch[1]}&dnt=true&embedVersion=2a`;
-  if (url.includes("facebook.com") || url.includes("instagram.com") || url.includes("tiktok.com")) return url;
+  if (url.includes("facebook.com")) {
+    const fbVideoMatch = url.match(/videos\/(\d+)/);
+    if (fbVideoMatch) return `https://www.facebook.com/video/embed?video_id=${fbVideoMatch[1]}`;
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}`;
+  }
+  if (url.includes("instagram.com")) return `https://www.instagram.com/p/${url.match(/\/p\/([^/]+)/)?.[1] || ""}/embed/`;
+  if (url.includes("tiktok.com")) return `https://www.tiktok.com/embed/v2/${url.match(/\/video\/(\d+)/)?.[1] || ""}`;
   if (url.includes("/embed/") || url.includes("player.vimeo")) return url;
   return url;
 }
