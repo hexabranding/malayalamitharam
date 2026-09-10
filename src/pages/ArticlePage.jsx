@@ -55,22 +55,33 @@ function isVideoUrl(url) {
     /tiktok\.com\/@.*\/video\//.test(url);
 }
 
-function extractVideoUrls(body) {
+function isImageUrl(url) {
+  if (!url) return false;
+  return /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i.test(url) ||
+    /\/image\/proxy\?/i.test(url) ||
+    /images\.(?:googleusercontent|fbcdn|cloudfront|imgur|wikimedia)\.com/i.test(url) ||
+    /pbs\.twimg\.com\/media\//i.test(url) ||
+    /instagram\.[a-z]+\/.*\/media\//i.test(url);
+}
+
+function extractMediaUrls(body) {
   if (!body || !Array.isArray(body)) return [];
-  const urls = [];
+  const items = [];
   const urlRegex = /https?:\/\/[^\s)>\]]+/g;
   body.forEach(paragraph => {
     const matches = paragraph.match(urlRegex);
     if (matches) {
       matches.forEach(url => {
         const cleanUrl = url.replace(/[.,;!?]+$/, "");
-        if (isVideoUrl(cleanUrl) && !urls.includes(cleanUrl)) {
-          urls.push(cleanUrl);
+        if (isVideoUrl(cleanUrl) && !items.find(i => i.url === cleanUrl)) {
+          items.push({ type: "video", url: cleanUrl });
+        } else if (isImageUrl(cleanUrl) && !items.find(i => i.url === cleanUrl)) {
+          items.push({ type: "image", url: cleanUrl });
         }
       });
     }
   });
-  return urls;
+  return items;
 }
 
 export default function ArticlePage({ slug, navigate }) {
@@ -234,41 +245,74 @@ export default function ArticlePage({ slug, navigate }) {
         </div>
 
         {(() => {
-          const extractedUrls = extractVideoUrls(article.body);
-          const extractedVideos = extractedUrls.map((url, i) => ({ videoUrl: url, title: article.title + " - Video " + (i + 1) }));
+          const extractedMedia = extractMediaUrls(article.body);
+          const extractedVideos = extractedMedia.filter(m => m.type === "video").map((m, i) => ({ videoUrl: m.url, title: article.title + " - Video " + (i + 1) }));
+          const extractedImages = extractedMedia.filter(m => m.type === "image").map((m, i) => ({ imageUrl: m.url, title: article.title + " - Image " + (i + 1) }));
           const allRelatedVideos = [...(article.relatedVideos || []), ...extractedVideos];
           const hasMainVideo = article.videoUrl || allRelatedVideos.length > 0;
+          const hasImages = extractedImages.length > 0;
 
-          if (!hasMainVideo) return null;
+          if (!hasMainVideo && !hasImages) return null;
 
           const mainVideoUrl = article.videoUrl || allRelatedVideos[0]?.videoUrl;
 
           return (
             <div className="article-video-section" data-aos="fade-up" data-aos-delay="230">
-              <div className="article-video-container">
-                {showVideo && selectedVideo ? (
-                  <div className="article-video-player">
-                    <iframe
-                      src={getVideoEmbedUrl(selectedVideo.videoUrl)}
-                      title={selectedVideo.title}
-                      frameBorder="0"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                    <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
-                  </div>
-                ) : (
-                  <div
-                    className="article-video-player clickable"
-                    onClick={() => { setSelectedVideo({ videoUrl: mainVideoUrl, title: article.title }); setShowVideo(true); }}
-                  >
-                    {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
-                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
-                      <Play size={36} fill="#fff" color="#fff" />
+              {hasMainVideo && (
+                <div className="article-video-container">
+                  {showVideo && selectedVideo ? (
+                    <div className="article-video-player">
+                      {selectedVideo.imageUrl ? (
+                        <img
+                          src={selectedVideo.imageUrl}
+                          alt={selectedVideo.title}
+                          style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                        />
+                      ) : (
+                        <iframe
+                          src={getVideoEmbedUrl(selectedVideo.videoUrl)}
+                          title={selectedVideo.title}
+                          frameBorder="0"
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                        />
+                      )}
+                      <button className="video-close-btn" onClick={() => { setShowVideo(false); setSelectedVideo(null); }}>✕</button>
                     </div>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div
+                      className="article-video-player clickable"
+                      onClick={() => { setSelectedVideo({ videoUrl: mainVideoUrl, title: article.title }); setShowVideo(true); }}
+                    >
+                      {(article.image || article.thumbnail) && <img src={resolveImageUrl(article.image || article.thumbnail)} alt={article.title} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "72px", height: "72px", background: "rgba(189,29,37,0.9)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+                        <Play size={36} fill="#fff" color="#fff" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {hasImages && (
+                <div className="article-video-grid" style={{ marginTop: hasMainVideo ? "16px" : "0" }}>
+                  {extractedImages.map((img, index) => (
+                    <div
+                      key={`img-${index}`}
+                      className="article-video-card clickable"
+                      onClick={() => { setSelectedVideo({ imageUrl: img.url, title: img.title }); setShowVideo(true); }}
+                    >
+                      <div className="article-video-thumb">
+                        <img src={img.url} alt={img.title} />
+                        <div className="article-video-play" style={{ background: "rgba(0,0,0,0.5)" }}>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
+                      </div>
+                      <span className="article-video-label">{img.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {allRelatedVideos.length > 0 && showVideo && selectedVideo && (
                 <div className="article-video-grid" style={{ marginTop: "16px" }}>
                   {allRelatedVideos.map((video, index) => (
