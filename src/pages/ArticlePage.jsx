@@ -404,8 +404,7 @@ export default function ArticlePage({ slug, navigate }) {
           )}
           <div className="author-details">
             <h4>{authorData?.nameMl || article.author}</h4>
-            {authorData?.role && <span className="author-role" style={{ fontSize: "13px", color: "#888", display: "block", marginBottom: 4 }}>{authorData.roleMl || authorData.role}</span>}
-            <p>{authorData?.bio || "മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു."}</p>
+            <p>{authorData?.roleMl || authorData?.role || "മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്"}</p>
           </div>
         </div>
 
