@@ -145,7 +145,8 @@ export default function ArticlePage({ slug, navigate }) {
               if (!cancelled) {
                 const list = res?.authors || res || [];
                 const arr = Array.isArray(list) ? list : [];
-                const found = arr.find(a => a.name === data.author);
+                const authorName = (data.author || "").trim().toLowerCase();
+                const found = arr.find(a => (a.name || "").trim().toLowerCase() === authorName);
                 setAuthorData(found || null);
               }
             }).catch(() => {});
@@ -396,9 +397,14 @@ export default function ArticlePage({ slug, navigate }) {
         </div>
 
         <div className="article-author-card" data-aos="fade-up" data-aos-delay="350">
-          <div className="author-avatar">{article.author.charAt(0)}</div>
+          {authorData?.photo ? (
+            <img src={authorData.photo} alt={article.author} className="author-avatar" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <div className="author-avatar">{article.author.charAt(0)}</div>
+          )}
           <div className="author-details">
-            <h4>{article.author}</h4>
+            <h4>{authorData?.nameMl || article.author}</h4>
+            {authorData?.role && <span className="author-role" style={{ fontSize: "13px", color: "#888", display: "block", marginBottom: 4 }}>{authorData.roleMl || authorData.role}</span>}
             <p>{authorData?.bio || "മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു."}</p>
           </div>
         </div>
