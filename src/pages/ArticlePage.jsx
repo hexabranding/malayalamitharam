@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2 } from "lucide-react";
-import { fetchArticle, fetchNews, incrementView } from "../services/api.js";
+import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -98,6 +98,8 @@ export default function ArticlePage({ slug, navigate }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [authorData, setAuthorData] = useState(null);
+
   const [related, setRelated] = useState(() => {
     const base = fallbackArticle || cachedArticle;
     if (!base) return [];
@@ -115,6 +117,7 @@ export default function ArticlePage({ slug, navigate }) {
       setLoading(true);
       setArticle(null);
       setRelated([]);
+      setAuthorData(null);
       try {
         if (fallbackArticle) {
           if (!cancelled) {
@@ -137,6 +140,16 @@ export default function ArticlePage({ slug, navigate }) {
           setArticle(data);
           registerArticle(data);
           incrementView(data.slug || data.id).catch(() => {});
+          if (data.author) {
+            fetchAuthors().then(res => {
+              if (!cancelled) {
+                const list = res?.authors || res || [];
+                const arr = Array.isArray(list) ? list : [];
+                const found = arr.find(a => a.name === data.author);
+                setAuthorData(found || null);
+              }
+            }).catch(() => {});
+          }
           try {
             if (data.category) {
               const relatedData = await fetchNews({ category: data.category, limit: 50 });
@@ -386,7 +399,7 @@ export default function ArticlePage({ slug, navigate }) {
           <div className="author-avatar">{article.author.charAt(0)}</div>
           <div className="author-details">
             <h4>{article.author}</h4>
-            <p>മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു.</p>
+            <p>{authorData?.bio || "മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്. ദേശീയ-അന്തർദേശീയ വിഷയങ്ങളെക്കുറിച്ചും സാമൂഹിക മാറ്റങ്ങളെക്കുറിച്ചും വിശകലനം ചെയ്യുന്നു."}</p>
           </div>
         </div>
 
