@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import { Save, X, Upload, ChevronUp, ChevronDown } from "lucide-react";
+import { Save, X, Upload } from "lucide-react";
 import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, fetchAuthors } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -52,7 +52,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
     media: "standard",
     videoUrl: "",
     relatedVideos: [],
-    images: [],
     content: "",
     body: "",
     tags: "",
@@ -106,7 +105,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
               media: found.media || "standard",
               videoUrl: found.videoUrl || "",
               relatedVideos: found.relatedVideos || [],
-              images: found.images || [],
               content: found.content || "",
               body: Array.isArray(found.body) ? found.body.join("\n\n") : (found.body || ""),
               tags: found.tags?.join(", ") || "",
@@ -218,49 +216,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
     }));
   };
 
-  const addGalleryImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, { url: "", caption: "" }]
-    }));
-  };
-
-  const updateGalleryImage = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.map((img, i) => i === index ? { ...img, [field]: value } : img)
-    }));
-  };
-
-  const removeGalleryImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const moveGalleryImage = (index, direction) => {
-    setFormData(prev => {
-      const newImages = [...prev.images];
-      const swapIndex = index + direction;
-      if (swapIndex < 0 || swapIndex >= newImages.length) return prev;
-      [newImages[index], newImages[swapIndex]] = [newImages[swapIndex], newImages[index]];
-      return { ...prev, images: newImages };
-    });
-  };
-
-  const handleGalleryImageUpload = async (e, index) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const result = await uploadImage(file);
-      updateGalleryImage(index, "url", result.url);
-    } catch (err) {
-      alert("Image upload failed: " + err.message);
-    }
-    e.target.value = "";
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -294,7 +249,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
       categories: formData.categories.length > 0 ? formData.categories : [formData.category].filter(Boolean),
       content: derivedContent,
       body: bodyParagraphs,
-      images: formData.images.filter(img => img.url.trim()),
       tags: formData.tags.split(",").map(tag => tag.trim()).filter(tag => tag),
       likes: Number(formData.likes) || 0,
       views: Number(formData.views) || 0,
@@ -491,51 +445,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
                   <button type="button" className="remove-image" onClick={() => { setImagePreview(""); setFormData(prev => ({ ...prev, image: "" })); }}><X size={16} /></button>
                 </div>
               )}
-            </div>
-
-            <div className="form-group">
-              <label>Gallery Images (shown as carousel on article page)</label>
-              <div className="gallery-images-list">
-                {formData.images.map((img, index) => (
-                  <div key={index} className="gallery-image-item">
-                    <div className="gallery-image-actions">
-                      <button type="button" className="btn-icon" onClick={() => moveGalleryImage(index, -1)} disabled={index === 0} title="Move up">
-                        <ChevronUp size={14} />
-                      </button>
-                      <button type="button" className="btn-icon" onClick={() => moveGalleryImage(index, 1)} disabled={index === formData.images.length - 1} title="Move down">
-                        <ChevronDown size={14} />
-                      </button>
-                      <button type="button" className="btn-icon btn-remove" onClick={() => removeGalleryImage(index)} title="Remove">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    {img.url && (
-                      <div className="gallery-image-thumb">
-                        <img src={resolveImageUrl(img.url) || img.url} alt="" onError={(e) => { e.target.style.display = "none" }} />
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      placeholder="Image URL"
-                      value={img.url}
-                      onChange={(e) => updateGalleryImage(index, "url", e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Caption (optional)"
-                      value={img.caption}
-                      onChange={(e) => updateGalleryImage(index, "caption", e.target.value)}
-                    />
-                    <label className="admin-upload-btn small" style={{ marginTop: 4, display: "inline-flex" }}>
-                      <Upload size={14} /> Upload
-                      <input type="file" accept="image/*" onChange={(e) => handleGalleryImageUpload(e, index)} hidden />
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <button type="button" className="admin-btn secondary small" onClick={addGalleryImage} style={{ marginTop: 8 }}>
-                + Add Gallery Image
-              </button>
             </div>
 
             <div className="form-row">

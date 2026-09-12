@@ -116,7 +116,7 @@ router.get("/:slug", async (req, res) => {
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, titleEn, slug: requestedSlug, category, categories, subcategory, content, excerpt, image, images, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
+    const { title, titleEn, slug: requestedSlug, category, categories, subcategory, content, excerpt, image, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
     if (!title || !category || !content) {
       return res.status(400).json({ error: "title, category, and content are required" });
     }
@@ -139,7 +139,6 @@ router.post("/", authMiddleware, async (req, res) => {
       author: author || req.user.name,
       date: new Date().toISOString().split("T")[0],
       image: image || "/images/blog/1.jpg",
-      images: images || [],
       excerpt: excerpt || content.slice(0, 120),
       content,
       body: body || [],
