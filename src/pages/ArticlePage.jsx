@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2 } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
-import ImageCarousel from "../components/ImageCarousel.jsx";
+
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import { useSettings } from "../context/DataContext.jsx";
@@ -233,11 +233,7 @@ export default function ArticlePage({ slug, navigate }) {
         <Meta article={article} />
 
         <div data-aos="zoom-in" data-aos-delay="120">
-          {article.images && article.images.length > 0 ? (
-            <ImageCarousel images={article.images} alt={article.title} className="detail-image" />
-          ) : (
-            <ArticleImage article={article} alt={article.title} className="detail-image" />
-          )}
+          <ArticleImage article={article} alt={article.title} className="detail-image" />
         </div>
 
         <blockquote

@@ -42,7 +42,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
     date: "",
     readTime: "",
     image: "",
-    images: [],
     titleEn: "",
     slug: "",
     slugManuallyEdited: false,
@@ -96,7 +95,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
               date: found.date || "",
               readTime: found.readTime || "",
               image: found.image || "",
-              images: found.images || [],
               titleEn: found.titleEn || "",
               slug: found.slug || "",
               slugManuallyEdited: true,
@@ -201,39 +199,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
     e.target.value = "";
   };
 
-  const handleCarouselImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const result = await uploadImage(file);
-      setFormData(prev => ({ ...prev, images: [...prev.images, result.url] }));
-    } catch (err) {
-      alert("Image upload failed: " + err.message);
-    }
-    e.target.value = "";
-  };
-
-  const handleCarouselImageUrlAdd = () => {
-    const url = prompt("Enter image URL:");
-    if (url && url.trim()) {
-      setFormData(prev => ({ ...prev, images: [...prev.images, url.trim()] }));
-    }
-  };
-
-  const removeCarouselImage = (index) => {
-    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-  };
-
-  const moveCarouselImage = (from, to) => {
-    if (to < 0 || to >= formData.images.length) return;
-    setFormData(prev => {
-      const arr = [...prev.images];
-      const [item] = arr.splice(from, 1);
-      arr.splice(to, 0, item);
-      return { ...prev, images: arr };
-    });
-  };
-
   const addRelatedVideo = () => {
     if (!newVideoUrl.trim()) return;
     setFormData(prev => ({
@@ -289,7 +254,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
       views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
-      images: formData.images || [],
     };
     delete newsData.id;
     delete newsData.slugManuallyEdited;
@@ -480,37 +444,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
                   <img src={resolveImageUrl(imagePreview) || imagePreview} alt="Preview" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 4 }} onError={(e) => { e.target.style.display = "none" }} />
                   <button type="button" className="remove-image" onClick={() => { setImagePreview(""); setFormData(prev => ({ ...prev, image: "" })); }}><X size={16} /></button>
                 </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label>Carousel Images (optional — multiple images shown as a slider on the article page)</label>
-              <div className="carousel-images-list">
-                {formData.images.map((img, index) => (
-                  <div key={index} className="carousel-image-item">
-                    <img src={resolveImageUrl(img) || img} alt={`Slide ${index + 1}`} className="carousel-image-thumb" />
-                    <div className="carousel-image-actions">
-                      <button type="button" className="btn-icon" onClick={() => moveCarouselImage(index, index - 1)} disabled={index === 0} title="Move left">&#9664;</button>
-                      <button type="button" className="btn-icon" onClick={() => moveCarouselImage(index, index + 1)} disabled={index === formData.images.length - 1} title="Move right">&#9654;</button>
-                      <button type="button" className="btn-remove" onClick={() => removeCarouselImage(index)} title="Remove"><X size={14} /></button>
-                    </div>
-                    <span className="carousel-image-label">{index + 1}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                <label className="admin-upload-btn" style={{ display: "inline-flex" }}>
-                  <Upload size={16} /> Upload Image
-                  <input type="file" accept="image/*" onChange={handleCarouselImageUpload} hidden />
-                </label>
-                <button type="button" className="admin-btn secondary" onClick={handleCarouselImageUrlAdd} style={{ fontSize: 13, padding: "6px 12px" }}>
-                  + Add URL
-                </button>
-              </div>
-              {formData.images.length > 0 && (
-                <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 12 }}>
-                  {formData.images.length} image(s) will be shown as a carousel on the article page.
-                </small>
               )}
             </div>
 
