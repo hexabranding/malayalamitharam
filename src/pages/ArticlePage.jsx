@@ -244,18 +244,27 @@ export default function ArticlePage({ slug, navigate }) {
         </blockquote>
 
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
-          {(article.body || []).map((paragraph, index) => (
-            <div key={index}>
-              {index === 1 && (
-                <div className="in-article-ads">
-                  <div data-aos="fade-right" data-aos-delay="0"><VisitingCarAd slot="article-part-1" /></div>
-                  <div data-aos="fade-up" data-aos-delay="100"><VisitingCarAd slot="article-part-2" /></div>
-                  <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
-                </div>
-              )}
-              <p>{parseLinks(paragraph)}</p>
-            </div>
-          ))}
+          {(() => {
+            const body = article.body;
+            const isHtmlBody = typeof body === "string" && /<[a-z][\s\S]*>/i.test(body);
+            
+            if (isHtmlBody) {
+              return <div dangerouslySetInnerHTML={{ __html: body }} />;
+            }
+            
+            return (body || []).map((paragraph, index) => (
+              <div key={index}>
+                {index === 1 && (
+                  <div className="in-article-ads">
+                    <div data-aos="fade-right" data-aos-delay="0"><VisitingCarAd slot="article-part-1" /></div>
+                    <div data-aos="fade-up" data-aos-delay="100"><VisitingCarAd slot="article-part-2" /></div>
+                    <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
+                  </div>
+                )}
+                <p>{parseLinks(paragraph)}</p>
+              </div>
+            ));
+          })()}
         </div>
 
         {(() => {

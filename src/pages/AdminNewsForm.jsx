@@ -1,10 +1,33 @@
 import { useState, useEffect } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { Save, X, Upload } from "lucide-react";
 import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, fetchAuthors } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
 import { generateSlugFromTitle } from "../utils/transliterate.js";
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link", "image"],
+    [{ align: [] }],
+    ["clean"],
+  ],
+};
+
+const quillFormats = [
+  "header",
+  "bold", "italic", "underline", "strike",
+  "list", "bullet",
+  "blockquote", "code-block",
+  "link", "image",
+  "align",
+];
 
 export default function AdminNewsForm({ navigate, newsId }) {
   const isEditing = !!newsId;
@@ -83,7 +106,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               videoUrl: found.videoUrl || "",
               relatedVideos: found.relatedVideos || [],
               content: found.content || "",
-              body: found.body?.join("\n\n") || "",
+              body: Array.isArray(found.body) ? found.body.join("\n\n") : (found.body || ""),
               tags: found.tags?.join(", ") || "",
               backgroundColor: found.backgroundColor || "",
               likes: found.likes || 0,
@@ -198,8 +221,19 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setSubmitting(true);
 
     const bodyText = formData.body.trim();
-    const bodyParagraphs = bodyText ? bodyText.split("\n\n").filter(para => para.trim()) : [];
-    const derivedContent = bodyParagraphs.length > 0 ? bodyParagraphs.join("\n\n") : formData.excerpt;
+    const isHtmlContent = /<[a-z][\s\S]*>/i.test(bodyText);
+    let bodyParagraphs;
+    let derivedContent;
+    
+    if (isHtmlContent) {
+      bodyParagraphs = bodyText ? [bodyText] : [];
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = bodyText;
+      derivedContent = tempDiv.textContent || tempDiv.innerText || formData.excerpt;
+    } else {
+      bodyParagraphs = bodyText ? bodyText.split("\n\n").filter(para => para.trim()) : [];
+      derivedContent = bodyParagraphs.length > 0 ? bodyParagraphs.join("\n\n") : formData.excerpt;
+    }
     
     let finalSlug = formData.slug.trim();
     if (!finalSlug) {
@@ -578,17 +612,17 @@ export default function AdminNewsForm({ navigate, newsId }) {
           <h3>Content</h3>
           
           <div className="form-group">
-              <label>Body Content (separate paragraphs with blank lines)</label>
-              <textarea
-                name="body"
-                value={formData.body}
-                onChange={handleChange}
-                rows={10}
-                placeholder="Write the full news content here (leave empty to use excerpt as content)"
-              />
-              <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 13, lineHeight: 1.5 }}>
-                Add clickable links: <code>[link text](https://example.com)</code> — Example: "കൂടുതൽ വായിക്കൂ <code>[ഇവിടെ](https://example.com)</code>" will show as a clickable link.
-              </small>
+              <label>Body Content</label>
+              <div className="quill-editor-wrapper">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.body}
+                  onChange={(value) => setFormData(prev => ({ ...prev, body: value }))}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  placeholder="Write the full news content here..."
+                />
+              </div>
           </div>
 
           <div className="form-group">
