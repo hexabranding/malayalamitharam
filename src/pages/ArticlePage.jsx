@@ -232,7 +232,7 @@ export default function ArticlePage({ slug, navigate }) {
         <article className="article-detail" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
         <Meta article={article} />
 
-        <div data-aos="zoom-in" data-aos-delay="120">
+        <div>
           <ArticleImage article={article} alt={article.title} className="detail-image" />
         </div>
 
