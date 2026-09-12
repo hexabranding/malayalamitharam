@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2 } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
+import ImageCarousel from "../components/ImageCarousel.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
 import { useSettings } from "../context/DataContext.jsx";
@@ -232,7 +233,11 @@ export default function ArticlePage({ slug, navigate }) {
         <Meta article={article} />
 
         <div data-aos="zoom-in" data-aos-delay="120">
-          <ArticleImage article={article} alt={article.title} className="detail-image" />
+          {article.images && article.images.length > 0 ? (
+            <ImageCarousel images={article.images} alt={article.title} className="detail-image" />
+          ) : (
+            <ArticleImage article={article} alt={article.title} className="detail-image" />
+          )}
         </div>
 
         <blockquote
@@ -246,13 +251,15 @@ export default function ArticlePage({ slug, navigate }) {
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(() => {
             const body = article.body;
-            const isHtmlBody = typeof body === "string" && /<[a-z][\s\S]*>/i.test(body);
+            const bodyStr = Array.isArray(body) ? body.join("\n\n") : (body || "");
+            const isHtmlBody = /<[a-z][\s\S]*>/i.test(bodyStr);
             
             if (isHtmlBody) {
-              return <div dangerouslySetInnerHTML={{ __html: body }} />;
+              return <div dangerouslySetInnerHTML={{ __html: bodyStr }} />;
             }
             
-            return (body || []).map((paragraph, index) => (
+            const paragraphs = Array.isArray(body) ? body : [body];
+            return (paragraphs || []).map((paragraph, index) => (
               <div key={index}>
                 {index === 1 && (
                   <div className="in-article-ads">

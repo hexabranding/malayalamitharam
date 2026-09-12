@@ -13,6 +13,7 @@ const articleSchema = new mongoose.Schema({
   author: { type: String, default: "Staff Reporter" },
   date: { type: String },
   image: { type: String, default: "/images/blog/1.jpg" },
+  images: [{ type: String }],
   excerpt: { type: String, default: "" },
   content: { type: String, default: "" },
   body: [{ type: String }],
