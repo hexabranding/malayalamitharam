@@ -8,6 +8,7 @@ import { useSettings } from "../context/DataContext.jsx";
 import { parseLinks } from "../services/parseLinks.jsx";
 import AdSlot from "../components/AdSlot.jsx";
 import VisitingCarAd from "../components/VisitingCarAd.jsx";
+import ArticleImageCarousel from "../components/ArticleImageCarousel.jsx";
 import Meta from "../components/Meta.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
@@ -234,6 +235,12 @@ export default function ArticlePage({ slug, navigate }) {
         <div data-aos="zoom-in" data-aos-delay="120">
           <ArticleImage article={article} alt={article.title} className="detail-image" />
         </div>
+
+        {article.images && article.images.length > 0 && (
+          <div data-aos="fade-up" data-aos-delay="140">
+            <ArticleImageCarousel images={article.images} />
+          </div>
+        )}
 
         <blockquote
           className="article-lead-blockquote"
