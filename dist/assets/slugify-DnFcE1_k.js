@@ -1,1 +1,0 @@
-import{c as o}from"./index-D-NbCPVj.js";const t=o("ChevronUp",[["path",{d:"m18 15-6-6-6 6",key:"153udz"}]]);function n(e){return String(e||"").toLowerCase().replace(/[^a-z0-9\s-]/g," ").trim().split(/[\s-]+/).filter(Boolean).join("-")}export{t as C,n as s};

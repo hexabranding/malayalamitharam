@@ -30,11 +30,11 @@ export default function ArticleImageCarousel({ images }) {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="carousel-track">
+      <div className="article-carousel-track">
         {images.map((img, index) => (
           <div
             key={index}
-            className={`carousel-slide ${index === current ? "active" : ""}`}
+            className={`article-carousel-slide ${index === current ? "active" : ""}`}
           >
             <img
               src={resolveImageUrl(img.url) || img.url}
@@ -42,7 +42,7 @@ export default function ArticleImageCarousel({ images }) {
               onError={(e) => { e.target.style.display = "none"; }}
             />
             {img.caption && (
-              <div className="carousel-caption">{img.caption}</div>
+              <div className="article-carousel-caption">{img.caption}</div>
             )}
           </div>
         ))}
@@ -50,17 +50,17 @@ export default function ArticleImageCarousel({ images }) {
 
       {showNav && (
         <>
-          <button className="carousel-nav-btn prev" onClick={prev} aria-label="Previous image">
+          <button className="article-carousel-nav prev" onClick={prev} aria-label="Previous image">
             <ChevronLeft size={22} />
           </button>
-          <button className="carousel-nav-btn next" onClick={next} aria-label="Next image">
+          <button className="article-carousel-nav next" onClick={next} aria-label="Next image">
             <ChevronRight size={22} />
           </button>
-          <div className="carousel-dots">
+          <div className="article-carousel-dots">
             {images.map((_, index) => (
               <button
                 key={index}
-                className={`carousel-dot ${index === current ? "active" : ""}`}
+                className={`article-carousel-dot ${index === current ? "active" : ""}`}
                 onClick={() => setCurrent(index)}
                 aria-label={`Go to image ${index + 1}`}
               />
