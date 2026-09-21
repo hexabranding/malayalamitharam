@@ -26,9 +26,16 @@ router.get("/all", async (req, res) => {
 
 router.put("/:key", authMiddleware, async (req, res) => {
   try {
+    const existing = await Setting.findOne({ key: req.params.key });
+    const update = { value: req.body.value };
+    if (existing) {
+      if (existing.label) update.label = existing.label;
+      if (existing.type) update.type = existing.type;
+      if (existing.options) update.options = existing.options;
+    }
     const setting = await Setting.findOneAndUpdate(
       { key: req.params.key },
-      { value: req.body.value },
+      update,
       { new: true, upsert: true }
     );
     res.json(setting);

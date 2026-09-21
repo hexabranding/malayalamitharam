@@ -27,6 +27,11 @@ export default function AdminSettings({ navigate }) {
 
   const KNOWN = {
     carousel_category_width: { label: "Carousel Category Badge Width (px)", type: "number", value: 5 },
+    banner_date_format: { label: "Banner Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
+    show_calendar_strip: { label: "Show Calendar Strip", type: "boolean", value: true },
+    show_kollavarsham: { label: "Show Kollavarsham Date", type: "boolean", value: true },
+    show_hijri_date: { label: "Show Hijri Date", type: "boolean", value: true },
+    article_date_format: { label: "Article Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
   };
 
   function getMeta(key) {
