@@ -251,7 +251,19 @@ export default function ArticlePage({ slug, navigate }) {
             const isHtmlBody = /<[a-z][\s\S]*>/i.test(bodyStr);
             
             if (isHtmlBody) {
-              return <div dangerouslySetInnerHTML={{ __html: bodyStr }} />;
+              const parts = bodyStr.split(/<\/p>/i).filter(s => s.trim());
+              return parts.map((part, index) => (
+                <div key={index}>
+                  {index === 1 && (
+                    <div className="in-article-ads">
+                      <div data-aos="fade-right" data-aos-delay="0"><VisitingCarAd slot="article-part-1" /></div>
+                      <div data-aos="fade-up" data-aos-delay="100"><VisitingCarAd slot="article-part-2" /></div>
+                      <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
+                    </div>
+                  )}
+                  <div dangerouslySetInnerHTML={{ __html: part + "</p>" }} />
+                </div>
+              ));
             }
             
             const paragraphs = Array.isArray(body) ? body : [body];
