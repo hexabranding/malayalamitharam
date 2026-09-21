@@ -20,6 +20,13 @@ export default function Meta({ article }) {
       }
       return dateSource;
     }
+    if (settings.article_date_format === "short") {
+      if (article.createdAt) {
+        const d = new Date(article.createdAt);
+        return d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
+      }
+      return dateSource;
+    }
     if (article.createdAt) {
       return getGregorianDate(new Date(article.createdAt)).formatted;
     }

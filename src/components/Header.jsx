@@ -76,6 +76,13 @@ export default function Header({ navigate, activeSlug }) {
     return ML_WEEKDAYS[d.getDay()] + ", " + d.getDate() + " " + ML_MONTHS[d.getMonth()] + " " + d.getFullYear();
   }
 
+  function formatBannerTime(d) {
+    if (settings.banner_time_format === "12h") {
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+    }
+    return d.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";
   const logo = resolveImageUrl(settings.site_logo) || "/images/malayalamithram-logo.png";
@@ -96,17 +103,35 @@ export default function Header({ navigate, activeSlug }) {
     <header className="site-header">
       <div className="banner-wrap">
         <div className="banner-inner">
-          <span className="banner-date">{formatBannerDate(currentTime)}</span>
+          {settings.show_banner_date !== false && <span className="banner-date">{formatBannerDate(currentTime)}</span>}
           <img src={banner} alt="മലയാളമിത്രം" />
-          <span className="banner-time">{currentTime.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+          <span className="banner-time">{formatBannerTime(currentTime)}</span>
         </div>
       </div>
       {settings.show_calendar_strip !== false && (
         <div className="top-strip"><div className="container strip-inner">
           <div className="date-display">
-            {settings.show_kollavarsham !== false && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
-            {settings.show_kollavarsham !== false && settings.show_hijri_date !== false && <span className="date-sep">|</span>}
-            {settings.show_hijri_date !== false && <span className="date-item">{getHijriDate().formatted}</span>}
+            {(() => {
+              const order = settings.date_display_order || "kollavarsham-hijri";
+              const showK = settings.show_kollavarsham !== false && (order === "kollavarsham-hijri" || order === "kollavarsham-only");
+              const showH = settings.show_hijri_date !== false && (order === "kollavarsham-hijri" || order === "hijri-kollavarsham" || order === "hijri-only");
+              if (order === "hijri-kollavarsham") {
+                return (
+                  <>
+                    {showH && <span className="date-item">{getHijriDate().formatted}</span>}
+                    {showH && showK && <span className="date-sep">|</span>}
+                    {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
+                  </>
+                );
+              }
+              return (
+                <>
+                  {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
+                  {showK && showH && <span className="date-sep">|</span>}
+                  {showH && <span className="date-item">{getHijriDate().formatted}</span>}
+                </>
+              );
+            })()}
           </div>
           <span>{tagline}</span>
         </div></div>

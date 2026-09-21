@@ -65,10 +65,13 @@ router.post("/seed", authMiddleware, async (req, res) => {
       { key: "articles_per_page", value: 20, label: "Articles Per Page", type: "number" },
       { key: "carousel_category_width", value: 5, label: "Carousel Category Badge Width (px)", type: "number" },
       { key: "banner_date_format", value: "malayalam", label: "Banner Date Format", type: "select", options: ["malayalam", "english"] },
+      { key: "show_banner_date", value: true, label: "Show Banner Date", type: "boolean" },
+      { key: "banner_time_format", value: "24h", label: "Banner Time Format", type: "select", options: ["12h", "24h"] },
       { key: "show_calendar_strip", value: true, label: "Show Calendar Strip", type: "boolean" },
+      { key: "date_display_order", value: "kollavarsham-hijri", label: "Date Display Order", type: "select", options: ["kollavarsham-hijri", "hijri-kollavarsham", "kollavarsham-only", "hijri-only"] },
       { key: "show_kollavarsham", value: true, label: "Show Kollavarsham Date", type: "boolean" },
       { key: "show_hijri_date", value: true, label: "Show Hijri Date", type: "boolean" },
-      { key: "article_date_format", value: "malayalam", label: "Article Date Format", type: "select", options: ["malayalam", "english"] },
+      { key: "article_date_format", value: "malayalam", label: "Article Date Format", type: "select", options: ["malayalam", "english", "short"] },
     ];
     for (const d of defaults) {
       await Setting.findOneAndUpdate({ key: d.key }, d, { upsert: true, new: true });

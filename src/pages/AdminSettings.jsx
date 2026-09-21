@@ -27,11 +27,14 @@ export default function AdminSettings({ navigate }) {
 
   const KNOWN = {
     carousel_category_width: { label: "Carousel Category Badge Width (px)", type: "number", value: 5 },
+    show_banner_date: { label: "Show Banner Date", type: "boolean", value: true },
     banner_date_format: { label: "Banner Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
+    banner_time_format: { label: "Banner Time Format", type: "select", value: "24h", options: ["12h", "24h"] },
     show_calendar_strip: { label: "Show Calendar Strip", type: "boolean", value: true },
+    date_display_order: { label: "Date Display Order", type: "select", value: "kollavarsham-hijri", options: ["kollavarsham-hijri", "hijri-kollavarsham", "kollavarsham-only", "hijri-only"] },
     show_kollavarsham: { label: "Show Kollavarsham Date", type: "boolean", value: true },
     show_hijri_date: { label: "Show Hijri Date", type: "boolean", value: true },
-    article_date_format: { label: "Article Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
+    article_date_format: { label: "Article Date Format", type: "select", value: "malayalam", options: ["malayalam", "english", "short"] },
   };
 
   function getMeta(key) {
@@ -114,7 +117,7 @@ export default function AdminSettings({ navigate }) {
   const groups = [
     { icon: Globe, label: "Site Info", keys: ["site_name", "site_tagline"] },
     { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "footer_logo", "primary_color", "secondary_color", "title_bg_color", "carousel_category_width"] },
-    { icon: Calendar, label: "Date Display", keys: ["banner_date_format", "show_calendar_strip", "show_kollavarsham", "show_hijri_date", "article_date_format"] },
+    { icon: Calendar, label: "Date Display", keys: ["show_banner_date", "banner_date_format", "banner_time_format", "show_calendar_strip", "date_display_order", "show_kollavarsham", "show_hijri_date", "article_date_format"] },
     { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url", "threads_url"] },
     { icon: Database, label: "Configuration", keys: ["articles_per_page"] },
   ];
