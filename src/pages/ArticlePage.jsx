@@ -247,27 +247,20 @@ export default function ArticlePage({ slug, navigate }) {
         <div className="article-body-text" data-aos="fade-up" data-aos-delay="200">
           {(() => {
             const body = article.body;
-            const bodyStr = Array.isArray(body) ? body.join("\n\n") : (body || "");
-            const isHtmlBody = /<[a-z][\s\S]*>/i.test(bodyStr);
-            
-            if (isHtmlBody) {
-              const parts = bodyStr.split(/<\/p>/i).filter(s => s.trim());
-              return parts.map((part, index) => (
-                <div key={index}>
-                  {index === 1 && (
-                    <div className="in-article-ads">
-                      <div data-aos="fade-right" data-aos-delay="0"><VisitingCarAd slot="article-part-1" /></div>
-                      <div data-aos="fade-up" data-aos-delay="100"><VisitingCarAd slot="article-part-2" /></div>
-                      <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
-                    </div>
-                  )}
-                  <div dangerouslySetInnerHTML={{ __html: part + "</p>" }} />
-                </div>
-              ));
+            const rawBody = Array.isArray(body) ? body : [body || ""];
+
+            let paragraphs = rawBody;
+            if (rawBody.length === 1 && /<[a-z][\s\S]*>/i.test(rawBody[0])) {
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = rawBody[0];
+              paragraphs = Array.from(tempDiv.childNodes)
+                .filter(n => (n.nodeType === 1) || (n.nodeType === 3 && n.textContent.trim()))
+                .map(n => n.outerHTML || n.textContent);
             }
-            
-            const paragraphs = Array.isArray(body) ? body : [body];
-            return (paragraphs || []).map((paragraph, index) => (
+
+            if (paragraphs.length === 0) return null;
+
+            return paragraphs.map((paragraph, index) => (
               <div key={index}>
                 {index === 1 && (
                   <div className="in-article-ads">
@@ -276,7 +269,11 @@ export default function ArticlePage({ slug, navigate }) {
                     <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
                   </div>
                 )}
-                <p>{parseLinks(paragraph)}</p>
+                {/<[a-z][\s\S]*>/i.test(paragraph) ? (
+                  <div dangerouslySetInnerHTML={{ __html: paragraph }} />
+                ) : (
+                  <p>{parseLinks(paragraph)}</p>
+                )}
               </div>
             ));
           })()}

@@ -226,10 +226,13 @@ export default function AdminNewsForm({ navigate, newsId }) {
     let derivedContent;
     
     if (isHtmlContent) {
-      bodyParagraphs = bodyText ? [bodyText] : [];
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = bodyText;
       derivedContent = tempDiv.textContent || tempDiv.innerText || formData.excerpt;
+      const blocks = Array.from(tempDiv.childNodes).filter(n =>
+        (n.nodeType === 1) || (n.nodeType === 3 && n.textContent.trim())
+      );
+      bodyParagraphs = blocks.map(n => n.outerHTML || n.textContent);
     } else {
       bodyParagraphs = bodyText ? bodyText.split("\n\n").filter(para => para.trim()) : [];
       derivedContent = bodyParagraphs.length > 0 ? bodyParagraphs.join("\n\n") : formData.excerpt;
