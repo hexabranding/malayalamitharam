@@ -253,11 +253,18 @@ export default function ArticlePage({ slug, navigate }) {
 
             let paragraphs;
             if (isHtml) {
-              const tempDiv = document.createElement("div");
-              tempDiv.innerHTML = bodyStr;
-              paragraphs = Array.from(tempDiv.childNodes)
-                .filter(n => (n.nodeType === 1) || (n.nodeType === 3 && n.textContent.trim()))
-                .map(n => n.outerHTML || n.textContent);
+              const re = /<\/(?:p|h[1-6]|li|blockquote|pre|div)>/gi;
+              const parts = bodyStr.split(re);
+              paragraphs = [];
+              for (let i = 0; i < parts.length; i++) {
+                let chunk = parts[i].trim();
+                if (!chunk) continue;
+                const openMatch = chunk.match(/<(\w+)[\s>]/);
+                if (openMatch) {
+                  chunk = chunk + "</" + openMatch[1] + ">";
+                }
+                paragraphs.push(chunk);
+              }
               if (paragraphs.length === 0) paragraphs = rawBody.filter(Boolean);
             } else {
               paragraphs = rawBody.filter(Boolean);
