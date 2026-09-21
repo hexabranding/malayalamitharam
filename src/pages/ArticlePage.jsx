@@ -248,14 +248,19 @@ export default function ArticlePage({ slug, navigate }) {
           {(() => {
             const body = article.body;
             const rawBody = Array.isArray(body) ? body : [body || ""];
+            const bodyStr = rawBody.join("\n\n");
+            const isHtml = /<[a-z][\s\S]*>/i.test(bodyStr);
 
-            let paragraphs = rawBody;
-            if (rawBody.length === 1 && /<[a-z][\s\S]*>/i.test(rawBody[0])) {
+            let paragraphs;
+            if (isHtml) {
               const tempDiv = document.createElement("div");
-              tempDiv.innerHTML = rawBody[0];
+              tempDiv.innerHTML = bodyStr;
               paragraphs = Array.from(tempDiv.childNodes)
                 .filter(n => (n.nodeType === 1) || (n.nodeType === 3 && n.textContent.trim()))
                 .map(n => n.outerHTML || n.textContent);
+              if (paragraphs.length === 0) paragraphs = rawBody.filter(Boolean);
+            } else {
+              paragraphs = rawBody.filter(Boolean);
             }
 
             if (paragraphs.length === 0) return null;
@@ -269,7 +274,7 @@ export default function ArticlePage({ slug, navigate }) {
                     <div data-aos="fade-left" data-aos-delay="200"><VisitingCarAd slot="article-part-3" /></div>
                   </div>
                 )}
-                {/<[a-z][\s\S]*>/i.test(paragraph) ? (
+                {isHtml ? (
                   <div dangerouslySetInnerHTML={{ __html: paragraph }} />
                 ) : (
                   <p>{parseLinks(paragraph)}</p>
