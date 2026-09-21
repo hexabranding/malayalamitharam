@@ -2,11 +2,30 @@ import { useEffect } from "react";
 import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getShareUrl } from "../utils/transliterate.js";
+import { useSettings } from "../context/DataContext.jsx";
+import { getGregorianDate, getEnglishDate } from "../utils/calendars.js";
 
 const SITE_NAME = "Malayalamitram";
 const SITE_URL = "https://demo.malayalamitharam.in";
 
 export default function Meta({ article }) {
+  const settings = useSettings();
+
+  function formatArticleDate() {
+    const dateSource = article.createdAt || article.date;
+    if (!dateSource) return "";
+    if (settings.article_date_format === "english") {
+      if (article.createdAt) {
+        return getEnglishDate(new Date(article.createdAt)).formatted;
+      }
+      return dateSource;
+    }
+    if (article.createdAt) {
+      return getGregorianDate(new Date(article.createdAt)).formatted;
+    }
+    return dateSource;
+  }
+
   useEffect(() => {
     if (!article) return;
     const rawTitle = String(article.title || SITE_NAME).trim();
@@ -67,7 +86,7 @@ export default function Meta({ article }) {
 
   return (
     <div className="meta">
-      <span><CalendarDays size={15} />{article.date}</span>
+      <span><CalendarDays size={15} />{formatArticleDate()}</span>
       <span><Clock3 size={15} />{article.readTime}</span>
       <span><MessageCircle size={15} />{article.comments}</span>
     </div>

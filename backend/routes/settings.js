@@ -57,6 +57,11 @@ router.post("/seed", authMiddleware, async (req, res) => {
       { key: "secondary_color", value: "#e6b313", label: "Secondary Color", type: "color" },
       { key: "articles_per_page", value: 20, label: "Articles Per Page", type: "number" },
       { key: "carousel_category_width", value: 5, label: "Carousel Category Badge Width (px)", type: "number" },
+      { key: "banner_date_format", value: "malayalam", label: "Banner Date Format", type: "select", options: ["malayalam", "english"] },
+      { key: "show_calendar_strip", value: true, label: "Show Calendar Strip", type: "boolean" },
+      { key: "show_kollavarsham", value: true, label: "Show Kollavarsham Date", type: "boolean" },
+      { key: "show_hijri_date", value: true, label: "Show Hijri Date", type: "boolean" },
+      { key: "article_date_format", value: "malayalam", label: "Article Date Format", type: "select", options: ["malayalam", "english"] },
     ];
     for (const d of defaults) {
       await Setting.findOneAndUpdate({ key: d.key }, d, { upsert: true, new: true });

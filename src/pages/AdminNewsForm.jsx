@@ -42,6 +42,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     date: "",
     readTime: "",
     image: "",
+    gallery: [],
     titleEn: "",
     slug: "",
     slugManuallyEdited: false,
@@ -61,6 +62,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
   });
 
   const [imagePreview, setImagePreview] = useState("");
+  const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [menuGroupsData, setMenuGroupsData] = useState([]);
@@ -95,6 +97,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               date: found.date || "",
               readTime: found.readTime || "",
               image: found.image || "",
+              gallery: found.gallery || [],
               titleEn: found.titleEn || "",
               slug: found.slug || "",
               slugManuallyEdited: true,
@@ -199,6 +202,41 @@ export default function AdminNewsForm({ navigate, newsId }) {
     e.target.value = "";
   };
 
+  const addGalleryImage = () => {
+    const url = galleryUrlInput.trim();
+    if (!url) return;
+    setFormData(prev => ({ ...prev, gallery: [...prev.gallery, url] }));
+    setGalleryUrlInput("");
+  };
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    for (const file of files) {
+      try {
+        const result = await uploadImage(file);
+        setFormData(prev => ({ ...prev, gallery: [...prev.gallery, result.url] }));
+      } catch (err) {
+        alert("Upload failed for " + file.name + ": " + err.message);
+      }
+    }
+    e.target.value = "";
+  };
+
+  const removeGalleryImage = (index) => {
+    setFormData(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }));
+  };
+
+  const moveGalleryImage = (fromIndex, direction) => {
+    setFormData(prev => {
+      const newGallery = [...prev.gallery];
+      const toIndex = fromIndex + direction;
+      if (toIndex < 0 || toIndex >= newGallery.length) return prev;
+      [newGallery[fromIndex], newGallery[toIndex]] = [newGallery[toIndex], newGallery[fromIndex]];
+      return { ...prev, gallery: newGallery };
+    });
+  };
+
   const addRelatedVideo = () => {
     if (!newVideoUrl.trim()) return;
     setFormData(prev => ({
@@ -257,6 +295,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
+      gallery: formData.gallery || [],
     };
     delete newsData.id;
     delete newsData.slugManuallyEdited;
@@ -450,6 +489,46 @@ export default function AdminNewsForm({ navigate, newsId }) {
               )}
             </div>
 
+            <div className="form-group">
+              <label>Gallery Images (multiple)</label>
+              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <input
+                  type="text"
+                  value={galleryUrlInput}
+                  onChange={(e) => setGalleryUrlInput(e.target.value)}
+                  placeholder="Image URL"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addGalleryImage(); } }}
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="admin-btn secondary" onClick={addGalleryImage} style={{ whiteSpace: "nowrap" }}>
+                  + Add URL
+                </button>
+                <label className="admin-upload-btn" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 12px", background: "#0d4228", color: "#fff", borderRadius: 6, cursor: "pointer", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap" }}>
+                  <Upload size={14} /> Upload
+                  <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} hidden />
+                </label>
+              </div>
+              {formData.gallery.length > 0 && (
+                <div className="gallery-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginTop: 10 }}>
+                  {formData.gallery.map((url, index) => (
+                    <div key={index} style={{ position: "relative", borderRadius: 6, overflow: "hidden", border: "1px solid #e3e9df", background: "#f7f9f7" }}>
+                      <img src={resolveImageUrl(url) || url} alt="" style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} onError={(e) => { e.target.src = url; }} />
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 6px" }}>
+                        <div style={{ display: "flex", gap: 2 }}>
+                          <button type="button" onClick={() => moveGalleryImage(index, -1)} disabled={index === 0} style={{ background: "none", border: "none", cursor: index === 0 ? "default" : "pointer", color: index === 0 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }} title="Move left">&#9664;</button>
+                          <button type="button" onClick={() => moveGalleryImage(index, 1)} disabled={index === formData.gallery.length - 1} style={{ background: "none", border: "none", cursor: index === formData.gallery.length - 1 ? "default" : "pointer", color: index === formData.gallery.length - 1 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }} title="Move right">&#9654;</button>
+                        </div>
+                        <button type="button" onClick={() => removeGalleryImage(index)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c91f26", fontSize: 16, padding: "2px 4px" }} title="Remove"><X size={14} /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {formData.gallery.length > 0 && (
+                <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 12 }}>{formData.gallery.length} image(s) in gallery</small>
+              )}
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>Media Type</label>
@@ -477,7 +556,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
             </div>
 
-            <div className="form-group">
+            {/* <div className="form-group">
               <label>Related Videos (shown on detail page) — supports YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
               <div className="related-videos-list">
                 {formData.relatedVideos.map((video, index) => (
@@ -505,7 +584,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 />
                 <button type="button" className="btn-add" onClick={addRelatedVideo}>+ Add</button>
               </div>
-            </div>
+            </div> */}
 
             <div className="form-row">
               <div className="form-group checkbox-group">

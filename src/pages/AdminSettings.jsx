@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw, Upload } from "lucide-react";
+import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw, Upload, Calendar } from "lucide-react";
 import { fetchSettingsAll, updateSetting, seedSettings, uploadImage } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 
@@ -31,9 +31,9 @@ export default function AdminSettings({ navigate }) {
 
   function getMeta(key) {
     const s = settings.find(s => s.key === key);
-    if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value };
+    if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value, options: s.options };
     const k = KNOWN[key];
-    return k ? { key, label: k.label, type: k.type, value: k.value } : null;
+    return k ? { key, label: k.label, type: k.type, value: k.value, options: k.options } : null;
   }
 
   async function handleSave() {
@@ -68,6 +68,14 @@ export default function AdminSettings({ navigate }) {
             {s.label}
           </label>
         );
+      case "select":
+        return (
+          <select value={val} onChange={e => handleChange(s.key, e.target.value)}>
+            {(s.options || []).map(opt => (
+              <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+            ))}
+          </select>
+        );
       case "textarea":
         return <textarea rows={3} value={val} onChange={e => handleChange(s.key, e.target.value)} />;
       case "image":
@@ -101,6 +109,7 @@ export default function AdminSettings({ navigate }) {
   const groups = [
     { icon: Globe, label: "Site Info", keys: ["site_name", "site_tagline"] },
     { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "footer_logo", "primary_color", "secondary_color", "title_bg_color", "carousel_category_width"] },
+    { icon: Calendar, label: "Date Display", keys: ["banner_date_format", "show_calendar_strip", "show_kollavarsham", "show_hijri_date", "article_date_format"] },
     { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url", "threads_url"] },
     { icon: Database, label: "Configuration", keys: ["articles_per_page"] },
   ];
