@@ -269,6 +269,9 @@ const BASE = (process.env.API_BASE_URL || (isAbsolute ? process.env.VITE_API_URL
 
 function spa(_req, res) {
   res.type("html");
+  res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
   res.send(indexHtml);
 }
 
