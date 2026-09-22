@@ -51,8 +51,15 @@ export default function AdminSettings({ navigate }) {
 
   function getMeta(key) {
     const s = settings.find(s => s.key === key);
-    if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value, options: s.options };
     const k = KNOWN[key];
+    if (s && k) {
+      // Prefer KNOWN metadata when DB has wrong/empty type (e.g. live DB has text for boolean)
+      const type = s.type && s.type !== "text" ? s.type : k.type;
+      const label = s.label && s.label.trim() ? s.label : k.label;
+      const options = s.options && s.options.length ? s.options : k.options;
+      return { key: s.key, label, type: type || k.type, value: s.value, options };
+    }
+    if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value, options: s.options };
     return k ? { key, label: k.label, type: k.type, value: k.value, options: k.options } : null;
   }
 
