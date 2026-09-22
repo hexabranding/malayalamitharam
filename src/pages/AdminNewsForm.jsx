@@ -556,8 +556,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
               </div>
             </div>
 
-            {/* <div className="form-group">
-              <label>Related Videos (shown on detail page) — supports YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok, and any embed link</label>
+            <div className="form-group">
+              <label>Related Videos </label>
               <div className="related-videos-list">
                 {formData.relatedVideos.map((video, index) => (
                   <div key={index} className="related-video-item">
@@ -584,7 +584,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 />
                 <button type="button" className="btn-add" onClick={addRelatedVideo}>+ Add</button>
               </div>
-            </div> */}
+            </div> 
 
             <div className="form-row">
               <div className="form-group checkbox-group">
