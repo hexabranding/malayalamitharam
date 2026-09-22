@@ -83,20 +83,6 @@ export default function Header({ navigate, activeSlug }) {
     return d.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
 
-  function getKollavarshamText() {
-    if (settings.kollavarsham_manual_enabled && settings.kollavarsham_day && settings.kollavarsham_month && settings.kollavarsham_year) {
-      return `${settings.kollavarsham_month} ${settings.kollavarsham_day}, ${settings.kollavarsham_year}`;
-    }
-    return getKollavarsham().formatted;
-  }
-
-  function getHijriText() {
-    if (settings.hijri_manual_enabled && settings.hijri_day && settings.hijri_month && settings.hijri_year) {
-      return `${settings.hijri_day} ${settings.hijri_month} ${settings.hijri_year}`;
-    }
-    return getHijriDate().formatted;
-  }
-
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";
   const logo = resolveImageUrl(settings.site_logo) || "/images/malayalamithram-logo.png";
@@ -132,23 +118,23 @@ export default function Header({ navigate, activeSlug }) {
               if (order === "hijri-kollavarsham") {
                 return (
                   <>
-                    {showH && <span className="date-item">{getHijriText()}</span>}
+                    {showH && <span className="date-item">{getHijriDate().formatted}</span>}
                     {showH && showK && <span className="date-sep">|</span>}
-                    {showK && <span className="date-item">{getKollavarshamText()} കൊല്ലവർഷം</span>}
+                    {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
                   </>
                 );
               }
               if (order === "kollavarsham-only") {
-                return showK ? <span className="date-item">{getKollavarshamText()} കൊല്ലവർഷം</span> : null;
+                return showK ? <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span> : null;
               }
               if (order === "hijri-only") {
-                return showH ? <span className="date-item">{getHijriText()}</span> : null;
+                return showH ? <span className="date-item">{getHijriDate().formatted}</span> : null;
               }
               return (
                 <>
-                  {showK && <span className="date-item">{getKollavarshamText()} കൊല്ലവർഷം</span>}
+                  {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
                   {showK && showH && <span className="date-sep">|</span>}
-                  {showH && <span className="date-item">{getHijriText()}</span>}
+                  {showH && <span className="date-item">{getHijriDate().formatted}</span>}
                 </>
               );
             })()}
