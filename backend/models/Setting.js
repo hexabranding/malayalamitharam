@@ -5,6 +5,7 @@ const settingSchema = new mongoose.Schema({
   value: { type: mongoose.Schema.Types.Mixed, required: true },
   label: { type: String, default: "" },
   type: { type: String, default: "text", enum: ["text", "textarea", "image", "color", "number", "boolean", "select"] },
+  options: { type: [String], default: undefined },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Setting", settingSchema);

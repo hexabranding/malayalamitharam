@@ -25,16 +25,28 @@ export default function AdminSettings({ navigate }) {
     return s ? s.value : def;
   }
 
+  const SELECT_LABELS = {
+    "malayalam": "Malayalam (മലയാളം)",
+    "english": "English",
+    "short": "Short (DD/MM/YYYY)",
+    "12h": "12 Hour (AM/PM)",
+    "24h": "24 Hour",
+    "kollavarsham-hijri": "Kollavarsham → Hijri",
+    "hijri-kollavarsham": "Hijri → Kollavarsham",
+    "kollavarsham-only": "Kollavarsham Only",
+    "hijri-only": "Hijri Only",
+  };
+
   const KNOWN = {
     carousel_category_width: { label: "Carousel Category Badge Width (px)", type: "number", value: 5 },
     show_banner_date: { label: "Show Banner Date", type: "boolean", value: true },
     banner_date_format: { label: "Banner Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
     banner_time_format: { label: "Banner Time Format", type: "select", value: "24h", options: ["12h", "24h"] },
-    show_calendar_strip: { label: "Show Calendar Strip", type: "boolean", value: true },
+    show_calendar_strip: { label: "Show Calendar Strip (Kollavarsham / Hijri bar)", type: "boolean", value: true },
     date_display_order: { label: "Date Display Order", type: "select", value: "kollavarsham-hijri", options: ["kollavarsham-hijri", "hijri-kollavarsham", "kollavarsham-only", "hijri-only"] },
     show_kollavarsham: { label: "Show Kollavarsham Date", type: "boolean", value: true },
     show_hijri_date: { label: "Show Hijri Date", type: "boolean", value: true },
-    article_date_format: { label: "Article Date Format", type: "select", value: "malayalam", options: ["malayalam", "english", "short"] },
+    article_date_format: { label: "Article Date Format (Meta area)", type: "select", value: "malayalam", options: ["malayalam", "english", "short"] },
   };
 
   function getMeta(key) {
@@ -80,7 +92,7 @@ export default function AdminSettings({ navigate }) {
         return (
           <select value={val} onChange={e => handleChange(s.key, e.target.value)}>
             {(s.options || []).map(opt => (
-              <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+              <option key={opt} value={opt}>{SELECT_LABELS[opt] || opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
             ))}
           </select>
         );

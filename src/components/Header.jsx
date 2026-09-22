@@ -113,7 +113,7 @@ export default function Header({ navigate, activeSlug }) {
           <div className="date-display">
             {(() => {
               const order = settings.date_display_order || "kollavarsham-hijri";
-              const showK = settings.show_kollavarsham !== false && (order === "kollavarsham-hijri" || order === "kollavarsham-only");
+              const showK = settings.show_kollavarsham !== false && (order === "kollavarsham-hijri" || order === "hijri-kollavarsham" || order === "kollavarsham-only");
               const showH = settings.show_hijri_date !== false && (order === "kollavarsham-hijri" || order === "hijri-kollavarsham" || order === "hijri-only");
               if (order === "hijri-kollavarsham") {
                 return (
@@ -123,6 +123,12 @@ export default function Header({ navigate, activeSlug }) {
                     {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
                   </>
                 );
+              }
+              if (order === "kollavarsham-only") {
+                return showK ? <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span> : null;
+              }
+              if (order === "hijri-only") {
+                return showH ? <span className="date-item">{getHijriDate().formatted}</span> : null;
               }
               return (
                 <>
