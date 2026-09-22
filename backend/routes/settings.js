@@ -72,6 +72,16 @@ router.post("/seed", authMiddleware, async (req, res) => {
       { key: "show_kollavarsham", value: true, label: "Show Kollavarsham Date", type: "boolean" },
       { key: "show_hijri_date", value: true, label: "Show Hijri Date", type: "boolean" },
       { key: "article_date_format", value: "malayalam", label: "Article Date Format", type: "select", options: ["malayalam", "english", "short"] },
+      // Manual override — Malayalam Kollavarsham (year/date/day editable by admin)
+      { key: "kollavarsham_manual_enabled", value: false, label: "Manual Kollavarsham (override auto)", type: "boolean" },
+      { key: "kollavarsham_day", value: 1, label: "Kollavarsham Day (1-32)", type: "number" },
+      { key: "kollavarsham_month", value: "മേടം", label: "Kollavarsham Month", type: "select", options: ["മേടം", "ഇടവം", "മിഥുനം", "കര്‍ക്കടകം", "ചിങ്ങം", "കന്നി", "തുലാം", "വൃശ്ചികം", "ധനു", "മകരം", "കുംഭം", "മീനം"] },
+      { key: "kollavarsham_year", value: 1201, label: "Kollavarsham Year", type: "number" },
+      // Manual override — Arabic Hijri (year/date/day editable by admin)
+      { key: "hijri_manual_enabled", value: false, label: "Manual Hijri (override auto)", type: "boolean" },
+      { key: "hijri_day", value: 1, label: "Hijri Day (1-30)", type: "number" },
+      { key: "hijri_month", value: "മുഹറം", label: "Hijri Month", type: "select", options: ["മുഹറം", "സഫർ", "റബീഉൽ അവ്വൽ", "റബീഉൽ ആഖിർ", "ജുമാദ ഉൽ ഉലാ", "ജുമാദ ഉൽ ആഖിറ", "റജബ്", "ശഅബാൻ", "റമദാൻ", "ശവ്വൽ", "ദുൽ ഖഅദ്", "ദുൽ ഹിജ്ജ"] },
+      { key: "hijri_year", value: 1447, label: "Hijri Year", type: "number" },
     ];
     for (const d of defaults) {
       await Setting.findOneAndUpdate({ key: d.key }, d, { upsert: true, new: true });
