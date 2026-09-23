@@ -502,7 +502,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
               />
               <label className="admin-upload-btn" style={{ marginTop: 8, display: "inline-flex" }}>
                 <Upload size={16} /> Upload Photo
-                <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+                <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:"none"}} />
               </label>
               {imagePreview && (
                 <div className="image-preview" style={{ marginTop: 8 }}>
@@ -528,7 +528,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 </button>
                 <label className="admin-upload-btn" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 12px", background: "#0d4228", color: "#fff", borderRadius: 6, cursor: "pointer", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap" }}>
                   <Upload size={14} /> Upload
-                  <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} hidden />
+                  <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} style={{display:"none"}} />
                 </label>
               </div>
               {formData.gallery.length > 0 && (

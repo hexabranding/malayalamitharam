@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || "https://api.malayalamitharam.in/api";
+const BASE = import.meta.env.VITE_API_URL || (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "/api" : "https://api.malayalamitharam.in/api");
 export const API_BASE = BASE;
 
 function getToken() {
