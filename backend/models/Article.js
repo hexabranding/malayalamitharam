@@ -20,6 +20,8 @@ const articleSchema = new mongoose.Schema({
   tags: [{ type: String }],
   featured: { type: Boolean, default: false, index: true },
   breaking: { type: Boolean, default: false, index: true },
+  mainNews: { type: Boolean, default: false, index: true },
+  popular: { type: Boolean, default: false, index: true },
   published: { type: Boolean, default: true, index: true },
   media: { type: String, default: "standard" },
   videoUrl: { type: String, default: "" },

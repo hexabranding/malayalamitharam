@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2, ChevronLeft, ChevronRight, X as CloseIcon, Images } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 
@@ -83,6 +83,126 @@ function extractMediaUrls(body) {
     }
   });
   return items;
+}
+
+function ArticleGallerySlider({ gallery, title }) {
+  const [active, setActive] = useState(0);
+  const [lightbox, setLightbox] = useState(null); // null or index
+
+  const images = gallery.map((u) => resolveImageUrl(u) || u).filter(Boolean);
+
+  useEffect(() => {
+    setActive(0);
+  }, [gallery]);
+
+  const prev = useCallback(() => setActive((i) => (i - 1 + images.length) % images.length), [images.length]);
+  const next = useCallback(() => setActive((i) => (i + 1) % images.length), [images.length]);
+
+  const lbPrev = useCallback(() => setLightbox((i) => (i - 1 + images.length) % images.length), [images.length]);
+  const lbNext = useCallback(() => setLightbox((i) => (i + 1) % images.length), [images.length]);
+
+  // Keyboard for lightbox
+  useEffect(() => {
+    if (lightbox === null) return;
+    function onKey(e) {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowLeft") lbPrev();
+      if (e.key === "ArrowRight") lbNext();
+    }
+    window.addEventListener("keydown", onKey);
+    // Prevent body scroll
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightbox, lbPrev, lbNext]);
+
+  // Touch swipe for main slider
+  const [touchStart, setTouchStart] = useState(null);
+  function onTouchStart(e) { setTouchStart(e.touches[0].clientX); }
+  function onTouchEnd(e) {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) next(); else prev();
+    }
+    setTouchStart(null);
+  }
+
+  if (images.length === 0) return null;
+
+  return (
+    <>
+      <div className="article-gallery" data-aos="fade-up" data-aos-delay="120">
+        <div className="article-gallery-header">
+          <span className="article-gallery-title"><Images size={18} /> Gallery ({images.length})</span>
+          <span className="article-gallery-counter">{active + 1} / {images.length}</span>
+        </div>
+
+        <div
+          className="article-gallery-main"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <img
+            src={images[active]}
+            alt={`${title || "Gallery"} ${active + 1}`}
+            className="article-gallery-image"
+            onClick={() => setLightbox(active)}
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+          {images.length > 1 && (
+            <>
+              <button className="ag-nav ag-prev" onClick={prev} aria-label="Previous image"><ChevronLeft size={22} /></button>
+              <button className="ag-nav ag-next" onClick={next} aria-label="Next image"><ChevronRight size={22} /></button>
+              <button className="ag-expand" onClick={() => setLightbox(active)} aria-label="Expand">⛶</button>
+            </>
+          )}
+        </div>
+
+        {images.length > 1 && (
+          <div className="article-gallery-thumbs">
+            {images.map((src, idx) => (
+              <button
+                key={idx}
+                className={`ag-thumb ${idx === active ? "active" : ""}`}
+                onClick={() => setActive(idx)}
+                aria-label={`View image ${idx + 1}`}
+              >
+                <img src={src} alt={`Thumb ${idx + 1}`} onError={(e) => { e.target.style.display = "none"; }} />
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="ag-hint">Click image to expand • Swipe or use arrows to move • Thumbnails to select</p>
+      </div>
+
+      {lightbox !== null && (
+        <div className="ag-lightbox" onClick={() => setLightbox(null)}>
+          <button className="ag-lightbox-close" onClick={() => setLightbox(null)} aria-label="Close"><CloseIcon size={24} /></button>
+          <button className="ag-lightbox-nav ag-lb-prev" onClick={(e) => { e.stopPropagation(); lbPrev(); }} aria-label="Previous"><ChevronLeft size={28} /></button>
+          <div className="ag-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={images[lightbox]} alt={`${title || "Gallery"} ${lightbox + 1}`} />
+            <div className="ag-lightbox-caption">{lightbox + 1} / {images.length} {title ? `— ${title}` : ""}</div>
+            <div className="ag-lightbox-thumbs">
+              {images.map((src, idx) => (
+                <button
+                  key={idx}
+                  className={`ag-lb-thumb ${idx === lightbox ? "active" : ""}`}
+                  onClick={() => setLightbox(idx)}
+                >
+                  <img src={src} alt={`Thumb ${idx + 1}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <button className="ag-lightbox-nav ag-lb-next" onClick={(e) => { e.stopPropagation(); lbNext(); }} aria-label="Next"><ChevronRight size={28} /></button>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function ArticlePage({ slug, navigate }) {
@@ -235,6 +355,10 @@ export default function ArticlePage({ slug, navigate }) {
         <div>
           <ArticleImage article={article} alt={article.title} className="detail-image" />
         </div>
+
+        {Array.isArray(article.gallery) && article.gallery.filter(Boolean).length > 0 && (
+          <ArticleGallerySlider gallery={article.gallery.filter(Boolean)} title={article.title} />
+        )}
 
         <blockquote
           className="article-lead-blockquote"

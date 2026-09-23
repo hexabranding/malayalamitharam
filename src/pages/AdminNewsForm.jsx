@@ -219,13 +219,23 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    // Batch upload to avoid stale state updates and show combined result
+    const uploadedUrls = [];
+    const failed = [];
     for (const file of files) {
       try {
         const result = await uploadImage(file);
-        setFormData(prev => ({ ...prev, gallery: [...prev.gallery, result.url] }));
+        if (result && result.url) uploadedUrls.push(result.url);
+        else failed.push(file.name);
       } catch (err) {
-        alert("Upload failed for " + file.name + ": " + err.message);
+        failed.push(file.name + ": " + err.message);
       }
+    }
+    if (uploadedUrls.length > 0) {
+      setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...uploadedUrls] }));
+    }
+    if (failed.length > 0) {
+      alert("Upload failed for: " + failed.join(", "));
     }
     e.target.value = "";
   };
@@ -291,6 +301,8 @@ export default function AdminNewsForm({ navigate, newsId }) {
       if (base) finalSlug = base.split("-").slice(0, 5).join("-");
     }
     
+    // Ensure gallery is a clean array of non-empty string URLs (max 30)
+    const cleanGallery = (formData.gallery || []).map((u) => String(u).trim()).filter(Boolean).slice(0, 30);
     const newsData = {
       ...formData,
       slug: finalSlug,
@@ -302,7 +314,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       views: Number(formData.views) || 0,
       comments: 0,
       backgroundColor: formData.backgroundColor || undefined,
-      gallery: formData.gallery || [],
+      gallery: cleanGallery,
     };
     delete newsData.id;
     delete newsData.slugManuallyEdited;

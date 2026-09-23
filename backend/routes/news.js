@@ -136,6 +136,11 @@ router.get("/:slug", async (req, res) => {
   }
 });
 
+function sanitizeGallery(input) {
+  if (!Array.isArray(input)) return [];
+  return input.map((u) => String(u).trim()).filter(Boolean).slice(0, 30);
+}
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, titleEn, slug: requestedSlug, category, categories, subcategory, content, excerpt, image, gallery, tags, featured, breaking, published, author, body, media, videoUrl, relatedVideos, categoryMl, readTime, backgroundColor, likes, views, mainNews, popular } = req.body;
@@ -149,6 +154,7 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!baseSlug) return res.status(400).json({ error: "Enter a valid English slug or title" });
     const slug = await ensureUniqueSlug(baseSlug);
     const articleCategories = (categories && categories.length > 0) ? categories : [category];
+    const cleanGallery = sanitizeGallery(gallery);
 
     const article = await Article.create({
       slug,
@@ -161,7 +167,7 @@ router.post("/", authMiddleware, async (req, res) => {
       author: author || req.user.name,
       date: new Date().toISOString().split("T")[0],
       image: image || "/images/blog/1.jpg",
-      gallery: gallery || [],
+      gallery: cleanGallery,
       excerpt: excerpt || content.slice(0, 120),
       content,
       body: body || [],
@@ -194,6 +200,10 @@ router.put("/:id", authMiddleware, async (req, res) => {
       ? { _id: req.params.id }
       : { slug: req.params.id };
     const updateData = { ...req.body, updatedAt: new Date().toISOString() };
+    // Ensure gallery is always a clean array if provided
+    if (req.body.gallery !== undefined) {
+      updateData.gallery = sanitizeGallery(req.body.gallery);
+    }
     const existing = await Article.findOne(filter);
     if (!existing) return res.status(404).json({ error: "Article not found" });
     const requestedSlug = req.body.slug !== undefined ? req.body.slug : (req.body.engSlug || "");
@@ -217,7 +227,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (computedLegacy) updateData.legacySlugs = computedLegacy;
     const article = await Article.findOneAndUpdate(
       filter,
-      updateData,
+      { $set: updateData },
       { new: true, runValidators: true }
     );
     if (!article) return res.status(404).json({ error: "Article not found" });
