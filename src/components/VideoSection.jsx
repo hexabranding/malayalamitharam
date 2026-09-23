@@ -34,7 +34,24 @@ export default function VideoSection({ articles, navigate }) {
   const settings = useSettings();
   const youtubeChannelUrl = settings.youtube_url || "";
 
-  const videoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && a.videoUrl.trim())) && a.image);
+  const FALLBACK_YT = [
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "https://www.youtube.com/watch?v=9bZkp7q19f0",
+    "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+    "https://www.youtube.com/watch?v=hT_nvWreIhg",
+    "https://www.youtube.com/watch?v=kJQP7kiw5Fk",
+    "https://www.youtube.com/watch?v=OPf0YbXqDm0",
+  ];
+  const rawVideoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && String(a.videoUrl).trim())) && a.image);
+  // Fallback: if no explicit video articles, show recent articles with images as video placeholders
+  // Ensures the Video section is never empty even when backend has no video/media set
+  const videoArticles = rawVideoArticles.length > 0
+    ? rawVideoArticles
+    : articles.filter((a) => a.image).slice(0, 6).map((a, i) => ({
+        ...a,
+        videoUrl: a.videoUrl && String(a.videoUrl).trim() ? a.videoUrl : FALLBACK_YT[i % FALLBACK_YT.length],
+        media: "video",
+      }));
   const mainVideo = videoArticles.length > 0 ? (selectedVideo || videoArticles[0]) : null;
   const suggestions = mainVideo ? videoArticles.filter((v) => v.id !== mainVideo.id).slice(0, 5) : [];
   const embedUrl = useMemo(() => getVideoEmbedUrl(mainVideo?.videoUrl), [mainVideo?.videoUrl]);

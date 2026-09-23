@@ -125,7 +125,10 @@ export default function HomePage({ navigate }) {
   const viewsLead = viewsStories[0];
   const viewsSide = viewsStories.slice(1, 5);
 
-  const displayMedia = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
+  const _displayMediaRaw = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
+  // Fallback: if no photo/video tagged articles, show latest 4 articles with images
+  // This ensures Multimedia section is never empty
+  const displayMedia = _displayMediaRaw.length > 0 ? _displayMediaRaw : articles.filter((a) => a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
   const handledSlugs = new Set([
