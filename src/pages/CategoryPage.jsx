@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchNews, loadMenuGroups } from "../services/api.js";
-import { articles as fallback, flatMenuItems } from "../data/news.js";
+import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
@@ -13,104 +13,171 @@ export default function CategoryPage({ categoryItem, navigate }) {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    setCurrentPage(1);
-    setLoading(true);
-    const label = categoryItem.label || "";
-    const titleMl = categoryItem.titleMl || "";
-    const slug = categoryItem.slug || "";
+    let cancelled = false;
+    async function load() {
+      setCurrentPage(1);
+      setLoading(true);
+      const label = (categoryItem.label || "").trim();
+      const titleMl = (categoryItem.titleMl || "").trim();
+      const slug = (categoryItem.slug || "").trim();
 
-    loadMenuGroups().then(apiCats => {
-      const allSlugs = new Set();
-      const allLabels = new Set();
-      const allTitleMls = new Set();
+      try {
+        const apiCats = await loadMenuGroups();
 
-      if (label) allLabels.add(label.toLowerCase());
-      if (titleMl) allTitleMls.add(titleMl.toLowerCase());
-      if (slug) allSlugs.add(slug);
+        const allSlugs = new Set();
+        const allLabels = new Set();
+        const allTitleMls = new Set();
 
-      let foundTitleMl = "";
-      let foundLabel = "";
-      let foundChildLabel = "";
-      let foundChildTitleMl = "";
+        if (label) allLabels.add(label.toLowerCase());
+        if (titleMl) allTitleMls.add(titleMl.toLowerCase());
+        if (slug) allSlugs.add(slug);
 
-      for (const group of apiCats) {
-        const groupLabel = (group.label || "").toLowerCase();
-        const groupTitleMl = (group.titleMl || "").toLowerCase();
-        const isMatch = groupLabel === label.toLowerCase() || groupTitleMl === titleMl.toLowerCase() || group.slug === slug;
+        let foundTitleMl = "";
+        let foundLabel = "";
+        let foundChildLabel = "";
+        let foundChildTitleMl = "";
 
-        if (isMatch) {
-          allSlugs.add(group.slug);
-          if (group.titleMl) foundTitleMl = group.titleMl;
-          if (group.label) foundLabel = group.label;
-          for (const child of (group.children || [])) {
-            allSlugs.add(child.slug);
-            allLabels.add((child.label || "").toLowerCase());
-            allTitleMls.add((child.titleMl || "").toLowerCase());
-          }
-        }
+        for (const group of apiCats) {
+          const groupLabel = (group.label || "").toLowerCase().trim();
+          const groupTitleMl = (group.titleMl || "").toLowerCase().trim();
+          const isGroupMatch =
+            groupLabel === label.toLowerCase().trim() ||
+            groupTitleMl === titleMl.toLowerCase().trim() ||
+            group.slug === slug;
 
-        for (const child of (group.children || [])) {
-          if ((child.label || "").toLowerCase() === label.toLowerCase() || (child.titleMl || "").toLowerCase() === titleMl.toLowerCase() || child.slug === slug) {
-            allSlugs.add(child.slug);
+          if (isGroupMatch) {
             allSlugs.add(group.slug);
-            allLabels.add((child.label || "").toLowerCase());
-            allTitleMls.add((child.titleMl || "").toLowerCase());
-            if (child.titleMl) foundChildTitleMl = child.titleMl;
-            if (child.label) foundChildLabel = child.label;
+            if (group.titleMl) foundTitleMl = group.titleMl;
+            if (group.label) foundLabel = group.label;
+            for (const child of group.children || []) {
+              allSlugs.add(child.slug);
+              if (child.label) allLabels.add(child.label.toLowerCase().trim());
+              if (child.titleMl) allTitleMls.add(child.titleMl.toLowerCase().trim());
+            }
+          }
+
+          for (const child of group.children || []) {
+            const childLabelLower = (child.label || "").toLowerCase().trim();
+            const childTitleMlLower = (child.titleMl || "").toLowerCase().trim();
+            if (
+              childLabelLower === label.toLowerCase().trim() ||
+              childTitleMlLower === titleMl.toLowerCase().trim() ||
+              child.slug === slug
+            ) {
+              allSlugs.add(child.slug);
+              allSlugs.add(group.slug);
+              if (child.label) allLabels.add(childLabelLower);
+              if (child.titleMl) allTitleMls.add(childTitleMlLower);
+              if (child.titleMl) foundChildTitleMl = child.titleMl;
+              if (child.label) foundChildLabel = child.label;
+            }
           }
         }
-      }
 
-      setDisplayName(foundChildTitleMl || foundChildLabel || foundTitleMl || foundLabel || label || slug);
+        const display = foundChildTitleMl || foundChildLabel || foundTitleMl || foundLabel || titleMl || label || slug;
+        if (!cancelled) setDisplayName(display);
 
-      fetchNews({ limit: 100 }).then(data => {
-        const fetched = data.news || [];
-        const filtered = fetched.filter(a => {
-          if (allSlugs.has(a.category)) return true;
-          if (a.categories && a.categories.some(c => allSlugs.has(c))) return true;
-          if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
-          if (a.category && allLabels.has(a.category.toLowerCase())) return true;
-          if (a.categoryMl && allLabels.has(a.categoryMl.toLowerCase())) return true;
-          return false;
-        });
+        // Build backend category param: join all collected slugs + labels/titleMls for maximum compatibility
+        // Backend now supports comma-separated `category` where each value is matched against category, categories, categoryMl
+        const slugsArray = Array.from(allSlugs).filter(Boolean);
+        const paramValues = slugsArray.length > 0 ? slugsArray : (slug ? [slug] : []);
+        // Also include Malayalam variants to catch categoryMl-stored articles when slug list alone misses them
+        // Keep unique and preserve slugs first
+        const extraValues = [];
+        for (const v of allTitleMls) if (v && !paramValues.includes(v)) extraValues.push(v);
+        for (const v of allLabels) if (v && !paramValues.includes(v)) extraValues.push(v);
+        // For leaf categories, paramValues already contains slug; adding Malayalam helps if article stored with categoryMl only
+        const backendCategory = [...paramValues, ...extraValues].filter(Boolean).join(",");
 
-        if (filtered.length > 0) {
-          setArticles(filtered);
-        } else {
-          const localFiltered = fallback.filter(a => {
-            const cat = (a.category || "").toLowerCase();
-            if (allLabels.has(cat)) return true;
-            if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
+        const fetchParams = { limit: 100 };
+        if (backendCategory) fetchParams.category = backendCategory;
+
+        try {
+          const data = await fetchNews(fetchParams);
+          const fetched = data.news || [];
+          if (cancelled) return;
+          if (fetched.length > 0) {
+            setArticles(fetched);
+            setLoading(false);
+            return;
+          }
+          // Backend returned 0 – try broader fetch and client-side filter as fallback
+          // This handles stale cache / parent expansion edge cases where backendCategory still missed due to casing
+          const fallbackData = await fetchNews({ limit: 100 });
+          const allFetched = fallbackData.news || [];
+          const filtered = allFetched.filter((a) => {
+            if (allSlugs.has(a.category)) return true;
+            if (a.categories && a.categories.some((c) => allSlugs.has(c))) return true;
+            const catMlLower = (a.categoryMl || "").toLowerCase().trim();
+            const catLower = (a.category || "").toLowerCase().trim();
+            if (catMlLower && allTitleMls.has(catMlLower)) return true;
+            if (catLower && allLabels.has(catLower)) return true;
+            if (catMlLower && allLabels.has(catMlLower)) return true;
             return false;
           });
-          setArticles(localFiltered.length > 0 ? localFiltered : fallback);
+
+          if (filtered.length > 0) {
+            setArticles(filtered);
+            setLoading(false);
+            return;
+          }
+
+          // Final fallback to static data – only matching category, not full list
+          const localFiltered = fallback.filter((a) => {
+            const cat = (a.category || "").toLowerCase().trim();
+            const catMl = (a.categoryMl || "").toLowerCase().trim();
+            if (slugsArray.some((s) => s.toLowerCase() === cat)) return true;
+            if (allLabels.has(cat)) return true;
+            if (catMl && (allTitleMls.has(catMl) || allLabels.has(catMl))) return true;
+            if (label && cat === label.toLowerCase().trim()) return true;
+            if (titleMl && catMl === titleMl.toLowerCase().trim()) return true;
+            return false;
+          });
+
+          // Show localFiltered if found, otherwise empty (show "no news" message instead of unrelated fallback)
+          setArticles(localFiltered);
+          setLoading(false);
+        } catch {
+          if (cancelled) return;
+          const localFiltered = fallback.filter((a) => {
+            const cat = (a.category || "").toLowerCase().trim();
+            const catMl = (a.categoryMl || "").toLowerCase().trim();
+            if (slug && cat === slug.toLowerCase()) return true;
+            if (label && cat === label.toLowerCase().trim()) return true;
+            if (titleMl && catMl === titleMl.toLowerCase().trim()) return true;
+            return false;
+          });
+          setArticles(localFiltered);
+          setLoading(false);
         }
+      } catch {
+        if (cancelled) return;
+        // loadMenuGroups failed – try direct backend fetch by slug
+        try {
+          const params = slug ? { category: slug, limit: 100 } : { limit: 100 };
+          const data = await fetchNews(params);
+          const fetched = data.news || [];
+          if (fetched.length > 0) {
+            setArticles(fetched);
+          } else {
+            const localFiltered = fallback.filter((a) => {
+              const cat = (a.category || "").toLowerCase().trim();
+              if (slug && cat === slug.toLowerCase()) return true;
+              if (label && cat === label.toLowerCase().trim()) return true;
+              return false;
+            });
+            setArticles(localFiltered);
+          }
+        } catch {
+          setArticles([]);
+        }
+        setDisplayName(label || titleMl || slug);
         setLoading(false);
-      }).catch(() => {
-        const localFiltered = fallback.filter(a => {
-          const cat = (a.category || "").toLowerCase();
-          if (allLabels.has(cat)) return true;
-          if (a.categoryMl && allTitleMls.has(a.categoryMl.toLowerCase())) return true;
-          return false;
-        });
-        setArticles(localFiltered.length > 0 ? localFiltered : fallback);
-        setLoading(false);
-      });
-    }).catch(() => {
-      fetchNews({ limit: 100 }).then(data => {
-        const fetched = data.news || [];
-        const filtered = fetched.filter(a => {
-          if (slug && a.category === slug) return true;
-          if (label && a.category === label) return true;
-          if (titleMl && a.categoryMl === titleMl) return true;
-          return false;
-        });
-        setArticles(filtered.length > 0 ? filtered : fallback);
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-      });
-    });
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
   }, [categoryItem.label, categoryItem.titleMl, categoryItem.slug]);
 
   function parseDate(article) {

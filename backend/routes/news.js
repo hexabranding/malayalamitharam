@@ -68,7 +68,12 @@ router.get("/", async (req, res) => {
 
     const orGroups = [];
     if (category) {
-      orGroups.push({ $or: [{ category: category }, { categories: category }, { categoryMl: category }] });
+      const cats = String(category).split(",").map((s) => s.trim()).filter(Boolean);
+      if (cats.length === 1) {
+        orGroups.push({ $or: [{ category: cats[0] }, { categories: cats[0] }, { categoryMl: cats[0] }] });
+      } else if (cats.length > 1) {
+        orGroups.push({ $or: [{ category: { $in: cats } }, { categories: { $in: cats } }, { categoryMl: { $in: cats } }] });
+      }
     }
     if (search) {
       orGroups.push({

@@ -388,9 +388,10 @@ export default function HomePage({ navigate }) {
               ))}
             </div>
           )}
-          <VideoSection articles={articles} navigate={navigate} />
         </div>
       </section>
+
+      <VideoSection articles={articles} navigate={navigate} />
 
       <PhotoGallery articles={articles} navigate={navigate} />
 
