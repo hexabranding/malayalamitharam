@@ -64,11 +64,19 @@ export async function fetchNews(params = {}) {
   if (params.limit) q.set("limit", String(params.limit));
   if (params.page) q.set("page", String(params.page));
   const query = q.toString();
-  return request("/news" + (query ? "?" + query : ""));
+  // Always send Authorization if available so backend can distinguish admin (published filter) vs public
+  const h = headers();
+  // For GET we don't need Content-Type, but keep Authorization
+  const getHeaders = {};
+  if (h.Authorization) getHeaders.Authorization = h.Authorization;
+  return request("/news" + (query ? "?" + query : ""), { headers: getHeaders });
 }
 
 export async function fetchArticle(slug) {
-  const result = await request("/news/" + safeEncode(slug));
+  const h = headers();
+  const getHeaders = {};
+  if (h.Authorization) getHeaders.Authorization = h.Authorization;
+  const result = await request("/news/" + safeEncode(slug), { headers: getHeaders });
   return articlePayload(result);
 }
 

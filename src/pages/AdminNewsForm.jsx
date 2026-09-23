@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { Save, X, Upload } from "lucide-react";
-import { fetchNews, createArticle, updateArticle, loadMenuGroups, uploadImage, fetchAuthors } from "../services/api.js";
+import { fetchNews, fetchArticle, createArticle, updateArticle, loadMenuGroups, uploadImage, fetchAuthors } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
 import { articles as fallback } from "../data/news.js";
 import { slugify as frontendSlugify } from "../utils/slugify.js";
@@ -82,8 +82,15 @@ export default function AdminNewsForm({ navigate, newsId }) {
     async function load() {
       if (isEditing) {
         try {
-          const article = await fetchNews({ limit: 1000 });
-          let found = (article.news || []).find(a => a.id === newsId);
+          let found = null;
+          // Primary: fetch directly by slug/id (fast, works for old articles beyond list limit)
+          try {
+            found = await fetchArticle(newsId);
+          } catch {}
+          if (!found || !found.title) {
+            const article = await fetchNews({ limit: 50 });
+            found = (article.news || []).find(a => a.id === newsId || a.slug === newsId);
+          }
           if (!found) found = fallback.find(a => a.id === newsId);
           if (found) {
             setFormData({
@@ -310,12 +317,16 @@ export default function AdminNewsForm({ navigate, newsId }) {
       } else {
         await createArticle(submitData);
       }
+      // Notify admin lists/dashboard to refresh (they listen for mm-data-updated)
+      try { window.dispatchEvent(new Event("mm-data-updated")); } catch {}
+      try { localStorage.removeItem("mm_menu_cache"); } catch {}
       alert(isEditing ? "News updated successfully!" : "News created successfully!");
       navigate("/admin/news");
     } catch (err) {
       alert("Failed to save: " + err.message);
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   return (

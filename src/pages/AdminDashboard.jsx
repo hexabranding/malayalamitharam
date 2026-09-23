@@ -6,12 +6,17 @@ import { Newspaper, Eye, MessageSquare, TrendingUp, Calendar, Heart } from "luci
 
 export default function AdminDashboard({ navigate }) {
   const [articles, setArticles] = useState(fallback);
+  const [totalNews, setTotalNews] = useState(fallback.length);
 
   useEffect(() => {
     function loadArticles() {
-      fetchNews({ limit: 1000 }).then(data => {
+      // Use smaller limit for performance (backend caps at 100) – 50 is enough for dashboard preview
+      // Total count comes from data.total, not articles.length
+      fetchNews({ limit: 50 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) setArticles(fetched);
+        if (typeof data.total === "number") setTotalNews(data.total);
+        else if (fetched.length > 0) setTotalNews(fetched.length);
       }).catch(() => {});
     }
     loadArticles();
@@ -22,8 +27,6 @@ export default function AdminDashboard({ navigate }) {
       window.removeEventListener("mm-data-updated", loadArticles);
     };
   }, []);
-
-  const totalNews = articles.length;
   const featuredNews = articles.filter(a => a.featured).length;
   const totalViews = articles.reduce((acc, a) => acc + (a.views || 0), 0);
   const totalComments = articles.reduce((acc, a) => acc + (a.comments || 0), 0);

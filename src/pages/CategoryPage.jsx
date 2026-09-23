@@ -63,7 +63,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
       setDisplayName(foundChildTitleMl || foundChildLabel || foundTitleMl || foundLabel || label || slug);
 
-      fetchNews({ limit: 500 }).then(data => {
+      fetchNews({ limit: 100 }).then(data => {
         const fetched = data.news || [];
         const filtered = fetched.filter(a => {
           if (allSlugs.has(a.category)) return true;
@@ -97,7 +97,7 @@ export default function CategoryPage({ categoryItem, navigate }) {
         setLoading(false);
       });
     }).catch(() => {
-      fetchNews({ limit: 500 }).then(data => {
+      fetchNews({ limit: 100 }).then(data => {
         const fetched = data.news || [];
         const filtered = fetched.filter(a => {
           if (slug && a.category === slug) return true;

@@ -55,11 +55,10 @@ async function findArticleBySlug(slugParam, isAdmin) {
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, breaking, limit = 50, page = 1, search } = req.query;
-    const filter = {};
+    const lim = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+    const pg = Math.max(parseInt(page, 10) || 1, 1);
 
-    if (category) {
-      filter.$or = [{ category: category }, { categories: category }, { categoryMl: category }];
-    }
+    const filter = {};
     if (subcategory) filter.subcategory = subcategory;
     if (featured !== undefined) filter.featured = featured === "true";
     if (breaking !== undefined) filter.breaking = breaking === "true";
@@ -67,24 +66,38 @@ router.get("/", async (req, res) => {
     const isAdmin = req.headers.authorization?.startsWith("Bearer ");
     if (!isAdmin) filter.published = true;
 
+    const orGroups = [];
+    if (category) {
+      orGroups.push({ $or: [{ category: category }, { categories: category }, { categoryMl: category }] });
+    }
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { excerpt: { $regex: search, $options: "i" } },
-        { tags: { $regex: search, $options: "i" } },
-      ];
+      orGroups.push({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { excerpt: { $regex: search, $options: "i" } },
+          { tags: { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+    if (orGroups.length === 1) {
+      filter.$or = orGroups[0].$or;
+    } else if (orGroups.length > 1) {
+      filter.$and = orGroups;
     }
 
     const total = await Article.countDocuments(filter);
     const docs = await Article.find(filter)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * Number(limit))
-      .limit(Number(limit));
+      .skip((pg - 1) * lim)
+      .limit(lim)
+      .lean({ virtuals: true });
 
-    const news = docs.map(d => d.toJSON());
+    // lean virtuals already includes id = slug, but ensure id field exists for frontend
+    const news = docs.map((d) => ({ ...d, id: d.id || d.slug }));
 
-    res.json({ news, total, page: Number(page), limit: Number(limit) });
+    res.json({ news, total, page: pg, limit: lim });
   } catch (err) {
+    console.error("GET /api/news error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });

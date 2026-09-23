@@ -7,12 +7,16 @@ import { ArticleImage } from "../services/images.jsx";
 
 export default function AdminNewsPage({ navigate }) {
   const [newsList, setNewsList] = useState(fallback);
+  const [total, setTotal] = useState(fallback.length);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryMap, setCategoryMap] = useState({});
+  const [menuGroupsData, setMenuGroupsData] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(false);
   const searchRef = useRef(null);
 
   const itemsPerPage = 10;
@@ -27,12 +31,59 @@ export default function AdminNewsPage({ navigate }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Debounce search input for server query (400ms)
   useEffect(() => {
-    fetchNews({ limit: 1000 }).then(data => {
-      const fetched = data.news || [];
-      if (fetched.length > 0) setNewsList(fetched);
-    }).catch(() => {});
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, selectedCategory]);
+
+  // Server-side paginated fetch: uses API filtering so all 428+ items are browsable and newly added always appears on page 1
+  useEffect(() => {
+    let cancelled = false;
+    async function loadNews() {
+      setLoading(true);
+      const params = { limit: itemsPerPage, page: currentPage };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (selectedCategory !== "all") params.category = selectedCategory;
+      try {
+        const data = await fetchNews(params);
+        if (cancelled) return;
+        const fetched = data.news || [];
+        // If API returns empty on page 1 with no filters, keep fallback so admin never sees blank screen offline
+        if (fetched.length === 0 && currentPage === 1 && !debouncedSearch && selectedCategory === "all" && data.total === 0) {
+          // keep fallback? but total 0 means truly empty DB – show empty
+          setNewsList([]);
+        } else if (fetched.length > 0) {
+          setNewsList(fetched);
+        } else {
+          setNewsList(fetched);
+        }
+        if (typeof data.total === "number") setTotal(data.total);
+      } catch (err) {
+        console.error("AdminNewsPage fetchNews failed:", err.message);
+        // keep existing list (fallback or previous page) on error
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadNews();
+    function onUpdated() { loadNews(); }
+    // also listen for external updates (create/edit) – refetch current page
+    window.addEventListener("mm-data-updated", onUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("mm-data-updated", onUpdated);
+    };
+  }, [currentPage, debouncedSearch, selectedCategory]);
+
+  useEffect(() => {
     loadMenuGroups().then(groups => {
+      setMenuGroupsData(groups);
       const map = {};
       groups.forEach(g => {
         map[g.slug] = g.titleMl || g.label;
@@ -51,49 +102,49 @@ export default function AdminNewsPage({ navigate }) {
     return slug;
   }
 
-  const categories = ["all", ...new Set(newsList.map(a => a.category))];
-
-  const filteredNews = newsList.filter(news => {
-    const q = searchTerm.toLowerCase();
-    const matchesSearch = !q ||
-      news.title.toLowerCase().includes(q) ||
-      news.excerpt.toLowerCase().includes(q) ||
-      (news.categoryMl && news.categoryMl.toLowerCase().includes(q)) ||
-      (news.author && news.author.toLowerCase().includes(q));
-    const matchesCategory = selectedCategory === "all" || news.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Build filter dropdown from API categories + current page + fallback so admin can see all options even when paging
+  const categories = ["all", ...new Set([
+    ...menuGroupsData.flatMap(g => g.children ? g.children.map(c => c.slug) : [g.slug]),
+    ...fallback.map(a => a.category),
+    ...newsList.map(a => a.category),
+  ].filter(Boolean))];
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
-
-  useEffect(() => {
-    if (searchTerm.trim().length < 1) {
+    if (debouncedSearch.length < 1) {
       setSuggestions([]);
       return;
     }
     const timer = setTimeout(() => {
-      const q = searchTerm.toLowerCase();
+      const q = debouncedSearch.toLowerCase();
       const matches = newsList.filter(n =>
         n.title.toLowerCase().includes(q) || n.excerpt.toLowerCase().includes(q)
       ).slice(0, 6);
       setSuggestions(matches);
+      // also try server suggestion for broader match if local 0
+      if (matches.length === 0) {
+        fetchNews({ search: debouncedSearch, limit: 6 }).then(d => {
+          const s = (d.news || []).slice(0, 6);
+          if (s.length) setSuggestions(s);
+        }).catch(() => {});
+      }
     }, 200);
     return () => clearTimeout(timer);
-  }, [searchTerm, newsList]);
+  }, [debouncedSearch, newsList]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
+  // Server pagination – currentNews is already the page slice
+  const totalPages = Math.ceil(total / itemsPerPage);
+  const currentNews = newsList;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentNews = filteredNews.slice(startIndex, endIndex);
+  const endIndex = startIndex + currentNews.length;
 
   const handleDelete = async (id) => {
     if (confirm("Are you sure you want to delete this news?")) {
       try {
         await deleteArticle(id);
-        setNewsList(newsList.filter(news => news.id !== id));
+        const updated = newsList.filter(news => news.id !== id);
+        setNewsList(updated);
+        setTotal((t) => Math.max(0, t - 1));
+        window.dispatchEvent(new Event("mm-data-updated"));
       } catch (err) {
         alert("Failed to delete: " + err.message);
       }
@@ -205,7 +256,7 @@ export default function AdminNewsPage({ navigate }) {
 
       <div className="admin-stats">
         <div className="stat-card">
-          <strong>{newsList.length}</strong>
+          <strong>{total}</strong>
           <span>Total News</span>
         </div>
         <div className="stat-card">
@@ -213,6 +264,7 @@ export default function AdminNewsPage({ navigate }) {
           <span>Featured</span>
         </div>
         <div className="stat-card">
+          <strong>{new Set(newsList.map(n => n.category)).size}</strong>
           <span>Categories</span>
         </div>
         <div className="stat-card">
