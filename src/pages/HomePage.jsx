@@ -27,6 +27,7 @@ const SKIP_SECTIONS = ["news", "News", "Keralam", "keralam"];
 export default function HomePage({ navigate }) {
   const [articles, setArticles] = useState(fallback);
   const [categoryGroups, setCategoryGroups] = useState([]);
+  const [extraMedia, setExtraMedia] = useState([]);
 
   useEffect(() => {
     preloadCategories();
@@ -52,6 +53,32 @@ export default function HomePage({ navigate }) {
       }
     }).catch(() => {});
   }, []);
+
+  // If no photo/video in first 50, search deeper pages for existing multimedia (paginated)
+  useEffect(() => {
+    const hasLocalMedia = articles.some((a) => (a.media === "photo" || a.media === "video") && a.image);
+    if (hasLocalMedia) {
+      setExtraMedia([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadExistingMedia() {
+      const collected = [];
+      for (let p = 2; p <= 6; p++) {
+        try {
+          const data = await fetchNews({ limit: 50, page: p });
+          const m = (data.news || []).filter((a) => (a.media === "photo" || a.media === "video") && a.image);
+          if (m.length > 0) collected.push(...m);
+          if (collected.length >= 4) break;
+        } catch {
+          break;
+        }
+      }
+      if (!cancelled && collected.length > 0) setExtraMedia(collected.slice(0, 4));
+    }
+    loadExistingMedia();
+    return () => { cancelled = true; };
+  }, [articles]);
 
   const leadStory = articles[0];
   const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
@@ -126,9 +153,8 @@ export default function HomePage({ navigate }) {
   const viewsSide = viewsStories.slice(1, 5);
 
   const _displayMediaRaw = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
-  // Fallback: if no photo/video tagged articles, show latest 4 articles with images
-  // This ensures Multimedia section is never empty
-  const displayMedia = _displayMediaRaw.length > 0 ? _displayMediaRaw : articles.filter((a) => a.image).slice(0, 4);
+  // Priority: local photo/video -> existing DB photo/video from deeper pages -> latest 4 images (never empty)
+  const displayMedia = _displayMediaRaw.length > 0 ? _displayMediaRaw : extraMedia.length > 0 ? extraMedia : articles.filter((a) => a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
   const handledSlugs = new Set([

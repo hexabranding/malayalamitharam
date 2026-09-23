@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ThumbsUp, Play, Clock, Youtube } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 import { getTitleSlug } from "../utils/articleStore.js";
+import { fetchNews } from "../services/api.js";
 import AdSlot from "./AdSlot.jsx";
 
 function getVideoEmbedUrl(url) {
@@ -43,10 +44,34 @@ export default function VideoSection({ articles, navigate }) {
     "https://www.youtube.com/watch?v=OPf0YbXqDm0",
   ];
   const rawVideoArticles = articles.filter((a) => (a.media === "video" || (a.videoUrl && String(a.videoUrl).trim())) && a.image);
-  // Fallback: if no explicit video articles, show recent articles with images as video placeholders
-  // Ensures the Video section is never empty even when backend has no video/media set
-  const videoArticles = rawVideoArticles.length > 0
-    ? rawVideoArticles
+
+  // If no video in the first 50 (HomePage fetch), try to find existing videos deeper in DB (pages 2-6)
+  const [remoteVideos, setRemoteVideos] = useState([]);
+  useEffect(() => {
+    if (rawVideoArticles.length > 0) return;
+    let cancelled = false;
+    async function loadExistingVideos() {
+      const collected = [];
+      for (let p = 2; p <= 6; p++) {
+        try {
+          const data = await fetchNews({ limit: 50, page: p });
+          const vids = (data.news || []).filter((a) => (a.media === "video" || (a.videoUrl && String(a.videoUrl).trim())) && a.image);
+          if (vids.length > 0) collected.push(...vids);
+          if (collected.length >= 6) break;
+        } catch {
+          break;
+        }
+      }
+      if (!cancelled && collected.length > 0) setRemoteVideos(collected.slice(0, 6));
+    }
+    loadExistingVideos();
+    return () => { cancelled = true; };
+  }, [rawVideoArticles.length]);
+
+  const videoArticlesBase = rawVideoArticles.length > 0 ? rawVideoArticles : remoteVideos;
+  // Final fallback: only if NO existing video anywhere, show recent articles with dummy YouTube so section not empty
+  const videoArticles = videoArticlesBase.length > 0
+    ? videoArticlesBase
     : articles.filter((a) => a.image).slice(0, 6).map((a, i) => ({
         ...a,
         videoUrl: a.videoUrl && String(a.videoUrl).trim() ? a.videoUrl : FALLBACK_YT[i % FALLBACK_YT.length],
