@@ -15,7 +15,7 @@ export default function PhotoGallery({ articles, navigate }) {
             <Camera size={24} />
             <h3>ഫോട്ടോ ഗാലറി</h3>
           </div>
-          <button className="view-all-btn" onClick={() => navigate("/category/photos")}>View All</button>
+          <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent("Photo-gallery"))}>View All</button>
         </div>
         
         <div className="photo-grid">

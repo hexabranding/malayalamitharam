@@ -94,7 +94,7 @@ let aosInitialized = false;
 
 export default function App() {
   const { path, navigate } = useRoute();
-  const activeSlug = path.startsWith("/category/") ? path.replace("/category/", "") : "home";
+  const activeSlug = path.startsWith("/category/") ? decodeURIComponent(path.replace("/category/", "")) : "home";
   const isAdmin = path.startsWith("/admin");
 
   useEffect(() => {
@@ -233,8 +233,9 @@ export default function App() {
     if (path === "/" || path === "") return <HomePage navigate={navigate} />;
     if (path === "/login") return <AdminLoginPage onLogin={handleLogin} />;
     if (path.startsWith("/category/")) {
-      const slug = path.replace("/category/", "");
-      const item = dynamicFlatItems.find((entry) => entry.slug === slug) || { label: slug, slug, titleMl: slug };
+      const rawSlug = path.replace("/category/", "");
+      const slug = decodeURIComponent(rawSlug);
+      const item = dynamicFlatItems.find((entry) => entry.slug.toLowerCase() === slug.toLowerCase() || entry.slug === rawSlug) || { label: slug, slug, titleMl: slug };
       if (item.mediaType) return <MediaPage type={item.mediaType} title={item.titleMl} navigate={navigate} />;
       return <CategoryPage categoryItem={item} navigate={navigate} />;
     }

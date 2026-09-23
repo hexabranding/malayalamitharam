@@ -69,10 +69,14 @@ router.get("/", async (req, res) => {
     const orGroups = [];
     if (category) {
       const cats = String(category).split(",").map((s) => s.trim()).filter(Boolean);
+      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const makeRegexes = (arr) => arr.map((c) => new RegExp("^" + escapeRegExp(c) + "$", "i"));
       if (cats.length === 1) {
-        orGroups.push({ $or: [{ category: cats[0] }, { categories: cats[0] }, { categoryMl: cats[0] }] });
+        const rx = new RegExp("^" + escapeRegExp(cats[0]) + "$", "i");
+        orGroups.push({ $or: [{ category: rx }, { categories: rx }, { categoryMl: rx }] });
       } else if (cats.length > 1) {
-        orGroups.push({ $or: [{ category: { $in: cats } }, { categories: { $in: cats } }, { categoryMl: { $in: cats } }] });
+        const regexes = makeRegexes(cats);
+        orGroups.push({ $or: [{ category: { $in: regexes } }, { categories: { $in: regexes } }, { categoryMl: { $in: regexes } }] });
       }
     }
     if (search) {

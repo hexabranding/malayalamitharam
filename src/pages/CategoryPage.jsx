@@ -77,24 +77,51 @@ export default function CategoryPage({ categoryItem, navigate }) {
         const display = foundChildTitleMl || foundChildLabel || foundTitleMl || foundLabel || titleMl || label || slug;
         if (!cancelled) setDisplayName(display);
 
-        // Build backend category param: join all collected slugs + labels/titleMls for maximum compatibility
-        // Backend now supports comma-separated `category` where each value is matched against category, categories, categoryMl
         const slugsArray = Array.from(allSlugs).filter(Boolean);
         const paramValues = slugsArray.length > 0 ? slugsArray : (slug ? [slug] : []);
-        // Also include Malayalam variants to catch categoryMl-stored articles when slug list alone misses them
-        // Keep unique and preserve slugs first
+        // Also include Malayalam variants to catch categoryMl-stored articles
         const extraValues = [];
         for (const v of allTitleMls) if (v && !paramValues.includes(v)) extraValues.push(v);
         for (const v of allLabels) if (v && !paramValues.includes(v)) extraValues.push(v);
-        // For leaf categories, paramValues already contains slug; adding Malayalam helps if article stored with categoryMl only
-        const backendCategory = [...paramValues, ...extraValues].filter(Boolean).join(",");
-
-        const fetchParams = { limit: 100 };
-        if (backendCategory) fetchParams.category = backendCategory;
+        const allFetchSlugs = [...new Set([...paramValues, ...extraValues].filter(Boolean))];
 
         try {
-          const data = await fetchNews(fetchParams);
-          const fetched = data.news || [];
+          // Backend on live server does not yet support comma-separated categories (returns 0),
+          // so fetch per-slug in parallel and merge. Works for both old and new backend.
+          let fetched = [];
+          if (allFetchSlugs.length === 0) {
+            const data = await fetchNews({ limit: 100 });
+            fetched = data.news || [];
+          } else if (allFetchSlugs.length === 1) {
+            const data = await fetchNews({ category: allFetchSlugs[0], limit: 100 });
+            fetched = data.news || [];
+          } else {
+            // Try combined query first (new backend supports it)
+            try {
+              const combo = await fetchNews({ category: allFetchSlugs.join(","), limit: 100 });
+              if ((combo.news || []).length > 0) {
+                fetched = combo.news;
+              } else {
+                throw new Error("empty combo");
+              }
+            } catch {
+              const results = await Promise.all(
+                allFetchSlugs.map((s) =>
+                  fetchNews({ category: s, limit: 100 })
+                    .then((d) => d.news || [])
+                    .catch(() => [])
+                )
+              );
+              const map = new Map();
+              for (const arr of results) {
+                for (const n of arr) {
+                  const key = n.slug || n.id;
+                  if (key && !map.has(key)) map.set(key, n);
+                }
+              }
+              fetched = Array.from(map.values()).sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+            }
+          }
           if (cancelled) return;
           if (fetched.length > 0) {
             setArticles(fetched);

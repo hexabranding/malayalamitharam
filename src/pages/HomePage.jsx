@@ -246,7 +246,7 @@ export default function HomePage({ navigate }) {
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
             <span>കേരളം</span>
-            <button className="view-all-btn" onClick={() => navigate("/category/kerala")}>View All</button>
+            <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(keralaSlugs[0] || keralaSide[0]?.category || "Keralam"))}>View All</button>
           </div>
           <div className="news-split-layout">
             <div className="news-split-main">
@@ -264,7 +264,7 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ദേശിയം</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/india")}>View All</button>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(indiaSlugs[0] || nationalLead?.category || "India"))}>View All</button>
             </div>
             <div className="news-split-layout reversed">
               <div className="news-split-main">
@@ -283,7 +283,7 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>അന്തർദേശിയം</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/world")}>View All</button>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(worldSlugs[0] || internationalLead?.category || "World"))}>View All</button>
             </div>
             <div className="news-split-layout">
               <div className="news-split-main">
@@ -302,7 +302,7 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>ഗൾഫ്</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/gulf")}>View All</button>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(gulfGroup?.slug || gulfSlugs[0] || "new-group-1785595457520"))}>View All</button>
             </div>
             {gulfTop.length > 0 && (
               <div className="gulf-top-row">
@@ -334,7 +334,11 @@ export default function HomePage({ navigate }) {
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>അഭിപ്രായം</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/opinion")}>View All</button>
+              <button className="view-all-btn" onClick={() => {
+                const viewsGroupSlug = categoryGroups.find(g => g.label?.toLowerCase() === "views" || g.slug?.toLowerCase() === "views" || g.titleMl === "കാഴ്ചപ്പാട്")?.slug;
+                const fallbackSlug = viewsSlugs[0] || viewsLead?.category || viewsGroupSlug || "Views";
+                navigate("/category/" + encodeURIComponent(fallbackSlug));
+              }}>View All</button>
             </div>
             <div className="news-split-layout reversed">
               <div className="news-split-main">
@@ -353,7 +357,7 @@ export default function HomePage({ navigate }) {
           <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/" + section.slug)}>View All</button>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(section.slug))}>View All</button>
             </div>
             <div className={`news-split-layout${i % 2 === 0 ? "" : " reversed"}`}>
               <div className="news-split-main">
@@ -373,7 +377,10 @@ export default function HomePage({ navigate }) {
         <div className="container">
           <div className="multimedia-title" data-aos="fade-left">
             <span>മൾട്ടിമീഡിയ</span>
-            <button className="view-all-btn" onClick={() => navigate("/category/multi-media")}>View All</button>
+            <button className="view-all-btn" onClick={() => {
+              const mmGroup = categoryGroups.find(g => g.label?.toLowerCase().includes("multimedia") || g.slug?.toLowerCase().includes("multimedia") || g.titleMl?.includes("മൾട്ടി"));
+              navigate("/category/" + encodeURIComponent(mmGroup?.slug || "new-group-1785656306753"));
+            }}>View All</button>
           </div>
           {displayMedia.length > 0 && (
             <div className="multimedia-grid">

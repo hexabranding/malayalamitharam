@@ -83,7 +83,7 @@ export default function Header({ navigate, activeSlug }) {
     return d.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
 
-  const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + item.slug);
+  const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + encodeURIComponent(item.slug));
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";
   const logo = resolveImageUrl(settings.site_logo) || "/images/malayalamithram-logo.png";
   const tagline = settings.site_tagline || "മലയാളികളുടെ വാർത്താ കൂട്ടുകാരൻ";
