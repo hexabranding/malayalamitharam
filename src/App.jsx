@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, Suspense, lazy } from "react";
 import AOS from "aos";
 import Layout from "./components/Layout.jsx";
 import { articles, flatMenuItems as defaultFlatMenuItems } from "./data/news.js";
-import { loadFlatMenuItems, clearMenuCache } from "./services/api.js";
+import { loadFlatMenuItems, clearMenuCache, readAdminSession } from "./services/api.js";
 
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage.jsx"));
@@ -126,15 +126,8 @@ export default function App() {
     return () => document.removeEventListener("click", handleClick);
   }, [navigate]);
 
-  // Auth state — check sessionStorage on mount
-  const [adminUser, setAdminUser] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem("mm_admin");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Auth state — check sessionStorage on mount (drops expired sessions)
+  const [adminUser, setAdminUser] = useState(() => readAdminSession());
 
   // Dynamic menu items from API
   const [dynamicFlatItems, setDynamicFlatItems] = useState(defaultFlatMenuItems);

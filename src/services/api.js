@@ -1,15 +1,45 @@
 const BASE = import.meta.env.VITE_API_URL || (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "/api" : "https://api.malayalamitharam.in/api");
 export const API_BASE = BASE;
 
-function getToken() {
+function decodeTokenExp(token) {
+  try {
+    const payload = String(token).split(".")[1];
+    if (!payload) return null;
+    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof json.exp === "number" ? json.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readAdminSession() {
   try {
     const stored = sessionStorage.getItem("mm_admin");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed.token || null;
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    if (!parsed || !parsed.token) return null;
+    const exp = decodeTokenExp(parsed.token);
+    if (exp && exp * 1000 <= Date.now()) {
+      sessionStorage.removeItem("mm_admin");
+      return null;
     }
-  } catch {}
-  return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function getToken() {
+  const session = readAdminSession();
+  return session ? session.token : null;
+}
+
+function goToLogin() {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname || "/";
+  if (!path.startsWith("/admin")) return;
+  if (path === "/admin/login") return;
+  setTimeout(() => window.location.assign("/admin/login"), 80);
 }
 
 function headers(extra = {}) {
@@ -27,7 +57,12 @@ async function request(url, options = {}, timeout = 15000) {
     clearTimeout(id);
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(body.error || "Request failed");
+      if (res.status === 401 && !url.startsWith("/auth/")) {
+        try { sessionStorage.removeItem("mm_admin"); } catch {}
+        goToLogin();
+        throw new Error("Session expired. Please log in again.");
+      }
+      throw new Error(body.error || `Request failed (${res.status})`);
     }
     const text = await res.text();
     try {
@@ -37,6 +72,9 @@ async function request(url, options = {}, timeout = 15000) {
     }
   } catch (err) {
     clearTimeout(id);
+    if (err && err.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
     throw err;
   }
 }
