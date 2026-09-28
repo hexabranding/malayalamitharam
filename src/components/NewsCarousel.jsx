@@ -32,7 +32,7 @@ function CarouselImage({ article, alt, isActive }) {
       src={src}
       alt={alt || ""}
       loading="eager"
-      fetchpriority={isActive ? "high" : "auto"}
+      fetchPriority={isActive ? "high" : "auto"}
     />
   );
 }
