@@ -62,12 +62,11 @@ export default function AdminNewsForm({ navigate, newsId }) {
   });
 
   const [imagePreview, setImagePreview] = useState("");
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [menuGroupsData, setMenuGroupsData] = useState([]);
-  const [newVideoTitle, setNewVideoTitle] = useState("");
-  const [newVideoUrl, setNewVideoUrl] = useState("");
   const [authorsList, setAuthorsList] = useState([]);
 
   useEffect(() => {
@@ -194,6 +193,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
     const url = e.target.value;
     setFormData(prev => ({ ...prev, image: url }));
     setImagePreview(url);
+    if (url.trim()) setPreviewIndex(0);
   };
 
   const handleImageUpload = async (e) => {
@@ -212,7 +212,9 @@ export default function AdminNewsForm({ navigate, newsId }) {
   const addGalleryImage = () => {
     const url = galleryUrlInput.trim();
     if (!url) return;
+    const nextIndex = (formData.image ? 1 : 0) + formData.gallery.length;
     setFormData(prev => ({ ...prev, gallery: [...prev.gallery, url] }));
+    setPreviewIndex(nextIndex);
     setGalleryUrlInput("");
   };
 
@@ -232,6 +234,7 @@ export default function AdminNewsForm({ navigate, newsId }) {
       }
     }
     if (uploadedUrls.length > 0) {
+      setPreviewIndex((formData.image ? 1 : 0) + formData.gallery.length);
       setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...uploadedUrls] }));
     }
     if (failed.length > 0) {
@@ -254,21 +257,22 @@ export default function AdminNewsForm({ navigate, newsId }) {
     });
   };
 
-  const addRelatedVideo = () => {
-    if (!newVideoUrl.trim()) return;
-    setFormData(prev => ({
-      ...prev,
-      relatedVideos: [...prev.relatedVideos, { title: newVideoTitle.trim(), videoUrl: newVideoUrl.trim(), thumbnail: "" }]
-    }));
-    setNewVideoTitle("");
-    setNewVideoUrl("");
-  };
-
   const removeRelatedVideo = (index) => {
     setFormData(prev => ({
       ...prev,
       relatedVideos: prev.relatedVideos.filter((_, i) => i !== index)
     }));
+  };
+
+  const previewSlides = [
+    ...(formData.image ? [{ type: "main", url: formData.image }] : []),
+    ...(formData.gallery || []).map((url, index) => ({ type: "gallery", url, index })),
+  ];
+  const activeIndex = previewSlides.length === 0 ? 0 : Math.min(previewIndex, previewSlides.length - 1);
+  const activeSlide = previewSlides[activeIndex];
+  const movePreview = (dir) => {
+    if (previewSlides.length < 2) return;
+    setPreviewIndex((activeIndex + dir + previewSlides.length) % previewSlides.length);
   };
 
   const handleSubmit = async (e) => {
@@ -504,10 +508,74 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 <Upload size={16} /> Upload Photo
                 <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:"none"}} />
               </label>
-              {imagePreview && (
-                <div className="image-preview" style={{ marginTop: 8 }}>
-                  <img src={resolveImageUrl(imagePreview) || imagePreview} alt="Preview" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 4 }} onError={(e) => { e.target.style.display = "none" }} />
-                  <button type="button" className="remove-image" onClick={() => { setImagePreview(""); setFormData(prev => ({ ...prev, image: "" })); }}><X size={16} /></button>
+              {activeSlide && (
+                <div className="image-preview" style={{ marginTop: 8, position: "relative", border: "1px solid #e3e9df", borderRadius: 6, overflow: "hidden", background: "#f7f9f7" }}>
+                  <img
+                    key={activeSlide.type + "-" + activeIndex}
+                    src={resolveImageUrl(activeSlide.url) || activeSlide.url}
+                    alt={activeSlide.type === "main" ? "Main image" : "Gallery image " + (activeSlide.index + 1)}
+                    style={{ width: "100%", maxHeight: 240, objectFit: "contain", display: "block" }}
+                    onError={(e) => { e.target.src = activeSlide.url; }}
+                  />
+                  {previewSlides.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => movePreview(-1)}
+                        aria-label="Previous image"
+                        title="Previous image"
+                        style={{ position: "absolute", top: "50%", left: 6, transform: "translateY(-50%)", width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 20, lineHeight: "28px", cursor: "pointer", zIndex: 2, padding: 0 }}
+                      >&#8249;</button>
+                      <button
+                        type="button"
+                        onClick={() => movePreview(1)}
+                        aria-label="Next image"
+                        title="Next image"
+                        style={{ position: "absolute", top: "50%", right: 6, transform: "translateY(-50%)", width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 20, lineHeight: "28px", cursor: "pointer", zIndex: 2, padding: 0 }}
+                      >&#8250;</button>
+                    </>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "5px 8px", background: "#fff", borderTop: "1px solid #e3e9df", fontSize: 12, color: "#555" }}>
+                    <span>
+                      {activeIndex + 1} / {previewSlides.length}
+                      {" • "}
+                      {activeSlide.type === "main" ? "Main image" : "Gallery " + (activeSlide.index + 1)}
+                    </span>
+                    <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      {activeSlide.type === "gallery" && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => moveGalleryImage(activeSlide.index, -1)}
+                            disabled={activeSlide.index === 0}
+                            title="Move earlier"
+                            style={{ background: "none", border: "none", cursor: activeSlide.index === 0 ? "default" : "pointer", color: activeSlide.index === 0 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }}
+                          >&#9664;</button>
+                          <button
+                            type="button"
+                            onClick={() => moveGalleryImage(activeSlide.index, 1)}
+                            disabled={activeSlide.index === formData.gallery.length - 1}
+                            title="Move later"
+                            style={{ background: "none", border: "none", cursor: activeSlide.index === formData.gallery.length - 1 ? "default" : "pointer", color: activeSlide.index === formData.gallery.length - 1 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }}
+                          >&#9654;</button>
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(activeSlide.index)}
+                            title="Remove from gallery"
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#c91f26", padding: "2px 4px" }}
+                          ><X size={14} /></button>
+                        </>
+                      )}
+                      {activeSlide.type === "main" && (
+                        <button
+                          type="button"
+                          onClick={() => { setImagePreview(""); setFormData(prev => ({ ...prev, image: "" })); }}
+                          title="Remove main image"
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#c91f26", padding: "2px 4px" }}
+                        ><X size={14} /></button>
+                      )}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -532,23 +600,9 @@ export default function AdminNewsForm({ navigate, newsId }) {
                 </label>
               </div>
               {formData.gallery.length > 0 && (
-                <div className="gallery-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginTop: 10 }}>
-                  {formData.gallery.map((url, index) => (
-                    <div key={index} style={{ position: "relative", borderRadius: 6, overflow: "hidden", border: "1px solid #e3e9df", background: "#f7f9f7" }}>
-                      <img src={resolveImageUrl(url) || url} alt="" style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }} onError={(e) => { e.target.src = url; }} />
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 6px" }}>
-                        <div style={{ display: "flex", gap: 2 }}>
-                          <button type="button" onClick={() => moveGalleryImage(index, -1)} disabled={index === 0} style={{ background: "none", border: "none", cursor: index === 0 ? "default" : "pointer", color: index === 0 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }} title="Move left">&#9664;</button>
-                          <button type="button" onClick={() => moveGalleryImage(index, 1)} disabled={index === formData.gallery.length - 1} style={{ background: "none", border: "none", cursor: index === formData.gallery.length - 1 ? "default" : "pointer", color: index === formData.gallery.length - 1 ? "#ccc" : "#0d4228", fontSize: 14, padding: "2px 4px" }} title="Move right">&#9654;</button>
-                        </div>
-                        <button type="button" onClick={() => removeGalleryImage(index)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c91f26", fontSize: 16, padding: "2px 4px" }} title="Remove"><X size={14} /></button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {formData.gallery.length > 0 && (
-                <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 12 }}>{formData.gallery.length} image(s) in gallery</small>
+                <small style={{ display: "block", marginTop: 6, color: "#666", fontSize: 12 }}>
+                  {formData.gallery.length} image(s) in gallery — view, reorder and remove them with the arrows in the main image preview above
+                </small>
               )}
             </div>
 
@@ -580,7 +634,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
             </div>
 
             <div className="form-group">
-              <label>Related Videos </label>
               <div className="related-videos-list">
                 {formData.relatedVideos.map((video, index) => (
                   <div key={index} className="related-video-item">
@@ -591,21 +644,6 @@ export default function AdminNewsForm({ navigate, newsId }) {
                     </button>
                   </div>
                 ))}
-              </div>
-              <div className="add-related-video">
-                <input
-                  type="text"
-                  placeholder="Video title (optional)"
-                  value={newVideoTitle}
-                  onChange={(e) => setNewVideoTitle(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Paste any video link: YouTube, Vimeo, Dailymotion, Facebook, Instagram, TikTok..."
-                  value={newVideoUrl}
-                  onChange={(e) => setNewVideoUrl(e.target.value)}
-                />
-                <button type="button" className="btn-add" onClick={addRelatedVideo}>+ Add</button>
               </div>
             </div> 
 

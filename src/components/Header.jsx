@@ -1,9 +1,10 @@
 import { AtSign, ChevronDown, Facebook, Instagram, Linkedin, Menu, MessageCircle, Search, Send, X, Youtube } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
 import { fetchNews } from "../services/api.js";
-import { getKollavarsham, getHijriDate, getEnglishDate } from "../utils/calendars.js";
+import { getEnglishDate } from "../utils/calendars.js";
+import { buildDateDisplayItems, toBool } from "../utils/dateDisplay.js";
 import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
 
 function XLogo({ size = 18 }) {
@@ -103,41 +104,20 @@ export default function Header({ navigate, activeSlug }) {
     <header className="site-header">
       <div className="banner-wrap">
         <div className="banner-inner">
-          {settings.show_banner_date !== false && <span className="banner-date">{formatBannerDate(currentTime)}</span>}
+          {toBool(settings.show_banner_date, true) && <span className="banner-date">{formatBannerDate(currentTime)}</span>}
           <img src={banner} alt="മലയാളമിത്രം" />
           <span className="banner-time">{formatBannerTime(currentTime)}</span>
         </div>
       </div>
-      {settings.show_calendar_strip !== false && (
+      {toBool(settings.show_calendar_strip, true) && (
         <div className="top-strip"><div className="container strip-inner">
           <div className="date-display">
-            {(() => {
-              const order = settings.date_display_order || "kollavarsham-hijri";
-              const showK = settings.show_kollavarsham !== false && (order === "kollavarsham-hijri" || order === "hijri-kollavarsham" || order === "kollavarsham-only");
-              const showH = settings.show_hijri_date !== false && (order === "kollavarsham-hijri" || order === "hijri-kollavarsham" || order === "hijri-only");
-              if (order === "hijri-kollavarsham") {
-                return (
-                  <>
-                    {showH && <span className="date-item">{getHijriDate().formatted}</span>}
-                    {showH && showK && <span className="date-sep">|</span>}
-                    {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
-                  </>
-                );
-              }
-              if (order === "kollavarsham-only") {
-                return showK ? <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span> : null;
-              }
-              if (order === "hijri-only") {
-                return showH ? <span className="date-item">{getHijriDate().formatted}</span> : null;
-              }
-              return (
-                <>
-                  {showK && <span className="date-item">{getKollavarsham().formatted} കൊല്ലവർഷം</span>}
-                  {showK && showH && <span className="date-sep">|</span>}
-                  {showH && <span className="date-item">{getHijriDate().formatted}</span>}
-                </>
-              );
-            })()}
+            {buildDateDisplayItems(settings, currentTime).map((item, i) => (
+              <Fragment key={i}>
+                {i > 0 && <span className="date-sep">|</span>}
+                <span className={item.rtl ? "date-item date-arabic" : "date-item"}>{item.text}</span>
+              </Fragment>
+            ))}
           </div>
           <span>{tagline}</span>
         </div></div>

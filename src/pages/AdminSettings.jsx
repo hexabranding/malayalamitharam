@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { Save, Bell, Lock, Palette, Globe, Database, RefreshCw, Upload, Calendar } from "lucide-react";
 import { fetchSettingsAll, updateSetting, seedSettings, uploadImage } from "../services/api.js";
 import { resolveImageUrl } from "../services/images.jsx";
+import { buildDateDisplayItems, toBool } from "../utils/dateDisplay.js";
 
 export default function AdminSettings({ navigate }) {
   const [settings, setSettings] = useState([]);
@@ -22,30 +23,51 @@ export default function AdminSettings({ navigate }) {
   function getValue(key, def = "") {
     if (key in dirty) return dirty[key];
     const s = settings.find(s => s.key === key);
-    return s ? s.value : def;
+    if (!s) return def;
+    const isBoolean = s.type === "boolean" || (KNOWN[key] && KNOWN[key].type === "boolean");
+    if (isBoolean && typeof s.value === "string") {
+      const t = s.value.trim().toLowerCase();
+      if (t === "true" || t === "1") return true;
+      if (t === "false" || t === "0") return false;
+    }
+    return s.value;
   }
 
   const SELECT_LABELS = {
     "malayalam": "Malayalam (മലയാളം)",
     "english": "English",
     "short": "Short (DD/MM/YYYY)",
+    "arabic": "Arabic (العربية)",
     "12h": "12 Hour (AM/PM)",
     "24h": "24 Hour",
-    "kollavarsham-hijri": "Kollavarsham → Hijri",
-    "hijri-kollavarsham": "Hijri → Kollavarsham",
-    "kollavarsham-only": "Kollavarsham Only",
-    "hijri-only": "Hijri Only",
+    "kollavarsham-hijri": "Malayalam → Arabic (both sides)",
+    "hijri-kollavarsham": "Arabic → Malayalam (both sides)",
+    "kollavarsham-only": "Malayalam only",
+    "hijri-only": "Arabic only",
   };
 
   const KNOWN = {
     carousel_category_width: { label: "Carousel Category Badge Width (px)", type: "number", value: 5 },
-    show_banner_date: { label: "Show Banner Date", type: "boolean", value: true },
+    show_banner_date: { label: "Show Current Date in Banner", type: "boolean", value: true },
     banner_date_format: { label: "Banner Date Format", type: "select", value: "malayalam", options: ["malayalam", "english"] },
     banner_time_format: { label: "Banner Time Format", type: "select", value: "24h", options: ["12h", "24h"] },
-    show_calendar_strip: { label: "Show Calendar Strip (Kollavarsham / Hijri bar)", type: "boolean", value: true },
+    show_calendar_strip: { label: "Show Date Strip", type: "boolean", value: true },
     date_display_order: { label: "Date Display Order", type: "select", value: "kollavarsham-hijri", options: ["kollavarsham-hijri", "hijri-kollavarsham", "kollavarsham-only", "hijri-only"] },
-    show_kollavarsham: { label: "Show Kollavarsham Date", type: "boolean", value: true },
-    show_hijri_date: { label: "Show Hijri Date", type: "boolean", value: true },
+    show_kollavarsham: { label: "Show Malayalam Date", type: "boolean", value: true },
+    ml_show_weekday: { label: "Show Weekday", type: "boolean", value: true },
+    ml_show_day: { label: "Show Day (date)", type: "boolean", value: true },
+    ml_show_month: { label: "Show Month", type: "boolean", value: true },
+    ml_show_year: { label: "Show Year (Kollavarsham)", type: "boolean", value: true },
+    ml_day_override: { label: "Set Day (1-31, 0 = automatic)", type: "number", value: 0 },
+    ml_date_override: { label: "Edit Malayalam Date (blank = automatic)", type: "text", value: "" },
+    show_hijri_date: { label: "Show Arabic Date", type: "boolean", value: true },
+    hijri_show_weekday: { label: "Show Weekday", type: "boolean", value: true },
+    hijri_show_day: { label: "Show Day (date)", type: "boolean", value: true },
+    hijri_show_month: { label: "Show Month", type: "boolean", value: true },
+    hijri_show_year: { label: "Show Year (Hijri)", type: "boolean", value: true },
+    hijri_day_override: { label: "Set Day (1-31, 0 = automatic)", type: "number", value: 0 },
+    hijri_date_override: { label: "Edit Arabic Date (blank = automatic)", type: "text", value: "" },
+    hijri_month_lang: { label: "Month & Weekday Name Language", type: "select", value: "malayalam", options: ["malayalam", "arabic"] },
     article_date_format: { label: "Article Date Format (Meta area)", type: "select", value: "malayalam", options: ["malayalam", "english", "short"] },
   };
 
@@ -55,17 +77,21 @@ export default function AdminSettings({ navigate }) {
     if (s && k) {
       // Prefer KNOWN metadata when DB has wrong/empty type (e.g. live DB has text for boolean)
       const type = s.type && s.type !== "text" ? s.type : k.type;
-      const label = s.label && s.label.trim() ? s.label : k.label;
-      const options = s.options && s.options.length ? s.options : k.options;
-      return { key: s.key, label, type: type || k.type, value: s.value, options };
+      const options = k.options || (s.options && s.options.length ? s.options : undefined);
+      return { key, label: k.label || (s.label && s.label.trim()) || key, type: type || k.type, value: s.value, options };
     }
     if (s) return { key: s.key, label: s.label || s.key, type: s.type || "text", value: s.value, options: s.options };
     return k ? { key, label: k.label, type: k.type, value: k.value, options: k.options } : null;
   }
 
   async function handleSave() {
-    for (const key of Object.keys(dirty)) {
-      await updateSetting(key, dirty[key]);
+    try {
+      for (const key of Object.keys(dirty)) {
+        await updateSetting(key, dirty[key]);
+      }
+    } catch (err) {
+      alert("Save failed: " + (err && err.message ? err.message : err));
+      return;
     }
     setDirty({});
     setMsg("Settings saved!");
@@ -75,10 +101,16 @@ export default function AdminSettings({ navigate }) {
   }
 
   async function handleSeed() {
-    await seedSettings();
+    try {
+      await seedSettings();
+    } catch (err) {
+      alert("Seed failed: " + (err && err.message ? err.message : err));
+      return;
+    }
     await load();
     setMsg("Default settings created!");
     setTimeout(() => setMsg(""), 3000);
+    window.dispatchEvent(new CustomEvent("mm-data-updated", { detail: { type: "settings" } }));
   }
 
   const renderField = (s) => {
@@ -90,7 +122,7 @@ export default function AdminSettings({ navigate }) {
         return <input type="number" value={val} onChange={e => handleChange(s.key, Number(e.target.value))} />;
       case "boolean":
         return (
-          <label className="checkbox-group">
+          <label className="checkbox-control">
             <input type="checkbox" checked={!!val} onChange={e => handleChange(s.key, e.target.checked)} />
             {s.label}
           </label>
@@ -136,10 +168,36 @@ export default function AdminSettings({ navigate }) {
   const groups = [
     { icon: Globe, label: "Site Info", keys: ["site_name", "site_tagline"] },
     { icon: Palette, label: "Appearance", keys: ["site_logo", "site_banner", "footer_logo", "primary_color", "secondary_color", "title_bg_color", "carousel_category_width"] },
-    { icon: Calendar, label: "Date Display", keys: ["show_banner_date", "banner_date_format", "banner_time_format", "show_calendar_strip", "date_display_order", "show_kollavarsham", "show_hijri_date", "article_date_format"] },
+    {
+      icon: Calendar,
+      label: "Date Display",
+      sections: [
+        { title: "Current Date & Time", keys: ["show_banner_date", "banner_date_format", "banner_time_format"] },
+        { title: "Date Strip", keys: ["show_calendar_strip", "date_display_order"] },
+        { title: "Malayalam Date (കൊല്ലവർഷം)", keys: ["show_kollavarsham", "ml_show_weekday", "ml_show_day", "ml_show_month", "ml_show_year", "ml_day_override", "ml_date_override"] },
+        { title: "Arabic Date (ഹിജ്രി)", keys: ["show_hijri_date", "hijri_show_weekday", "hijri_show_day", "hijri_show_month", "hijri_show_year", "hijri_month_lang", "hijri_day_override", "hijri_date_override"] },
+        { title: "Article Meta Date", keys: ["article_date_format"] },
+      ],
+    },
     { icon: Bell, label: "Social Links", keys: ["facebook_url", "youtube_url", "twitter_url", "instagram_url", "whatsapp_url", "telegram_url", "linkedin_url", "threads_url"] },
     { icon: Database, label: "Configuration", keys: ["articles_per_page"] },
   ];
+
+  const renderFields = (items) => items.map(s => s.type === "boolean" ? (
+    <div key={s.key} className="form-group checkbox-group">
+      {renderField(s)}
+    </div>
+  ) : (
+    <div key={s.key} className="form-group">
+      <label>{s.label || s.key}</label>
+      {renderField(s)}
+    </div>
+  ));
+
+  const previewSettings = {};
+  settings.forEach(s => { previewSettings[s.key] = s.value; });
+  Object.assign(previewSettings, dirty);
+  const previewItems = buildDateDisplayItems(previewSettings, new Date());
 
   return (
     <div className="admin-settings-page">
@@ -147,8 +205,11 @@ export default function AdminSettings({ navigate }) {
 
       <div className="settings-grid">
         {groups.map(group => {
-          const groupSettings = group.keys.map(getMeta).filter(Boolean);
-          if (groupSettings.length === 0) return null;
+          const sections = (group.sections || [{ keys: group.keys }]).map(sec => ({
+            ...sec,
+            items: (sec.keys || []).map(getMeta).filter(Boolean),
+          })).filter(sec => sec.items.length);
+          if (sections.length === 0) return null;
           return (
             <div key={group.label} className="settings-section">
               <div className="settings-section-header">
@@ -156,12 +217,30 @@ export default function AdminSettings({ navigate }) {
                 <h3>{group.label}</h3>
               </div>
               <div className="settings-form">
-                {groupSettings.map(s => (
-                  <div key={s.key} className="form-group">
-                    <label>{s.label || s.key}</label>
-                    {renderField(s)}
+                {sections.map((sec, i) => sec.title ? (
+                  <div key={sec.title} className="settings-subsection">
+                    <div className="settings-subhead">{sec.title}</div>
+                    {renderFields(sec.items)}
                   </div>
+                ) : (
+                  <Fragment key={i}>{renderFields(sec.items)}</Fragment>
                 ))}
+                {group.label === "Date Display" && (
+                  <div className="date-preview">
+                    <div className="date-preview-title">Current Display Preview</div>
+                    <div className="date-preview-strip date-display">
+                      {previewItems.length ? previewItems.map((item, i) => (
+                        <Fragment key={i}>
+                          {i > 0 && <span className="date-sep">|</span>}
+                          <span className={item.rtl ? "date-item date-arabic" : "date-item"}>{item.text}</span>
+                        </Fragment>
+                      )) : <span className="date-item date-preview-empty">Nothing to display</span>}
+                    </div>
+                    {!toBool(previewSettings.show_calendar_strip, true) && (
+                      <div className="date-preview-note">Date strip is hidden on the site — enable "Show Date Strip".</div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

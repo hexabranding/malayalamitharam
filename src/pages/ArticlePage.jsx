@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2, ChevronLeft, ChevronRight, X as CloseIcon, Images } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, ThumbsUp, Eye, Youtube, Play, Link2, Share2, ChevronLeft, ChevronRight, X as CloseIcon } from "lucide-react";
 import { fetchArticle, fetchNews, incrementView, fetchAuthors } from "../services/api.js";
 import { ArticleImage, resolveImageUrl } from "../services/images.jsx";
 
@@ -85,15 +85,23 @@ function extractMediaUrls(body) {
   return items;
 }
 
-function ArticleGallerySlider({ gallery, title }) {
+function ArticleGallerySlider({ gallery, mainImage, title }) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(null); // null or index
 
-  const images = gallery.map((u) => resolveImageUrl(u) || u).filter(Boolean);
+  // Main image is slide 1, gallery images follow it (same order as admin preview)
+  const galleryKey = (gallery || []).join("|");
+  const images = useMemo(() => {
+    const resolvedGallery = (gallery || []).map((u) => resolveImageUrl(u) || u).filter(Boolean);
+    const main = mainImage ? (resolveImageUrl(mainImage) || mainImage) : null;
+    const rest = main ? resolvedGallery.filter((u) => u !== main) : resolvedGallery;
+    return main ? [main, ...rest] : rest;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [galleryKey, mainImage]);
 
   useEffect(() => {
     setActive(0);
-  }, [gallery]);
+  }, [images]);
 
   const prev = useCallback(() => setActive((i) => (i - 1 + images.length) % images.length), [images.length]);
   const next = useCallback(() => setActive((i) => (i + 1) % images.length), [images.length]);
@@ -136,11 +144,6 @@ function ArticleGallerySlider({ gallery, title }) {
   return (
     <>
       <div className="article-gallery" data-aos="fade-up" data-aos-delay="120">
-        <div className="article-gallery-header">
-          <span className="article-gallery-title"><Images size={18} /> Gallery ({images.length})</span>
-          <span className="article-gallery-counter">{active + 1} / {images.length}</span>
-        </div>
-
         <div
           className="article-gallery-main"
           onTouchStart={onTouchStart}
@@ -157,26 +160,9 @@ function ArticleGallerySlider({ gallery, title }) {
             <>
               <button className="ag-nav ag-prev" onClick={prev} aria-label="Previous image"><ChevronLeft size={22} /></button>
               <button className="ag-nav ag-next" onClick={next} aria-label="Next image"><ChevronRight size={22} /></button>
-              <button className="ag-expand" onClick={() => setLightbox(active)} aria-label="Expand">⛶</button>
             </>
           )}
         </div>
-
-        {images.length > 1 && (
-          <div className="article-gallery-thumbs">
-            {images.map((src, idx) => (
-              <button
-                key={idx}
-                className={`ag-thumb ${idx === active ? "active" : ""}`}
-                onClick={() => setActive(idx)}
-                aria-label={`View image ${idx + 1}`}
-              >
-                <img src={src} alt={`Thumb ${idx + 1}`} onError={(e) => { e.target.style.display = "none"; }} />
-              </button>
-            ))}
-          </div>
-        )}
-        <p className="ag-hint">Click image to expand • Swipe or use arrows to move • Thumbnails to select</p>
       </div>
 
       {lightbox !== null && (
@@ -352,13 +338,25 @@ export default function ArticlePage({ slug, navigate }) {
         <article className="article-detail" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
         <Meta article={article} />
 
-        <div>
-          <ArticleImage article={article} alt={article.title} className="detail-image" />
-        </div>
-
-        {Array.isArray(article.gallery) && article.gallery.filter(Boolean).length > 0 && (
-          <ArticleGallerySlider gallery={article.gallery.filter(Boolean)} title={article.title} />
-        )}
+        {(() => {
+          const gallery = Array.isArray(article.gallery) ? article.gallery.filter(Boolean) : [];
+          const mainImage = article.image || article.thumbnail || "";
+          if (gallery.length === 0) {
+            return (
+              <div>
+                <ArticleImage article={article} alt={article.title} className="detail-image" />
+              </div>
+            );
+          }
+          return (
+            <ArticleGallerySlider
+              key={article.slug || article.id || article.title}
+              mainImage={mainImage}
+              gallery={gallery}
+              title={article.title}
+            />
+          );
+        })()}
 
         <blockquote
           className="article-lead-blockquote"

@@ -21,6 +21,8 @@ const HIJRI_MONTHS_AR = [
   "رمضان", "شوّال", "ذو القعدة", "ذو الحجة"
 ];
 
+const HIJRI_WEEKDAYS_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
 const GREGORIAN_MONTHS_ML = [
   "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ",
   "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്",
@@ -109,12 +111,21 @@ export function getKollavarsham(date = new Date()) {
 export function getHijriDate(date = new Date()) {
   const h = gregorianToHijri(date);
   const hijriDay = h.day + 1;
+  const monthMl = HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0];
+  const monthAr = HIJRI_MONTHS_AR[h.month - 1] || HIJRI_MONTHS_AR[0];
+  const weekdayIndex = (toJulianDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) + 1) % 7;
+  const weekdayMl = MALAYALAM_WEEKDAYS[weekdayIndex];
+  const weekdayAr = HIJRI_WEEKDAYS_AR[weekdayIndex];
   return {
     day: hijriDay,
-    month: HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0],
+    month: monthMl,
+    monthAr,
     monthIndex: h.month - 1,
     year: h.year,
-    formatted: `${hijriDay} ${HIJRI_MONTHS_ML[h.month - 1] || HIJRI_MONTHS_ML[0]} ${h.year}`
+    weekday: weekdayMl,
+    weekdayAr,
+    formatted: `${hijriDay} ${monthMl} ${h.year}`,
+    formattedAr: `${hijriDay} ${monthAr} ${h.year}`
   };
 }
 
