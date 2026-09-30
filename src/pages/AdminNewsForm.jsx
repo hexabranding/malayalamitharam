@@ -218,30 +218,57 @@ export default function AdminNewsForm({ navigate, newsId }) {
     setGalleryUrlInput("");
   };
 
-  const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    // Batch upload to avoid stale state updates and show combined result
-    const uploadedUrls = [];
-    const failed = [];
-    for (const file of files) {
-      try {
-        const result = await uploadImage(file);
-        if (result && result.url) uploadedUrls.push(result.url);
-        else failed.push(file.name);
-      } catch (err) {
-        failed.push(file.name + ": " + err.message);
+ const handleGalleryUpload = async (e) => {
+  const files = Array.from(e.target.files || []);
+
+  if (files.length === 0) return;
+
+  const uploadedUrls = [];
+  const failed = [];
+
+  for (const file of files) {
+    try {
+      const result = await uploadImage(file);
+
+      if (!result?.url) {
+        throw new Error("Server did not return image URL");
       }
+
+      if (result?._storageOk === false) {
+        throw new Error("Image was not saved to server storage");
+      }
+
+      uploadedUrls.push(result.url);
+
+    } catch (err) {
+      failed.push(`${file.name}: ${err.message}`);
     }
-    if (uploadedUrls.length > 0) {
-      setPreviewIndex((formData.image ? 1 : 0) + formData.gallery.length);
-      setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...uploadedUrls] }));
-    }
-    if (failed.length > 0) {
-      alert("Upload failed for: " + failed.join(", "));
-    }
-    e.target.value = "";
-  };
+  }
+
+  if (uploadedUrls.length > 0) {
+    setPreviewIndex(
+      (formData.image ? 1 : 0) +
+      formData.gallery.length
+    );
+
+    setFormData(prev => ({
+      ...prev,
+      gallery: [
+        ...(prev.gallery || []),
+        ...uploadedUrls
+      ]
+    }));
+  }
+
+  if (failed.length > 0) {
+    alert(
+      "Some images failed to upload:\n\n" +
+      failed.join("\n")
+    );
+  }
+
+  e.target.value = "";
+};
 
   const removeGalleryImage = (index) => {
     setFormData(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }));
