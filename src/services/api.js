@@ -1,5 +1,18 @@
+import { readStoredLang, DEFAULT_LANG } from "../i18n/index.js";
+
 const BASE = import.meta.env.VITE_API_URL || (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "/api" : "https://api.malayalamitharam.in/api");
 export const API_BASE = BASE;
+
+// News is translated server-side; Malayalam is the stored source language,
+// so only the non-default languages need to ask the API for a translation.
+export function currentLang() {
+  return readStoredLang() || DEFAULT_LANG;
+}
+
+function langParam() {
+  const lang = currentLang();
+  return lang === DEFAULT_LANG ? "" : "&lang=" + lang;
+}
 
 function decodeTokenExp(token) {
   try {
@@ -101,25 +114,35 @@ export async function fetchNews(params = {}) {
   if (params.search) q.set("search", params.search);
   if (params.limit) q.set("limit", String(params.limit));
   if (params.page) q.set("page", String(params.page));
+  const lang = currentLang();
+  // `source: true` always asks for the stored Malayalam original (used by the
+  // admin editor, which must never save a translated copy back over it).
+  const useLang = !params.source && lang !== DEFAULT_LANG;
+  if (useLang) q.set("lang", lang);
   const query = q.toString();
   // Always send Authorization if available so backend can distinguish admin (published filter) vs public
   const h = headers();
   // For GET we don't need Content-Type, but keep Authorization
   const getHeaders = {};
   if (h.Authorization) getHeaders.Authorization = h.Authorization;
-  return request("/news" + (query ? "?" + query : ""), { headers: getHeaders });
+  return request("/news" + (query ? "?" + query : ""), { headers: getHeaders }, useLang ? 40000 : 15000);
 }
 
-export async function fetchArticle(slug) {
+export async function fetchArticle(slug, options = {}) {
   const h = headers();
   const getHeaders = {};
   if (h.Authorization) getHeaders.Authorization = h.Authorization;
-  const result = await request("/news/" + safeEncode(slug), { headers: getHeaders });
+  const lang = currentLang();
+  const useLang = !options.source && lang !== DEFAULT_LANG;
+  const suffix = useLang ? "?lang=" + lang : "";
+  const result = await request("/news/" + safeEncode(slug) + suffix, { headers: getHeaders }, useLang ? 40000 : 15000);
   return articlePayload(result);
 }
 
 export async function fetchArticleByTitleSlug(titleSlug) {
-  const result = await request("/news/title-slug/" + safeEncode(titleSlug));
+  const lang = currentLang();
+  const suffix = lang === DEFAULT_LANG ? "" : "?lang=" + lang;
+  const result = await request("/news/title-slug/" + safeEncode(titleSlug) + suffix);
   return articlePayload(result);
 }
 

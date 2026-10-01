@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { login } from "../services/api.js";
 import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useT } from "../context/LangContext.jsx";
 
 export default function LoginPage({ onLoginSuccess }) {
+  const t = useT();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -13,7 +15,7 @@ export default function LoginPage({ onLoginSuccess }) {
     e.preventDefault();
     setError("");
     if (!username || !password) {
-      setError("Please enter username/email and password");
+      setError(t("login.errorRequired"));
       return;
     }
     setLoading(true);
@@ -23,9 +25,9 @@ export default function LoginPage({ onLoginSuccess }) {
       onLoginSuccess(data);
     } catch (err) {
       if (err.message.includes("fetch") || err.message.includes("network") || err.message.includes("Failed") || err.message.includes("NetworkError")) {
-        setError("Cannot connect to server. Please try again later.");
+        setError(t("login.errorNetwork"));
       } else {
-        setError(err.message || "Login failed");
+        setError(err.message || t("login.errorFailed"));
       }
     } finally {
       setLoading(false);
@@ -38,24 +40,24 @@ export default function LoginPage({ onLoginSuccess }) {
         <div className="admin-login-logo">
           <img
             src="/images/malayalamithram-logo.png"
-            alt="Malayalamithram"
+            alt={t("login.logoAlt")}
             className="admin-login-logo-img"
           />
         </div>
 
-        <h1 className="admin-login-title">മലയാളമിത്രം</h1>
-        <p className="admin-login-subtitle">ADMIN PANEL</p>
+        <h1 className="admin-login-title">{t("login.title")}</h1>
+        <p className="admin-login-subtitle">{t("login.subtitle")}</p>
 
         <form className="admin-login-form" onSubmit={handleSubmit}>
           {error && <div className="admin-login-error">{error}</div>}
 
           <div className="admin-login-field">
-            <label>Username or Email</label>
+            <label>{t("login.usernameLabel")}</label>
             <div className="admin-login-input-wrap">
               <Mail size={18} className="admin-login-icon" />
               <input
                 type="text"
-                placeholder="Enter username or email"
+                placeholder={t("login.usernamePlaceholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoFocus
@@ -64,12 +66,12 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
 
           <div className="admin-login-field">
-            <label>Password</label>
+            <label>{t("login.passwordLabel")}</label>
             <div className="admin-login-input-wrap">
               <Lock size={18} className="admin-login-icon" />
               <input
                 type={showPw ? "text" : "password"}
-                placeholder="Enter password"
+                placeholder={t("login.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -86,13 +88,13 @@ export default function LoginPage({ onLoginSuccess }) {
 
           <button className="admin-login-btn" type="submit" disabled={loading}>
             {loading ? <div className="admin-login-spinner" /> : <LogIn size={20} />}
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? t("login.signingIn") : t("login.signIn")}
           </button>
         </form>
 
         <div className="admin-login-hint">
           <a href="/" style={{ color: "#0d4228", fontWeight: 600, textDecoration: "none" }}>
-            &larr; Back to Website
+            &larr; {t("login.back")}
           </a>
         </div>
       </div>

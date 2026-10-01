@@ -1,8 +1,10 @@
 import { Camera } from "lucide-react";
 import { ArticleImage } from "../services/images.jsx";
 import { getTitleSlug } from "../utils/articleStore.js";
+import { useT } from "../context/LangContext.jsx";
 
 export default function PhotoGallery({ articles, navigate }) {
+  const t = useT();
   const galleryArticles = articles.filter((a) => a.image).slice(0, 4);
 
   if (galleryArticles.length === 0) return null;
@@ -13,9 +15,9 @@ export default function PhotoGallery({ articles, navigate }) {
         <div className="gallery-header">
           <div className="gallery-title">
             <Camera size={24} />
-            <h3>ഫോട്ടോ ഗാലറി</h3>
+            <h3>{t("gallery.title")}</h3>
           </div>
-          <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent("Photo-gallery"))}>View All</button>
+          <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent("Photo-gallery"))}>{t("gallery.viewAll")}</button>
         </div>
         
         <div className="photo-grid">

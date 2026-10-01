@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
+import LanguageBar from "./LanguageBar.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 
 export default function Layout({ children, navigate, activeSlug }) {
@@ -16,10 +17,13 @@ export default function Layout({ children, navigate, activeSlug }) {
   }, [titleBg]);
 
   return (
-    <div className="site-shell">
-      <Header navigate={navigate} activeSlug={activeSlug} />
-      <div className="site-body">{children}</div>
-      <Footer navigate={navigate} />
-    </div>
+    <>
+      <div className="site-shell">
+        <Header navigate={navigate} activeSlug={activeSlug} />
+        <div className="site-body">{children}</div>
+        <Footer navigate={navigate} />
+      </div>
+      <LanguageBar />
+    </>
   );
 }

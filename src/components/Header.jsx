@@ -6,6 +6,7 @@ import { fetchNews } from "../services/api.js";
 import { getEnglishDate } from "../utils/calendars.js";
 import { buildDateDisplayItems, toBool } from "../utils/dateDisplay.js";
 import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { useT } from "../context/LangContext.jsx";
 
 function XLogo({ size = 18 }) {
   return (
@@ -26,6 +27,7 @@ export default function Header({ navigate, activeSlug }) {
   const debounceRef = useRef(null);
   const settings = useSettings();
   const navGroups = useMenuGroups();
+  const t = useT();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -68,26 +70,26 @@ export default function Header({ navigate, activeSlug }) {
     navigate("/search?q=" + encodeURIComponent(q));
   }
 
-  const ML_WEEKDAYS = ["ഞായർ", "തിങ്കൾ", "ചൊവ്വ", "ബുധൻ", "വ്യാഴം", "വെള്ളി", "ശനി"];
-  const ML_MONTHS = ["ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്തംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"];
+  const WEEKDAYS = t("header.weekdays").split(",");
+  const MONTHS = t("header.months").split(",");
   function formatBannerDate(d) {
     if (settings.banner_date_format === "english") {
       return getEnglishDate(d).formatted;
     }
-    return ML_WEEKDAYS[d.getDay()] + ", " + d.getDate() + " " + ML_MONTHS[d.getMonth()] + " " + d.getFullYear();
+    return WEEKDAYS[d.getDay()] + ", " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
   }
 
   function formatBannerTime(d) {
     if (settings.banner_time_format === "12h") {
       return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
     }
-    return d.toLocaleTimeString("ml-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString(t("header.timeLocale"), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }
 
   const openPath = (item) => item.path || (item.slug === "home" ? "/" : "/category/" + encodeURIComponent(item.slug));
   const banner = resolveImageUrl(settings.site_banner) || "/images/malayala-mitra-banner.jpeg";
   const logo = resolveImageUrl(settings.site_logo) || "/images/malayalamithram-logo.png";
-  const tagline = settings.site_tagline || "മലയാളികളുടെ വാർത്താ കൂട്ടുകാരൻ";
+  const tagline = settings.site_tagline || t("header.tagline");
   const siteName = settings.site_name || "Malayalamithram";
   const social = {
     facebook: settings.facebook_url,
@@ -105,7 +107,7 @@ export default function Header({ navigate, activeSlug }) {
       <div className="banner-wrap">
         <div className="banner-inner">
           {toBool(settings.show_banner_date, true) && <span className="banner-date">{formatBannerDate(currentTime)}</span>}
-          <img src={banner} alt="മലയാളമിത്രം" />
+          <img src={banner} alt={t("header.bannerAlt")} />
           <span className="banner-time">{formatBannerTime(currentTime)}</span>
         </div>
       </div>
@@ -123,13 +125,13 @@ export default function Header({ navigate, activeSlug }) {
         </div></div>
       )}
       <div className="container masthead">
-        <button className="icon-button mobile-only" onClick={() => setMenuOpen(true)} aria-label="മെനു തുറക്കുക"><Menu size={22} /></button>
+        <button className="icon-button mobile-only" onClick={() => setMenuOpen(true)} aria-label={t("header.menuOpen")}><Menu size={22} /></button>
         <div className="search-wrapper masthead-search" ref={searchRef}>
           <form className="search-form" onSubmit={handleSearchSubmit}>
-            <button type="submit" className="search-submit" aria-label="Search"><Search size={18} /></button>
+            <button type="submit" className="search-submit" aria-label={t("header.searchAria")}><Search size={18} /></button>
             <input
               name="q"
-              placeholder="വാർത്തകൾ തിരയുക"
+              placeholder={t("header.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
               onFocus={() => setShowSuggestions(true)}
@@ -140,25 +142,25 @@ export default function Header({ navigate, activeSlug }) {
             <div className="search-suggestions">
               {suggestions.length > 0 ? (
                 <>
-                  <div className="suggestion-header">ഏറ്റവും പുതിയ വാർത്തകൾ</div>
+                  <div className="suggestion-header">{t("header.latest")}</div>
                   {suggestions.map((article) => (
                     <button key={article.id} className="suggestion-item" onClick={() => handleSuggestionClick(article)}>
                       {article.image && <img src={article.image} alt="" className="suggestion-thumb" />}
                       <div className="suggestion-text">
                         <span className="suggestion-title">{article.title}</span>
-                        {article.categoryMl && <span className="suggestion-cat">{article.categoryMl}</span>}
+                        {(article.categoryT || article.categoryMl) && <span className="suggestion-cat">{article.categoryT || article.categoryMl}</span>}
                       </div>
                     </button>
                   ))}
                   <button className="suggestion-footer" onClick={handleSearchSubmit}>
-                    <Search size={14} /> "{searchQuery}" എല്ലാം കാണുക
+                    <Search size={14} /> {t("header.viewAll", { q: searchQuery })}
                   </button>
                 </>
               ) : searchQuery.trim().length >= 1 ? (
-                <div className="suggestion-empty">ഫലങ്ങൾ ഒന്നുമില്ല</div>
+                <div className="suggestion-empty">{t("header.noResults")}</div>
               ) : (
                 <>
-                  <div className="suggestion-header">ട്രെൻഡിംഗ് തിരയലുകൾ</div>
+                  <div className="suggestion-header">{t("header.trending")}</div>
                   {["കേരളം", "ഇന്ത്യ", "ഗൾഫ്", "സിനിമ", "ഫുട്ബോൾ", "ടെക്"].map((tag) => (
                     <button key={tag} className="suggestion-item trending" onClick={() => { setSearchQuery(tag); setShowSuggestions(true); }}>
                       <Search size={14} /> {tag}
@@ -170,9 +172,9 @@ export default function Header({ navigate, activeSlug }) {
           )}
         </div>
         <button className="brand" onClick={() => navigate("/")}>
-          <img src={logo} alt="മലയാളമിത്രം" className="brand-logo-img" />
+          <img src={logo} alt={t("header.bannerAlt")} className="brand-logo-img" />
         </button>
-        <div className="social-links" aria-label="Social links">
+        <div className="social-links" aria-label={t("header.socialAria")}>
           <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined}><Facebook size={18} /></a>
           <a href={social.youtube && social.youtube !== "#" ? social.youtube : "#"} target={social.youtube && social.youtube !== "#" ? "_blank" : undefined} rel={social.youtube && social.youtube !== "#" ? "noopener noreferrer" : undefined}><Youtube size={19} /></a>
           <a href={social.twitter && social.twitter !== "#" ? social.twitter : "#"} target={social.twitter && social.twitter !== "#" ? "_blank" : undefined} rel={social.twitter && social.twitter !== "#" ? "noopener noreferrer" : undefined}><XLogo size={18} /></a>
@@ -218,7 +220,7 @@ export default function Header({ navigate, activeSlug }) {
         ))}
       </div></nav>
       {menuOpen && <div className="drawer"><div className="drawer-panel">
-        <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="മെനു അടയ്ക്കുക"><X size={22} /></button>
+        <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label={t("header.menuClose")}><X size={22} /></button>
         {navGroups.map((group) => <div className="drawer-group" key={group.slug}><button onClick={() => { if (!group.children?.length) { setMenuOpen(false); navigate(openPath(group)); } else if (group.children.length === 1) { setMenuOpen(false); navigate(openPath(group.children[0])); } }}>{group.label}</button>{group.children?.length > 1 && group.children.map((child) => <button className="drawer-child" key={child.slug} onClick={() => { setMenuOpen(false); navigate(openPath(child)); }}>{child.label}</button>)}</div>)}
       </div></div>}
     </header>

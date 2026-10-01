@@ -5,8 +5,10 @@ import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 export default function SearchPage({ path, navigate }) {
+  const t = useT();
   const params = new URLSearchParams(path.split("?")[1] || "");
   const query = params.get("q") || "";
   const normalized = query.trim();
@@ -55,8 +57,8 @@ export default function SearchPage({ path, navigate }) {
   return (
     <PageLayout navigate={navigate}>
       <div className="page-title" data-aos="fade-up">
-        <span>തിരച്ചിൽ</span>
-        <h1>{normalized ? "\"" + normalized + "\"" : "എല്ലാ വാർത്തകളും"}</h1>
+        <span>{t("search.title")}</span>
+        <h1>{normalized ? "\"" + normalized + "\"" : t("search.all")}</h1>
       </div>
       {results.length > 0 ? (
         <>
@@ -67,22 +69,22 @@ export default function SearchPage({ path, navigate }) {
           </div>
           {totalPages > 1 && (
             <div className="pagination" data-aos="zoom-in">
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>{t("search.prev")}</button>
               {[...Array(totalPages)].map((_, i) => (
                 <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
               ))}
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>{t("search.next")}</button>
             </div>
           )}
           <div className="category-info">
-            <p>Showing {startIndex + 1}-{Math.min(endIndex, results.length)} of {results.length} results</p>
+            <p>{t("search.showing", { from: startIndex + 1, to: Math.min(endIndex, results.length), total: results.length })}</p>
           </div>
-          <AdSlot slot="search-bottom" label="Search Bottom Ad" />
+          <AdSlot slot="search-bottom" label={t("search.adLabel")} />
         </>
       ) : (
         <EmptyState
-          title="No news found"
-          message="Try another word, or open a main category from below. New admin posts will appear here automatically."
+          title={t("search.emptyTitle")}
+          message={t("search.emptyMessage")}
           navigate={navigate}
           query={normalized}
         />

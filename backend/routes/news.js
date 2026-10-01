@@ -2,8 +2,23 @@ const express = require("express");
 const Article = require("../models/Article");
 const { authMiddleware } = require("../middleware/auth");
 const { slugifyEnglish, suggestNewsSlug, slugifyManglish, isCleanNewsSlug } = require("../utils/newsSlug");
+const {
+  normalizeLang,
+  translateOne,
+  translateMany,
+  translateArticle,
+} = require("../utils/translate");
+const { warmArticle } = require("../utils/warmTranslations");
 
 const router = express.Router();
+
+// Returns articles rendered in `?lang=en` / `?lang=ar`. Translation is
+// cached globally so each unique string is only ever paid for once.
+async function withLang(docs, req, full) {
+  const lang = normalizeLang(req.query.lang);
+  if (!lang) return docs;
+  return Promise.all(docs.map((doc) => translateArticle(doc, lang, { full })));
+}
 
 const BG_COLORS = ["#c91f26", "#1565c0", "#2e7d32", "#ef6c00", "#6a1b9a"];
 
@@ -102,7 +117,7 @@ router.get("/", async (req, res) => {
       .lean({ virtuals: true });
 
     // lean virtuals already includes id = slug, but ensure id field exists for frontend
-    const news = docs.map((d) => ({ ...d, id: d.id || d.slug }));
+    const news = await withLang(docs.map((d) => ({ ...d, id: d.id || d.slug })), req, false);
 
     res.json({ news, total, page: pg, limit: lim });
   } catch (err) {
@@ -117,7 +132,8 @@ router.get("/slug/:slug", async (req, res) => {
     const article = await findArticleBySlug(req.params.slug, isAdmin);
     if (!article) return res.status(404).json({ error: "Article not found" });
     if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
-    res.json(article.toJSON());
+    const [payload] = await withLang([article.toJSON()], req, true);
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -130,7 +146,8 @@ router.get("/:slug", async (req, res) => {
     if (!article) return res.status(404).json({ error: "Article not found" });
     if (!article.published && !isAdmin) return res.status(404).json({ error: "Article not found" });
 
-    res.json(article.toJSON());
+    const [payload] = await withLang([article.toJSON()], req, true);
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -140,6 +157,30 @@ function sanitizeGallery(input) {
   if (!Array.isArray(input)) return [];
   return input.map((u) => String(u).trim()).filter(Boolean).slice(0, 30);
 }
+
+router.post("/translate", async (req, res) => {
+  try {
+    const lang = normalizeLang(req.body?.lang);
+    const text = typeof req.body?.text === "string" ? req.body.text : "";
+    if (!lang) return res.status(400).json({ error: "Unsupported lang" });
+    const translated = await translateOne(text, lang);
+    res.json({ translated });
+  } catch (err) {
+    res.status(500).json({ error: "Translation failed" });
+  }
+});
+
+router.post("/translate-batch", async (req, res) => {
+  try {
+    const lang = normalizeLang(req.body?.lang);
+    const texts = Array.isArray(req.body?.texts) ? req.body.texts : [];
+    if (!lang) return res.status(400).json({ error: "Unsupported lang" });
+    const translations = await translateMany(texts, lang);
+    res.json({ translations });
+  } catch (err) {
+    res.status(500).json({ error: "Translation failed" });
+  }
+});
 
 router.post("/", authMiddleware, async (req, res) => {
   try {
@@ -188,9 +229,16 @@ router.post("/", authMiddleware, async (req, res) => {
       backgroundColor: backgroundColor || getRandomBgColor(),
     });
 
-    res.status(201).json(article.toJSON());
+    const payload = article.toJSON();
+    // New articles have a cold translation cache: warm it in the background so
+    // switching to English/Arabic right after publishing already shows them
+    // translated.
+    warmArticle(payload).catch(() => {});
+
+    res.status(201).json(payload);
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    console.error("POST /api/news failed:", err);
+    res.status(500).json({ error: "Failed to save news: " + (err.message || "unknown error") });
   }
 });
 
@@ -231,9 +279,13 @@ router.put("/:id", authMiddleware, async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!article) return res.status(404).json({ error: "Article not found" });
+    // Edited text is new to the cache; re-warm it so the saved article shows
+    // translated in every language.
+    warmArticle(article.toJSON()).catch(() => {});
     res.json(article);
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    console.error("PUT /api/news failed:", err);
+    res.status(500).json({ error: "Failed to update news: " + (err.message || "unknown error") });
   }
 });
 

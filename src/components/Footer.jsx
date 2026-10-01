@@ -2,6 +2,7 @@ import { AtSign, Facebook, Instagram, Linkedin, MessageCircle, Send, Youtube } f
 import { useMemo } from "react";
 import { useSettings, useMenuGroups } from "../context/DataContext.jsx";
 import { resolveImageUrl } from "../services/images.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 function XLogo({ size = 18 }) {
   return (
@@ -14,6 +15,7 @@ function XLogo({ size = 18 }) {
 export default function Footer({ navigate }) {
   const settings = useSettings();
   const menuGroups = useMenuGroups();
+  const t = useT();
   const logo = resolveImageUrl(settings.footer_logo) || "/images/footer%20logo.png";
   const categories = useMemo(() => {
     return menuGroups.flatMap((group) => group.children || []).slice(0, 8);
@@ -29,17 +31,25 @@ export default function Footer({ navigate }) {
     linkedin: settings.linkedin_url,
     threads: settings.threads_url,
   };
-  
+
+  const quickLinks = [
+    { label: t("footer.home"), path: "/" },
+    { label: t("footer.searchNews"), path: "/search" },
+    { label: t("footer.topTags"), path: "/tags/കേരളം" },
+    { label: t("footer.writers"), path: "/author" },
+    { label: t("footer.contactUs"), path: "/contact" },
+  ];
+
   return (
     <footer className="site-footer" data-aos="fade-up">
       <div className="container footer-grid">
-        
+
         {/* About & Branding Column */}
         <div className="footer-col about">
           <button className="footer-brand-logo" type="button" onClick={() => navigate("/")}>
-            <img src={logo} alt="Malayalamithram Logo" />
+            <img src={logo} alt={t("footer.logoAlt")} />
           </button>
-          <p>മലയാളം വായനക്കാർക്കായി ഏറ്റവും പുതിയ വാർത്തകൾ, വിശകലനങ്ങൾ, തത്സമയ വിവരങ്ങൾ, ഫോട്ടോകൾ, വീഡിയോകൾ എന്നിവ വേഗതയിലും കൃത്യതയിലും ലഭ്യമാക്കുന്നു.</p>
+          <p>{t("footer.tagline")}</p>
           <div className="footer-socials">
             <a href={social.facebook && social.facebook !== "#" ? social.facebook : "#"} target={social.facebook && social.facebook !== "#" ? "_blank" : undefined} rel={social.facebook && social.facebook !== "#" ? "noopener noreferrer" : undefined} aria-label="Facebook"><Facebook size={18} /></a>
             <a href={social.twitter && social.twitter !== "#" ? social.twitter : "#"} target={social.twitter && social.twitter !== "#" ? "_blank" : undefined} rel={social.twitter && social.twitter !== "#" ? "noopener noreferrer" : undefined} aria-label="X"><XLogo size={18} /></a>
@@ -54,11 +64,11 @@ export default function Footer({ navigate }) {
 
         {/* Newsletter Signup Column */}
         <div className="footer-col newsletter-col">
-          <h2>വാർത്താ പത്രിക</h2>
-          <p>പ്രധാന വാർത്തകൾ തത്സമയം നിങ്ങളുടെ ഇമെയിലിൽ ലഭിക്കുന്നതിനായി സബ്‌സ്‌ക്രൈബ് ചെയ്യുക.</p>
+          <h2>{t("footer.newsletterTitle")}</h2>
+          <p>{t("footer.newsletterDesc")}</p>
           <form className="footer-newsletter-form" onSubmit={(e) => e.preventDefault()}>
-            <input type="email" placeholder="ഇമെയിൽ വിലാസം" required />
-            <button type="submit" aria-label="അയക്കുക">
+            <input type="email" placeholder={t("footer.emailPlaceholder")} required />
+            <button type="submit" aria-label={t("footer.send")}>
               <Send size={16} />
             </button>
           </form>
@@ -69,7 +79,7 @@ export default function Footer({ navigate }) {
 
         {/* Categories Column */}
         <div className="footer-col links">
-          <h2>വാർത്തകൾ</h2>
+          <h2>{t("footer.newsHeading")}</h2>
           <div className="links-list">
             {categories.map((item) => (
               <button key={item.slug} onClick={() => navigate(item.path || "/category/" + item.slug)}>
@@ -81,21 +91,19 @@ export default function Footer({ navigate }) {
 
         {/* Quick Links Column */}
         <div className="footer-col links">
-          <h2>ലിങ്കുകൾ</h2>
+          <h2>{t("footer.linksHeading")}</h2>
           <div className="links-list">
-            <button onClick={() => navigate("/")}>ഹോം പേജ്</button>
-            <button onClick={() => navigate("/search")}>വാർത്തകൾ തിരയുക</button>
-            <button onClick={() => navigate("/tags/കേരളം")}>പ്രധാന ടാഗുകൾ</button>
-            <button onClick={() => navigate("/author")}>ലേഖകർ</button>
-            <button onClick={() => navigate("/contact")}>ഞങ്ങളെ ബന്ധപ്പെടുക</button>
+            {quickLinks.map((item) => (
+              <button key={item.path} onClick={() => navigate(item.path)}>{item.label}</button>
+            ))}
           </div>
         </div>
 
       </div>
       <div className="copyright">
         <div className="container copyright-inner">
-          <span>© 2026 Malayalamithram. All Rights Reserved.</span>
-          <span>നിർമ്മാണം: മലയാളമിത്രം ഡിജിറ്റൽ ടീം</span>
+          <span>{t("footer.rights")}</span>
+          <span>{t("footer.credit")}</span>
         </div>
       </div>
     </footer>

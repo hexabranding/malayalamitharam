@@ -68,6 +68,9 @@ export function clearCategoryCache() {
 
 export function getCategoryName(article) {
   if (!article) return "";
+  // `categoryT` is the translated chip label; `categoryMl` drives filtering
+  // so it is never replaced.
+  if (article.categoryT) return article.categoryT;
   const ml = article.categoryMl;
   const cat = article.category;
 

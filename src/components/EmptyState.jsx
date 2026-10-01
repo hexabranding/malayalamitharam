@@ -1,6 +1,8 @@
 import { Search, Newspaper } from "lucide-react";
+import { useT } from "../context/LangContext.jsx";
 
 export default function EmptyState({ title, message, navigate, query }) {
+  const t = useT();
   return (
     <section className="empty-state-panel">
       <Newspaper size={34} aria-hidden="true" />
@@ -8,10 +10,10 @@ export default function EmptyState({ title, message, navigate, query }) {
         <h2>{title}</h2>
         <p>{message}</p>
         <div className="empty-state-actions">
-          <button type="button" onClick={() => navigate("/")}>Home</button>
-          <button type="button" onClick={() => navigate("/category/kerala")}>Kerala</button>
-          <button type="button" onClick={() => navigate("/category/photos")}><Search size={15} /> Photos</button>
-          {query ? <button type="button" onClick={() => navigate("/search?q=" + encodeURIComponent(query))}>Search all</button> : null}
+          <button type="button" onClick={() => navigate("/")}>{t("empty.home")}</button>
+          <button type="button" onClick={() => navigate("/category/kerala")}>{t("empty.kerala")}</button>
+          <button type="button" onClick={() => navigate("/category/photos")}><Search size={15} /> {t("empty.photos")}</button>
+          {query ? <button type="button" onClick={() => navigate("/search?q=" + encodeURIComponent(query))}>{t("empty.searchAll")}</button> : null}
         </div>
       </div>
     </section>

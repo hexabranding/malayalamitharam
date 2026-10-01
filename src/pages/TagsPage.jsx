@@ -5,8 +5,10 @@ import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 export default function TagsPage({ tag, navigate }) {
+  const t = useT();
   const [list, setList] = useState(() => fallback.filter(a => (a.tags || []).includes(tag)));
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -32,10 +34,10 @@ export default function TagsPage({ tag, navigate }) {
   return (
     <PageLayout navigate={navigate}>
       <div className="page-title" data-aos="fade-up">
-        <span>ടാഗ്</span>
+        <span>{t("tags.title")}</span>
         <h1>{tag}</h1>
       </div>
-      <AdSlot slot="tags" label="Tag Page Ad" />
+      <AdSlot slot="tags" label={t("tags.adLabel")} />
       {list.length > 0 ? (
         <>
           <div className="list-feed">
@@ -45,21 +47,21 @@ export default function TagsPage({ tag, navigate }) {
           </div>
           {totalPages > 1 && (
             <div className="pagination" data-aos="zoom-in">
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>{t("tags.prev")}</button>
               {[...Array(totalPages)].map((_, i) => (
                 <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
               ))}
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>{t("tags.next")}</button>
             </div>
           )}
           <div className="category-info">
-            <p>Showing {startIndex + 1}-{Math.min(endIndex, list.length)} of {list.length} articles</p>
+            <p>{t("tags.showing", { from: startIndex + 1, to: Math.min(endIndex, list.length), total: list.length })}</p>
           </div>
         </>
       ) : (
         <EmptyState
-          title="No tagged news yet"
-          message="When you add this tag from admin, stories will show here. For now, browse the latest sections."
+          title={t("tags.emptyTitle")}
+          message={t("tags.emptyMessage")}
           navigate={navigate}
           query={tag}
         />

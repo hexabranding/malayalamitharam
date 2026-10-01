@@ -12,7 +12,7 @@ export default function AdminDashboard({ navigate }) {
     function loadArticles() {
       // Use smaller limit for performance (backend caps at 100) – 50 is enough for dashboard preview
       // Total count comes from data.total, not articles.length
-      fetchNews({ limit: 50 }).then(data => {
+      fetchNews({ limit: 50, source: true }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) setArticles(fetched);
         if (typeof data.total === "number") setTotalNews(data.total);

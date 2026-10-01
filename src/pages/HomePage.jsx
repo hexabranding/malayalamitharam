@@ -3,35 +3,40 @@ import { fetchNews, fetchCategories } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName, preloadCategories } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
-import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticles, loadCachedArticles } from "../utils/articleStore.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import NewsCarousel from "../components/NewsCarousel.jsx";
 import PhotoGallery from "../components/PhotoGallery.jsx";
 import VideoSection from "../components/VideoSection.jsx";
-
-const SECTION_LABELS = {
-  gulf: "ഗൾഫ്",
-  sports: "കായികം",
-  entertainment: "വിനോദം",
-  "life-style": "ലൈഫ് സ്റ്റൈൽ",
-  "multi-media": "മൾട്ടിമീഡിയ",
-  veedu: "വീട്",
-  column: "കോളം",
-  more: "മറ്റുള്ളവ",
-};
+import { useT } from "../context/LangContext.jsx";
 
 const SKIP_SECTIONS = ["news", "News", "Keralam", "keralam"];
 
 export default function HomePage({ navigate }) {
-  const [articles, setArticles] = useState(fallback);
+  const t = useT();
+
+  const SECTION_LABELS = {
+    gulf: t("home.section.gulf"),
+    sports: t("home.section.sports"),
+    entertainment: t("home.section.entertainment"),
+    "life-style": t("home.section.lifeStyle"),
+    "multi-media": t("home.section.multimedia"),
+    veedu: t("home.section.veedu"),
+    column: t("home.section.column"),
+    more: t("home.section.more"),
+  };
+
+  const [articles, setArticles] = useState(() => {
+    const cached = loadCachedArticles();
+    return cached.length > 0 ? cached : fallback;
+  });
   const [categoryGroups, setCategoryGroups] = useState([]);
   const [extraMedia, setExtraMedia] = useState([]);
 
   useEffect(() => {
     preloadCategories();
-    registerArticles(fallback);
     function loadArticles() {
       fetchNews({ limit: 50 }).then(data => {
         const fetched = data.news || [];
@@ -185,7 +190,7 @@ export default function HomePage({ navigate }) {
   return (
     <div className="home-page">
       <div className="news-ticker">
-        <span className="news-ticker-label">BREAKING NEWS</span>
+        <span className="news-ticker-label">{t("home.breakingNews")}</span>
         <div className="news-ticker-text">
           <div className="news-ticker-content">
             {[...tickerStories, ...tickerStories].map((story, i) => (
@@ -198,14 +203,14 @@ export default function HomePage({ navigate }) {
       </div>
 
       <div className="container">
-        <AdSlot slot="top-leaderboard" label="Top Leaderboard Ad (1280 x 250)" slider />
+        <AdSlot slot="top-leaderboard" label={t("home.adTopLeaderboard")} slider />
       </div>
 
       <NewsCarousel articles={articles} navigate={navigate} latestUpdates={latestUpdates} />
 
-      <section className="container latest-strip" aria-label="Latest updates" data-aos="fade-up" style={{ display: "none" }}>
+      <section className="container latest-strip" aria-label={t("home.latestUpdates")} data-aos="fade-up" style={{ display: "none" }}>
         <div className="latest-strip-title">
-          <strong>Latest Updates</strong>
+          <strong>{t("home.latestUpdates")}</strong>
         </div>
         <div className="latest-strip-list">
           {latestUpdates.map((article) => (
@@ -222,7 +227,7 @@ export default function HomePage({ navigate }) {
           <aside className="editorial-col">
             {leftColumnStories.map((story) => (
               <article key={story.id} className="editorial-story clickable" onClick={() => navigate("/news/" + getTitleSlug(story))}>
-                <small>{getCategoryName(story) || "രാഷ്ട്രീയം"}</small>
+                <small>{getCategoryName(story) || t("home.defaultCategory")}</small>
                 <h4>{story.title}</h4>
                 <p>{story.excerpt}</p>
               </article>
@@ -236,7 +241,7 @@ export default function HomePage({ navigate }) {
                 <span className="lead-category">{getCategoryName(leadStory)}</span>
                 <h2>{leadStory.title}</h2>
                 <p>{leadStory.excerpt}</p>
-                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">വിശദമായി വായിക്കുക</button>
+                <button className="read-more-btn" type="button" data-aos="zoom-in" data-aos-delay="150">{t("home.readMore")}</button>
               </div>
             </article>
             <div className="lead-mini-grid">
@@ -254,7 +259,7 @@ export default function HomePage({ navigate }) {
           </div>
 
           <aside className="briefs-col" data-aos="fade-up" data-aos-delay="200">
-            <h3 className="column-title">പ്രധാന വാർത്തകൾ</h3>
+            <h3 className="column-title">{t("home.mainNews")}</h3>
             {rightColumnStories.map((story) => (
               <div key={story.id} className="brief-story-card clickable" onClick={() => navigate("/news/" + getTitleSlug(story))}>
                 <ArticleImage article={story} alt={story.title} className="brief-story-img" />
@@ -268,14 +273,14 @@ export default function HomePage({ navigate }) {
       </section>
 
       <div className="container">
-        <AdSlot slot="mid-leaderboard" label="Mid Leaderboard Ad (1280 x 250)" />
+        <AdSlot slot="mid-leaderboard" label={t("home.adMidLeaderboard")} />
       </div>
 
       <PageLayout navigate={navigate} className="home-below-fold">
         <section className="section-block" data-aos="fade-up">
           <div className="section-block-title" data-aos="fade-left">
-            <span>കേരളം</span>
-            <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(keralaSlugs[0] || keralaSide[0]?.category || "Keralam"))}>View All</button>
+            <span>{t("home.section.kerala")}</span>
+            <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(keralaSlugs[0] || keralaSide[0]?.category || "Keralam"))}>{t("home.viewAll")}</button>
           </div>
           <div className="news-split-layout">
             <div className="news-split-main">
@@ -292,8 +297,8 @@ export default function HomePage({ navigate }) {
         {nationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>ദേശിയം</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(indiaSlugs[0] || nationalLead?.category || "India"))}>View All</button>
+              <span>{t("home.section.national")}</span>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(indiaSlugs[0] || nationalLead?.category || "India"))}>{t("home.viewAll")}</button>
             </div>
             <div className="news-split-layout reversed">
               <div className="news-split-main">
@@ -311,8 +316,8 @@ export default function HomePage({ navigate }) {
         {internationalStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>അന്തർദേശിയം</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(worldSlugs[0] || internationalLead?.category || "World"))}>View All</button>
+              <span>{t("home.section.international")}</span>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(worldSlugs[0] || internationalLead?.category || "World"))}>{t("home.viewAll")}</button>
             </div>
             <div className="news-split-layout">
               <div className="news-split-main">
@@ -330,8 +335,8 @@ export default function HomePage({ navigate }) {
         {gulfStories.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>ഗൾഫ്</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(gulfGroup?.slug || gulfSlugs[0] || "new-group-1785595457520"))}>View All</button>
+              <span>{t("home.section.gulf")}</span>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(gulfGroup?.slug || gulfSlugs[0] || "new-group-1785595457520"))}>{t("home.viewAll")}</button>
             </div>
             {gulfTop.length > 0 && (
               <div className="gulf-top-row">
@@ -362,12 +367,12 @@ export default function HomePage({ navigate }) {
         {viewsLead && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
-              <span>അഭിപ്രായം</span>
+              <span>{t("home.section.views")}</span>
               <button className="view-all-btn" onClick={() => {
                 const viewsGroupSlug = categoryGroups.find(g => g.label?.toLowerCase() === "views" || g.slug?.toLowerCase() === "views" || g.titleMl === "കാഴ്ചപ്പാട്")?.slug;
                 const fallbackSlug = viewsSlugs[0] || viewsLead?.category || viewsGroupSlug || "Views";
                 navigate("/category/" + encodeURIComponent(fallbackSlug));
-              }}>View All</button>
+              }}>{t("home.viewAll")}</button>
             </div>
             <div className="news-split-layout reversed">
               <div className="news-split-main">
@@ -386,7 +391,7 @@ export default function HomePage({ navigate }) {
           <section className="section-block" key={section.slug} data-aos="fade-up" data-aos-delay={i * 50}>
             <div className="section-block-title" data-aos="fade-left">
               <span>{section.title}</span>
-              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(section.slug))}>View All</button>
+              <button className="view-all-btn" onClick={() => navigate("/category/" + encodeURIComponent(section.slug))}>{t("home.viewAll")}</button>
             </div>
             <div className={`news-split-layout${i % 2 === 0 ? "" : " reversed"}`}>
               <div className="news-split-main">
@@ -405,11 +410,11 @@ export default function HomePage({ navigate }) {
       <section className="multimedia-section" style={{ padding: "32px 0" }} data-aos="fade-up">
         <div className="container">
           <div className="multimedia-title" data-aos="fade-left">
-            <span>മൾട്ടിമീഡിയ</span>
+            <span>{t("home.section.multimedia")}</span>
             <button className="view-all-btn" onClick={() => {
               const mmGroup = categoryGroups.find(g => g.label?.toLowerCase().includes("multimedia") || g.slug?.toLowerCase().includes("multimedia") || g.titleMl?.includes("മൾട്ടി"));
               navigate("/category/" + encodeURIComponent(mmGroup?.slug || "new-group-1785656306753"));
-            }}>View All</button>
+            }}>{t("home.viewAll")}</button>
           </div>
           {displayMedia.length > 0 && (
             <div className="multimedia-grid">
@@ -417,7 +422,7 @@ export default function HomePage({ navigate }) {
                 <div key={article.id} className="multimedia-card clickable" data-aos="zoom-in" data-aos-delay={i * 100} onClick={() => navigate("/news/" + getTitleSlug(article))}>
                   <div className="media-thumbnail">
                     <ArticleImage article={article} alt={article.title} />
-                    <span className="media-badge">{article.media === "video" ? "VIDEO" : "PHOTO"}</span>
+                    <span className="media-badge">{article.media === "video" ? t("home.badgeVideo") : t("home.badgePhoto")}</span>
                   </div>
                   <h4>{article.title}</h4>
                 </div>
@@ -433,7 +438,7 @@ export default function HomePage({ navigate }) {
 
       <section className="container section-block" style={{ borderBottom: "none" }} data-aos="fade-up">
         <div className="section-block-title" data-aos="fade-left">
-          <span>കൂടുതൽ വാർത്തകൾ</span>
+          <span>{t("home.moreNews")}</span>
         </div>
         <div className="list-feed">
           {articles.slice(0, 12).map((article, i) => (
@@ -444,14 +449,14 @@ export default function HomePage({ navigate }) {
 
       <div className="container">
         <div className="home-before-footer-ads">
-          <AdSlot slot="home-footer-ad-1" label="Home Footer Ad 1" />
-          <AdSlot slot="home-footer-ad-2" label="Home Footer Ad 2" />
-          <AdSlot slot="home-footer-ad-3" label="Home Footer Ad 3" />
+          <AdSlot slot="home-footer-ad-1" label={t("home.adFooter1")} />
+          <AdSlot slot="home-footer-ad-2" label={t("home.adFooter2")} />
+          <AdSlot slot="home-footer-ad-3" label={t("home.adFooter3")} />
         </div>
       </div>
 
       <div className="container home-bottom-ad">
-        <AdSlot slot="bottom-leaderboard" label="Bottom Leaderboard Ad (1280 x 250)" />
+        <AdSlot slot="bottom-leaderboard" label={t("home.adBottomLeaderboard")} />
       </div>
     </div>
   );

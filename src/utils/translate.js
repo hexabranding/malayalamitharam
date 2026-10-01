@@ -35,7 +35,7 @@ export async function translateToEnglish(text) {
     const res = await fetch(`${API_BASE}/news/translate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ lang: "en", text }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -53,7 +53,7 @@ export async function translateToEnglish(text) {
   return text;
 }
 
-export async function translateBatch(texts) {
+export async function translateBatch(texts, lang = "en") {
   if (!Array.isArray(texts) || texts.length === 0) return texts;
 
   const cache = getCache();
@@ -76,7 +76,7 @@ export async function translateBatch(texts) {
       const res = await fetch(`${API_BASE}/news/translate-batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texts: batchTexts }),
+        body: JSON.stringify({ lang, texts: batchTexts }),
       });
       if (res.ok) {
         const data = await res.json();

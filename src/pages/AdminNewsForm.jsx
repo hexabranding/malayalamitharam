@@ -82,12 +82,14 @@ export default function AdminNewsForm({ navigate, newsId }) {
       if (isEditing) {
         try {
           let found = null;
-          // Primary: fetch directly by slug/id (fast, works for old articles beyond list limit)
+          // Primary: fetch directly by slug/id (fast, works for old articles beyond list limit).
+          // Always the Malayalam source: the editor must never load (and save
+          // back) a translated copy when the admin UI language is English.
           try {
-            found = await fetchArticle(newsId);
+            found = await fetchArticle(newsId, { source: true });
           } catch {}
           if (!found || !found.title) {
-            const article = await fetchNews({ limit: 50 });
+            const article = await fetchNews({ limit: 50, source: true });
             found = (article.news || []).find(a => a.id === newsId || a.slug === newsId);
           }
           if (!found) found = fallback.find(a => a.id === newsId);

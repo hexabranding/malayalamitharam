@@ -47,7 +47,9 @@ export default function AdminNewsPage({ navigate }) {
     let cancelled = false;
     async function loadNews() {
       setLoading(true);
-      const params = { limit: itemsPerPage, page: currentPage };
+      // `source: true` keeps the admin list on the Malayalam original even
+      // when the public UI language is English/Arabic.
+      const params = { limit: itemsPerPage, page: currentPage, source: true };
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedCategory !== "all") params.category = selectedCategory;
       try {
@@ -122,7 +124,7 @@ export default function AdminNewsPage({ navigate }) {
       setSuggestions(matches);
       // also try server suggestion for broader match if local 0
       if (matches.length === 0) {
-        fetchNews({ search: debouncedSearch, limit: 6 }).then(d => {
+        fetchNews({ search: debouncedSearch, limit: 6, source: true }).then(d => {
           const s = (d.news || []).slice(0, 6);
           if (s.length) setSuggestions(s);
         }).catch(() => {});

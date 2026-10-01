@@ -3,12 +3,14 @@ import { Clock3, Star } from "lucide-react";
 import { fetchNews, fetchTags } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
-import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { getTitleSlug, registerArticles, loadCachedArticles } from "../utils/articleStore.js";
 import AdSlot from "./AdSlot.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 export default function Sidebar({ navigate, articles = [] }) {
+  const t = useT();
   const sidebarRef = useRef(null);
-  const [latestNews, setLatestNews] = useState([]);
+  const [latestNews, setLatestNews] = useState(() => loadCachedArticles());
   const [tags, setTags] = useState([]);
 
   useEffect(() => {
@@ -62,10 +64,10 @@ export default function Sidebar({ navigate, articles = [] }) {
 
   return (
     <aside className="sidebar" ref={sidebarRef}>
-      <AdSlot slot="sidebar" label="Sidebar Ad" compact slider />
+      <AdSlot slot="sidebar" label={t("sidebar.adLabel")} compact slider />
 
       <section className="sidebar-block sidebar-latest">
-        <h2><Clock3 size={18} /> Latest News</h2>
+        <h2><Clock3 size={18} /> {t("sidebar.latestNews")}</h2>
         {latest.map((article, index) => (
           <button className="headline-link" key={article.id} onClick={() => navigate("/news/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="headline-link-img" />
@@ -78,7 +80,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       </section>
 
       <section className="sidebar-block">
-        <h2>Popular</h2>
+        <h2>{t("sidebar.popular")}</h2>
         {popular.map((article) => (
           <button className="mini-story" key={article.id} onClick={() => navigate("/news/" + getTitleSlug(article))}>
             <ArticleImage article={article} alt="" className="mini-story-img" />
@@ -89,7 +91,7 @@ export default function Sidebar({ navigate, articles = [] }) {
 
       {editorPicks.length > 0 && (
         <section className="sidebar-block editor-picks">
-          <h2><Star size={18} /> Editor Picks</h2>
+          <h2><Star size={18} /> {t("sidebar.editorPicks")}</h2>
           {editorPicks.map((article) => (
             <button key={article.id} type="button" onClick={() => navigate("/news/" + getTitleSlug(article))}>
               <strong>{getCategoryName(article)}</strong>
@@ -100,7 +102,7 @@ export default function Sidebar({ navigate, articles = [] }) {
       )}
 
       <section className="sidebar-block">
-        <h2>Tags</h2>
+        <h2>{t("sidebar.tags")}</h2>
         <div className="tags">
           {tags.length > 0 ? tags.slice(0, 15).map((tag) => (
             <button key={tag._id || tag.name} onClick={() => navigate("/tags/" + encodeURIComponent(tag.name))}>{tag.name}</button>
@@ -111,10 +113,10 @@ export default function Sidebar({ navigate, articles = [] }) {
       </section>
 
       <section className="newsletter">
-        <h2>News Alert</h2>
-        <p>Get the latest updates directly in your inbox.</p>
+        <h2>{t("sidebar.newsAlert")}</h2>
+        <p>{t("sidebar.newsletterDesc")}</p>
         <input placeholder="email@example.com" />
-        <button>Subscribe</button>
+        <button>{t("sidebar.subscribe")}</button>
       </section>
     </aside>
   );

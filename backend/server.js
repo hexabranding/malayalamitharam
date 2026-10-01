@@ -19,6 +19,7 @@ const adsRoutes = require("./routes/ads");
 const uploadRoutes = require("./routes/upload");
 const Ad = require("./models/Ad");
 const Image = require("./models/Image");
+const { startWarmup } = require("./utils/warmTranslations");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -150,5 +151,6 @@ connectDB().then(async (connection) => {
     } catch (err) {
       console.log("Index cleanup skipped:", err.message);
     }
+    startWarmup();
   }
 });

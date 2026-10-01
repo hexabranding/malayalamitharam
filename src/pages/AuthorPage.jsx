@@ -1,12 +1,14 @@
 import { authors } from "../services/api.js";
 import PageLayout from "../components/PageLayout.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 export default function AuthorPage({ navigate }) {
+  const t = useT();
   return (
     <PageLayout navigate={navigate}>
       <div className="page-title" data-aos="fade-up">
-        <span>ലേഖകർ</span>
-        <h1>മലയാളമിത്രം ടീം (Authors &amp; Editorial Team)</h1>
+        <span>{t("author.sectionLabel")}</span>
+        <h1>{t("author.heading")}</h1>
       </div>
 
       <div className="author-grid">
@@ -15,7 +17,7 @@ export default function AuthorPage({ navigate }) {
             <div className="author-card-avatar">{author.name.charAt(0)}</div>
             <strong>{author.name}</strong>
             <span>{author.role}</span>
-            <small>{author.count} ലേഖനങ്ങൾ പ്രസിദ്ധീകരിച്ചു</small>
+            <small>{t("author.publishedCount", { count: author.count })}</small>
           </article>
         ))}
       </div>

@@ -15,6 +15,7 @@ import NotFoundPage from "./NotFoundPage.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import { getArticleBySlug, getTitleSlug, registerArticle } from "../utils/articleStore.js";
 import { getShareUrl } from "../utils/transliterate.js";
+import { useT, useLang } from "../context/LangContext.jsx";
 
 function XLogo({ size = 18 }) {
   return (
@@ -86,6 +87,7 @@ function extractMediaUrls(body) {
 }
 
 function ArticleGallerySlider({ gallery, mainImage, title }) {
+  const t = useT();
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(null); // null or index
 
@@ -151,15 +153,15 @@ function ArticleGallerySlider({ gallery, mainImage, title }) {
         >
           <img
             src={images[active]}
-            alt={`${title || "Gallery"} ${active + 1}`}
+            alt={`${title || t("article.galleryFallback")} ${active + 1}`}
             className="article-gallery-image"
             onClick={() => setLightbox(active)}
             onError={(e) => { e.target.style.display = "none"; }}
           />
           {images.length > 1 && (
             <>
-              <button className="ag-nav ag-prev" onClick={prev} aria-label="Previous image"><ChevronLeft size={22} /></button>
-              <button className="ag-nav ag-next" onClick={next} aria-label="Next image"><ChevronRight size={22} /></button>
+              <button className="ag-nav ag-prev" onClick={prev} aria-label={t("article.prevImage")}><ChevronLeft size={22} /></button>
+              <button className="ag-nav ag-next" onClick={next} aria-label={t("article.nextImage")}><ChevronRight size={22} /></button>
             </>
           )}
         </div>
@@ -167,10 +169,10 @@ function ArticleGallerySlider({ gallery, mainImage, title }) {
 
       {lightbox !== null && (
         <div className="ag-lightbox" onClick={() => setLightbox(null)}>
-          <button className="ag-lightbox-close" onClick={() => setLightbox(null)} aria-label="Close"><CloseIcon size={24} /></button>
-          <button className="ag-lightbox-nav ag-lb-prev" onClick={(e) => { e.stopPropagation(); lbPrev(); }} aria-label="Previous"><ChevronLeft size={28} /></button>
+          <button className="ag-lightbox-close" onClick={() => setLightbox(null)} aria-label={t("article.close")}><CloseIcon size={24} /></button>
+          <button className="ag-lightbox-nav ag-lb-prev" onClick={(e) => { e.stopPropagation(); lbPrev(); }} aria-label={t("article.prev")}><ChevronLeft size={28} /></button>
           <div className="ag-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img src={images[lightbox]} alt={`${title || "Gallery"} ${lightbox + 1}`} />
+            <img src={images[lightbox]} alt={`${title || t("article.galleryFallback")} ${lightbox + 1}`} />
             <div className="ag-lightbox-caption">{lightbox + 1} / {images.length} {title ? `— ${title}` : ""}</div>
             <div className="ag-lightbox-thumbs">
               {images.map((src, idx) => (
@@ -179,26 +181,41 @@ function ArticleGallerySlider({ gallery, mainImage, title }) {
                   className={`ag-lb-thumb ${idx === lightbox ? "active" : ""}`}
                   onClick={() => setLightbox(idx)}
                 >
-                  <img src={src} alt={`Thumb ${idx + 1}`} />
+                  <img src={src} alt={t("article.thumbAlt", { n: idx + 1 })} />
                 </button>
               ))}
             </div>
           </div>
-          <button className="ag-lightbox-nav ag-lb-next" onClick={(e) => { e.stopPropagation(); lbNext(); }} aria-label="Next"><ChevronRight size={28} /></button>
+          <button className="ag-lightbox-nav ag-lb-next" onClick={(e) => { e.stopPropagation(); lbNext(); }} aria-label={t("article.next")}><ChevronRight size={28} /></button>
         </div>
       )}
     </>
   );
 }
 
+const MALAYALAM_RE = /[ഀ-ൿ]/;
+
+// The per-language cache is filled from list calls, which translate titles but
+// not bodies. A cached article is only safe to paint immediately when its
+// title is already in the selected language; the detail request then swaps in
+// the fully translated body.
+function isCachedInLang(article, lang) {
+  if (!article || !article.title) return false;
+  if (lang === "ml") return true;
+  return !MALAYALAM_RE.test(String(article.title));
+}
+
 export default function ArticlePage({ slug, navigate }) {
+  const t = useT();
+  const { lang } = useLang();
   const settings = useSettings();
+
+  const fromCache = getArticleBySlug(slug);
+  const cachedArticle = isCachedInLang(fromCache, lang) ? fromCache : null;
 
   const fallbackBySlug = fallback.find(a => a.slug === slug || a.id === slug);
   const fallbackById = fallback.find(a => a.id === slug);
-  const fallbackArticle = fallbackBySlug || fallbackById;
-
-  const cachedArticle = !fallbackArticle ? getArticleBySlug(slug) : null;
+  const fallbackArticle = cachedArticle ? null : (fallbackBySlug || fallbackById);
 
   const [article, setArticle] = useState(fallbackArticle || cachedArticle || null);
   const [loading, setLoading] = useState(!fallbackArticle && !cachedArticle);
@@ -221,24 +238,19 @@ export default function ArticlePage({ slug, navigate }) {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      setLoading(true);
-      setArticle(null);
+      // Keep something on screen while the translated copy is fetched, so a
+      // language switch never blanks the page out behind a spinner.
+      const stale = cachedArticle || fallbackArticle || null;
       setRelated([]);
       setAuthorData(null);
+      if (stale) {
+        setArticle(stale);
+        setLoading(false);
+      } else {
+        setArticle(null);
+        setLoading(true);
+      }
       try {
-        if (fallbackArticle) {
-          if (!cancelled) {
-            setArticle(fallbackArticle);
-            const cat = fallbackArticle.category || "";
-            let items = fallback.filter(a => a.category === cat && a.id !== fallbackArticle.id);
-            if (items.length === 0) {
-              items = fallback.filter(a => a.id !== fallbackArticle.id);
-            }
-            setRelated(items.slice(0, 3));
-            setLoading(false);
-          }
-          return;
-        }
         let data = await fetchArticle(slug);
         if (!cancelled && data) {
           if (data.slug && data.slug !== slug) {
@@ -273,11 +285,11 @@ export default function ArticlePage({ slug, navigate }) {
               setRelated(items);
             }
           }
-        } else if (!cancelled) {
+        } else if (!cancelled && !stale) {
           setArticle(null);
         }
       } catch (err) {
-        if (!cancelled && !fallbackArticle && !cachedArticle) setArticle(null);
+        if (!cancelled && !stale) setArticle(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -291,7 +303,7 @@ export default function ArticlePage({ slug, navigate }) {
       <PageLayout navigate={navigate} className="article-page">
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh", flexDirection: "column", gap: "1rem" }}>
           <div className="loading-spinner" style={{ width: 40, height: 40, border: "4px solid #eee", borderTopColor: "#c91f26", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-          <p style={{ color: "#666" }}>Article loading...</p>
+          <p style={{ color: "#666" }}>{t("article.loading")}</p>
         </div>
       </PageLayout>
     );
@@ -327,7 +339,7 @@ export default function ArticlePage({ slug, navigate }) {
 
   const articleTitle = (
     <header className="article-page-title" style={{ "--title-bg": article.backgroundColor || "#c91f26" }} data-aos="fade-up">
-      <AdSlot slot="article-top" label="Article Top Advertisement (728 x 90)" slider />
+      <AdSlot slot="article-top" label={t("article.adTopLabel")} slider />
       <span className="pill" data-aos="fade-up" data-aos-delay="50">{getCategoryName(article)}</span>
       <h1 data-aos="fade-left" data-aos-delay="100">{article.title}</h1>
     </header>
@@ -415,8 +427,8 @@ export default function ArticlePage({ slug, navigate }) {
 
         {(() => {
           const extractedMedia = extractMediaUrls(article.body);
-          const extractedVideos = extractedMedia.filter(m => m.type === "video").map((m, i) => ({ videoUrl: m.url, title: article.title + " - Video " + (i + 1) }));
-          const extractedImages = extractedMedia.filter(m => m.type === "image").map((m, i) => ({ imageUrl: m.url, title: article.title + " - Image " + (i + 1) }));
+          const extractedVideos = extractedMedia.filter(m => m.type === "video").map((m, i) => ({ videoUrl: m.url, title: article.title + " - " + t("video.videoN", { n: i + 1 }) }));
+          const extractedImages = extractedMedia.filter(m => m.type === "image").map((m, i) => ({ imageUrl: m.url, title: article.title + " - " + t("video.imageN", { n: i + 1 }) }));
           const allRelatedVideos = [...(article.relatedVideos || []), ...extractedVideos];
           const hasMainVideo = article.videoUrl || allRelatedVideos.length > 0;
           const hasImages = extractedImages.length > 0;
@@ -440,10 +452,10 @@ export default function ArticlePage({ slug, navigate }) {
                       ) : isFacebookUrl(selectedVideo.videoUrl) ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#1877f2", color: "#fff", padding: "24px", textAlign: "center", position: "absolute", inset: 0 }}>
                           <svg width="64" height="64" viewBox="0 0 24 24" fill="white" style={{ marginBottom: "16px" }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                          <p style={{ fontSize: "16px", fontWeight: 600, marginBottom: "8px" }}>Facebook Video</p>
+                          <p style={{ fontSize: "16px", fontWeight: 600, marginBottom: "8px" }}>{t("video.facebookVideo")}</p>
                           <a href={selectedVideo.videoUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: "#fff", color: "#1877f2", borderRadius: "8px", fontWeight: 600, textDecoration: "none", fontSize: "15px" }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                            Watch on Facebook
+                            {t("video.watchOnFacebook")}
                           </a>
                         </div>
                       ) : (
@@ -509,7 +521,7 @@ export default function ArticlePage({ slug, navigate }) {
                         {video.thumbnail && <img src={resolveImageUrl(video.thumbnail)} alt={video.title} />}
                         <div className="article-video-play"><Play size={28} fill="#fff" /></div>
                       </div>
-                      <span className="article-video-label">{video.title || "Video " + (index + 1)}</span>
+                      <span className="article-video-label">{video.title || t("video.videoN", { n: index + 1 })}</span>
                     </div>
                   ))}
                 </div>
@@ -528,26 +540,26 @@ export default function ArticlePage({ slug, navigate }) {
 
         <div className="article-stats" data-aos="fade-up" data-aos-delay="270" style={{ display: "flex", gap: "1.5rem", padding: "12px 0", borderTop: "1px solid #eee", borderBottom: "1px solid #eee", margin: "16px 0" }}>
           <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#555", fontSize: "15px" }}>
-            <ThumbsUp size={18} /> {article.likes || 0} ലൈക്കുകൾ
+            <ThumbsUp size={18} /> {t("article.likes", { count: article.likes || 0 })}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#555", fontSize: "15px" }}>
-            <Eye size={18} /> {article.views || 0} വായനകൾ
+            <Eye size={18} /> {t("article.views", { count: article.views || 0 })}
           </span>
         </div>
 
         <div className="article-share" data-aos="fade-up" data-aos-delay="300">
-          <span>Share:</span>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(resolveImageUrl(article.image || article.thumbnail || "") || "")}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook"><Facebook size={20} /></a>
-          <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on X"><XLogo size={20} /></a>
-          <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp"><MessageCircle size={20} /></a>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram"><Send size={20} /></a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><Linkedin size={20} /></a>
+          <span>{t("article.share")}</span>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&picture=${encodeURIComponent(resolveImageUrl(article.image || article.thumbnail || "") || "")}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnFacebook")}><Facebook size={20} /></a>
+          <a href={`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnX")}><XLogo size={20} /></a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnWhatsapp")}><MessageCircle size={20} /></a>
+          <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnTelegram")}><Send size={20} /></a>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnLinkedin")}><Linkedin size={20} /></a>
           <a href={`https://www.youtube.com/`} target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={20} /></a>
-          <button onClick={handleNativeShare} aria-label="Share on Instagram" title="Share on Instagram"><Instagram size={20} /></button>
-          <a href={`https://www.threads.net/intent/post?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Threads"><AtSign size={20} /></a>
+          <button onClick={handleNativeShare} aria-label={t("article.shareOnInstagram")} title={t("article.shareOnInstagram")}><Instagram size={20} /></button>
+          <a href={`https://www.threads.net/intent/post?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" aria-label={t("article.shareOnThreads")}><AtSign size={20} /></a>
           <a href={`https://aratt.ai/@malayalamithram_online`} target="_blank" rel="noopener noreferrer" aria-label="Aratt" style={{ fontSize: "13px", fontWeight: 600 }}>Aratt</a>
-          <button onClick={handleCopyLink} aria-label="Copy link" title="Copy link to clipboard">
-            {copied ? <span style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700 }}>Copied!</span> : <Link2 size={20} />}
+          <button onClick={handleCopyLink} aria-label={t("article.copyLink")} title={t("article.copyLinkTitle")}>
+            {copied ? <span style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700 }}>{t("article.copied")}</span> : <Link2 size={20} />}
           </button>
         </div>
 
@@ -559,12 +571,12 @@ export default function ArticlePage({ slug, navigate }) {
           )}
           <div className="author-details">
             <h4>{authorData?.nameMl || article.author}</h4>
-            <p>{authorData?.roleMl || authorData?.role || "മലയാളമിത്രം ചീഫ് കറസ്‌പോണ്ടന്റ്"}</p>
+            <p>{authorData?.roleMl || authorData?.role || t("article.defaultRole")}</p>
           </div>
         </div>
 
         <div className="article-follow-social" data-aos="fade-up" data-aos-delay="370" style={{ padding: "16px 0", borderTop: "1px solid #eee", marginTop: "16px" }}>
-          <p style={{ fontWeight: 600, marginBottom: "10px", fontSize: "15px" }}>Follow Us:</p>
+          <p style={{ fontWeight: 600, marginBottom: "10px", fontSize: "15px" }}>{t("article.followUs")}</p>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <a href={settings.facebook_url && settings.facebook_url !== "#" ? settings.facebook_url : "#"} target={settings.facebook_url && settings.facebook_url !== "#" ? "_blank" : undefined} rel={settings.facebook_url && settings.facebook_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#1877f2", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Facebook size={16} /> Facebook</a>
             <a href={settings.youtube_url && settings.youtube_url !== "#" ? settings.youtube_url : "#"} target={settings.youtube_url && settings.youtube_url !== "#" ? "_blank" : undefined} rel={settings.youtube_url && settings.youtube_url !== "#" ? "noopener noreferrer" : undefined} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "6px 12px", background: "#ff0000", color: "#fff", borderRadius: "6px", fontSize: "13px", textDecoration: "none" }}><Youtube size={16} /> YouTube</a>
@@ -582,7 +594,7 @@ export default function ArticlePage({ slug, navigate }) {
       {displayRelated.length > 0 && (
         <section className="related-articles-section" data-aos="fade-up" data-aos-delay="400">
           <h3 className="section-block-title" data-aos="fade-left">
-            <span>കൂടുതൽ വായിക്കൂ (Related Stories)</span>
+            <span>{t("article.relatedStories")}</span>
           </h3>
           <div className="card-grid">
             {displayRelated.map((relatedStory, i) => (

@@ -3,6 +3,7 @@ import { CalendarDays, Clock3, MessageCircle } from "lucide-react";
 import { resolveImageUrl } from "../services/images.jsx";
 import { getShareUrl } from "../utils/transliterate.js";
 import { useSettings } from "../context/DataContext.jsx";
+import { useT } from "../context/LangContext.jsx";
 import { getGregorianDate, getEnglishDate } from "../utils/calendars.js";
 
 const SITE_NAME = "Malayalamitram";
@@ -10,6 +11,7 @@ const SITE_URL = "https://demo.malayalamitharam.in";
 
 export default function Meta({ article }) {
   const settings = useSettings();
+  const t = useT();
 
   function formatArticleDate() {
     const dateSource = article.createdAt || article.date;
@@ -37,7 +39,7 @@ export default function Meta({ article }) {
     if (!article) return;
     const rawTitle = String(article.title || SITE_NAME).trim();
     const title = rawTitle + " | " + SITE_NAME;
-    const desc = String(article.excerpt || article.title || "Malayalamitram - Malayalam News Portal").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 155);
+    const desc = String(article.excerpt || article.title || t("meta.siteDescription")).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 155);
     let image = resolveImageUrl(article.image || article.thumbnail) || "";
     if (image && !image.startsWith("http")) {
       image = window.location.origin + image;

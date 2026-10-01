@@ -3,6 +3,7 @@ import { resolveImageUrl } from "../services/images.jsx";
 import { getCategoryName } from "../services/categories.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 import { getTitleSlug, registerArticles } from "../utils/articleStore.js";
+import { useT } from "../context/LangContext.jsx";
 
 function CarouselImage({ article, alt, isActive }) {
   const [missing, setMissing] = useState(false);
@@ -38,6 +39,7 @@ function CarouselImage({ article, alt, isActive }) {
 }
 
 export default function NewsCarousel({ articles, navigate, latestUpdates = [] }) {
+  const t = useT();
   const settings = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
   const categoryPad = Number(settings.carousel_category_width ?? 5);
@@ -86,7 +88,7 @@ export default function NewsCarousel({ articles, navigate, latestUpdates = [] })
 
       <div className="news-carousel-right">
         <div className="latest-updates-header">
-          <strong>Latest Updates</strong>
+          <strong>{t("carousel.latestUpdates")}</strong>
         </div>
         <div className="latest-updates-scroll">
           <div className="latest-updates-track">

@@ -1,8 +1,16 @@
-const ARTICLES_KEY = "mm_articles_cache";
+import { readStoredLang, DEFAULT_LANG } from "../i18n/index.js";
+
+const MALAYALAM_RE = /[ഀ-ൿ]/;
+
+// Articles are cached per language so a switch never shows the previous
+// language's headlines while the new request is still in flight.
+function storageKey() {
+  return "mm_articles_cache_" + (readStoredLang() || DEFAULT_LANG);
+}
 
 function getArticlesCache() {
   try {
-    const raw = localStorage.getItem(ARTICLES_KEY);
+    const raw = localStorage.getItem(storageKey());
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.time > 30 * 60 * 1000) return [];
@@ -12,14 +20,28 @@ function getArticlesCache() {
   }
 }
 
+// Lets a page paint immediately with the last list it showed in this language
+// while the fresh request is still in flight.
+export function loadCachedArticles() {
+  try {
+    return getArticlesCache();
+  } catch {
+    return [];
+  }
+}
+
 function setArticlesCache(articles) {
   try {
-    localStorage.setItem(ARTICLES_KEY, JSON.stringify({ data: articles, time: Date.now() }));
+    localStorage.setItem(storageKey(), JSON.stringify({ data: articles, time: Date.now() }));
   } catch {}
 }
 
 export function registerArticle(article) {
   if (!article || !article.title) return;
+  // Under English/Arabic an article whose title is still Malayalam was not
+  // translated yet; caching it would pin the untranslated copy for 30 minutes.
+  const lang = readStoredLang() || DEFAULT_LANG;
+  if (lang !== DEFAULT_LANG && MALAYALAM_RE.test(String(article.title))) return;
   const cache = getArticlesCache();
   const idx = cache.findIndex(a => a.id === article.id);
   if (idx >= 0) {
@@ -57,8 +79,10 @@ export function getTitleSlug(article) {
     const s = slugifyEnglishLocal(article.titleEn);
     if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
   }
-  if (article.title) {
-    const s = slugifyEnglishLocal(article.title);
+  // `title` is translated for en/ar readers; the Malayalam original is kept on `titleMl`.
+  const source = article.titleMl || article.title;
+  if (source) {
+    const s = slugifyEnglishLocal(source);
     if (s && !isBadSlug(s)) return s.slice(0, 80).split("-").slice(0, 5).join("-");
   }
   return article.id || "";

@@ -4,8 +4,10 @@ import { articles as fallback } from "../data/news.js";
 import AdSlot from "../components/AdSlot.jsx";
 import ArticleCard from "../components/ArticleCard.jsx";
 import PageLayout from "../components/PageLayout.jsx";
+import { useT } from "../context/LangContext.jsx";
 
 export default function CategoryPage({ categoryItem, navigate }) {
+  const t = useT();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -234,13 +236,13 @@ export default function CategoryPage({ categoryItem, navigate }) {
   return (
     <PageLayout navigate={navigate}>
       <div className="page-title" data-aos="fade-up">
-        <span>വിഭാഗം</span>
+        <span>{t("category.sectionLabel")}</span>
         <h1>{displayName}</h1>
       </div>
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
-          <p>Loading...</p>
+          <p>{t("category.loading")}</p>
         </div>
       ) : (
         <>
@@ -258,27 +260,27 @@ export default function CategoryPage({ categoryItem, navigate }) {
 
           {currentArticles.length === 0 && (
             <div style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
-              <p>ഈ വിഭാഗത്തിൽ ഇപ്പോൾ വാർത്തകൾ ഇല്ല</p>
+              <p>{t("category.noNews")}</p>
             </div>
           )}
 
           {totalPages > 1 && (
             <div className="pagination" data-aos="zoom-in">
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>{t("category.prev")}</button>
               {[...Array(totalPages)].map((_, i) => (
                 <button key={i + 1} className={`pagination-btn ${currentPage === i + 1 ? "active" : ""}`} onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
               ))}
-              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+              <button className="pagination-btn" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>{t("category.next")}</button>
             </div>
           )}
 
           <div className="category-info">
-            <p>Showing {sortedVisible.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, sortedVisible.length)} of {sortedVisible.length} articles</p>
+            <p>{t("category.showing", { from: sortedVisible.length > 0 ? startIndex + 1 : 0, to: Math.min(endIndex, sortedVisible.length), total: sortedVisible.length })}</p>
           </div>
         </>
       )}
 
-      <AdSlot slot="category" label="Category Leaderboard Ad" />
+      <AdSlot slot="category" label={t("category.adLabel")} />
     </PageLayout>
   );
 }
