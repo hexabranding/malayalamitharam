@@ -4235,7 +4235,7 @@ tbody.collapse.in {
   }
   .navbar-nav > li > a {
     padding-top: 15px;
-    padding-bottom: 15px;
+ 15px;
   }
 }
 
@@ -4318,7 +4318,7 @@ tbody.collapse.in {
     margin-left: 0;
     margin-right: 0;
     padding-top: 0;
-    padding-bottom: 0;
+ 0;
     -webkit-box-shadow: none;
     box-shadow: none;
   }
