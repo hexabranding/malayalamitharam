@@ -103,7 +103,16 @@ export default function Footer({ navigate }) {
       <div className="copyright">
         <div className="container copyright-inner">
           <span>{t("footer.rights")}</span>
-          <span>{t("footer.credit")}</span>
+          <span>
+            <a
+              href="https://hexabranding.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-credit-link"
+            >
+              {t("footer.credit")}
+            </a>
+          </span>
         </div>
       </div>
     </footer>
