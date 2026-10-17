@@ -15,7 +15,7 @@ const footer = {
     "footer.writers": "ലേഖകർ",
     "footer.contactUs": "ഞങ്ങളെ ബന്ധപ്പെടുക",
     "footer.rights": "© 2026 Malayalamithram. All Rights Reserved.",
-    "footer.credit": "നിർമ്മിച്ചത് : HEXA BRANDING",
+    "footer.credit": "നിർമ്മിച്ചത്:HEXA BRANDING",
     "footer.tagline":
       "Delivering the latest news, analysis, live updates, photos and videos for Malayalam readers — fast and accurate.",
     "footer.newsletterTitle": "Newsletter",
@@ -31,7 +31,7 @@ const footer = {
     "footer.writers": "Reporters",
     "footer.contactUs": "Contact Us",
     "footer.rights": "© 2026 Malayalamithram. All Rights Reserved.",
-    "footer.credit": "MADE BY : HEXA BRANDING",
+    "footer.credit": "Made by:HEXA BRANDING",
     "footer.logoAlt": "Malayalamithram Logo",
   },
   ar: {
@@ -50,7 +50,7 @@ const footer = {
     "footer.writers": "المراسلون",
     "footer.contactUs": "اتصل بنا",
     "footer.rights": "© 2026 مالايالاميثرام. جميع الحقوق محفوظة.",
-    "footer.credit": "صنع : HEXA BRANDING",
+    "footer.credit": "صنع:HEXA BRANDING",
   },
 };
 
