@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
 import LanguageBar from "./LanguageBar.jsx";
+import SubscribeNotification from "./SubscribeNotification.jsx";
 import { useSettings } from "../context/DataContext.jsx";
 
 export default function Layout({ children, navigate, activeSlug }) {
@@ -24,6 +25,7 @@ export default function Layout({ children, navigate, activeSlug }) {
         <Footer navigate={navigate} />
       </div>
       <LanguageBar />
+      <SubscribeNotification />
     </>
   );
 }

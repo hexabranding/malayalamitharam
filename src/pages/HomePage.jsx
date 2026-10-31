@@ -96,13 +96,49 @@ export default function HomePage({ navigate }) {
 
 
   const leadStory = articles[0];
-  const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
-  const fallbackEditorial = articles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
-  const leftColumnStories = editorialStories.length ? editorialStories : fallbackEditorial;
+  const editorialCandidates = articles.filter((article) => (article.category === "politics" || article.category === "opinion") && article.id !== leadStory?.id);
+  const fallbackEditorialPool = articles.filter((a) => a.id !== leadStory?.id);
+  const leftColumnStories = [];
+  const editorialUsedIds = new Set([leadStory?.id].filter(Boolean));
 
-  const selectedMainStories = articles.filter((article) => article.mainNews && article.id !== leadStory?.id).slice(0, 4);
-  const briefStories = articles.filter((article) => article.id !== leadStory?.id && !leftColumnStories.some((l) => l.id === article.id)).slice(0, 4);
-  const rightColumnStories = selectedMainStories.length ? selectedMainStories : briefStories.length ? briefStories : articles.slice(1, 5);
+  for (const item of editorialCandidates) {
+    if (!editorialUsedIds.has(item.id)) {
+      editorialUsedIds.add(item.id);
+      leftColumnStories.push(item);
+      if (leftColumnStories.length >= 6) break;
+    }
+  }
+  if (leftColumnStories.length < 6) {
+    for (const item of fallbackEditorialPool) {
+      if (!editorialUsedIds.has(item.id)) {
+        editorialUsedIds.add(item.id);
+        leftColumnStories.push(item);
+        if (leftColumnStories.length >= 6) break;
+      }
+    }
+  }
+
+  const briefsUsedIds = new Set([leadStory?.id, ...leftColumnStories.map((l) => l.id)].filter(Boolean));
+  const mainCandidates = articles.filter((article) => article.mainNews && !briefsUsedIds.has(article.id));
+  const fallbackBriefPool = articles.filter((article) => !briefsUsedIds.has(article.id));
+  const rightColumnStories = [];
+
+  for (const item of mainCandidates) {
+    if (!briefsUsedIds.has(item.id)) {
+      briefsUsedIds.add(item.id);
+      rightColumnStories.push(item);
+      if (rightColumnStories.length >= 11) break;
+    }
+  }
+  if (rightColumnStories.length < 11) {
+    for (const item of fallbackBriefPool) {
+      if (!briefsUsedIds.has(item.id)) {
+        briefsUsedIds.add(item.id);
+        rightColumnStories.push(item);
+        if (rightColumnStories.length >= 11) break;
+      }
+    }
+  }
 
   const breakingStories = articles.filter((a) => a.breaking);
   const tickerStories = breakingStories.length > 0 ? breakingStories : articles.slice(0, 5);
