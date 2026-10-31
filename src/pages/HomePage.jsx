@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchNews, fetchCategories } from "../services/api.js";
+import { fetchNews, fetchCategories, fetchCategoriesLatest } from "../services/api.js";
 import { ArticleImage } from "../services/images.jsx";
 import { getCategoryName, preloadCategories } from "../services/categories.jsx";
 import { articles as fallback } from "../data/news.js";
@@ -33,16 +33,25 @@ export default function HomePage({ navigate }) {
     return cached.length > 0 ? cached : fallback;
   });
   const [categoryGroups, setCategoryGroups] = useState([]);
+  const [categoryArticlesMap, setCategoryArticlesMap] = useState({});
   const [extraMedia, setExtraMedia] = useState([]);
 
   useEffect(() => {
     preloadCategories();
     function loadArticles() {
-      fetchNews({ limit: 50 }).then(data => {
+      fetchNews({ limit: 100 }).then(data => {
         const fetched = data.news || [];
         if (fetched.length > 0) {
           setArticles(fetched);
           registerArticles(fetched);
+        }
+      }).catch(() => {});
+
+      fetchCategoriesLatest().then(catMap => {
+        if (catMap && typeof catMap === "object" && Object.keys(catMap).length > 0) {
+          setCategoryArticlesMap(catMap);
+          const allCatArticles = Object.values(catMap).flat();
+          if (allCatArticles.length > 0) registerArticles(allCatArticles);
         }
       }).catch(() => {});
     }
@@ -85,6 +94,7 @@ export default function HomePage({ navigate }) {
     return () => { cancelled = true; };
   }, [articles]);
 
+
   const leadStory = articles[0];
   const editorialStories = articles.filter((article) => article.category === "politics" || article.category === "opinion").slice(0, 3);
   const fallbackEditorial = articles.filter((a) => a.id !== leadStory?.id).slice(0, 3);
@@ -99,95 +109,197 @@ export default function HomePage({ navigate }) {
 
   const allChildSlugs = categoryGroups.flatMap(g => (g.children || []).map(c => c.slug));
 
-  function findChildSlugsByLabel(labels) {
-    const found = [];
+  function findCategorySlugs(labelsOrSlugs) {
+    const found = new Set();
+    const targets = labelsOrSlugs.map(s => String(s || "").toLowerCase().trim()).filter(Boolean);
     categoryGroups.forEach(g => {
+      const gSlug = String(g.slug || "").toLowerCase();
+      const gLabel = String(g.label || "").toLowerCase();
+      const gTitle = String(g.titleMl || "").toLowerCase();
+      const gMatch = targets.includes(gSlug) || targets.includes(gLabel) || targets.includes(gTitle);
+      if (gMatch) {
+        if (g.slug) found.add(g.slug);
+        (g.children || []).forEach(c => { if (c.slug) found.add(c.slug); });
+      }
       (g.children || []).forEach(c => {
-        if (labels.some(l => c.label?.toLowerCase() === l.toLowerCase())) {
-          found.push(c.slug);
+        const cSlug = String(c.slug || "").toLowerCase();
+        const cLabel = String(c.label || "").toLowerCase();
+        const cTitle = String(c.titleMl || "").toLowerCase();
+        if (targets.includes(cSlug) || targets.includes(cLabel) || targets.includes(cTitle)) {
+          if (c.slug) found.add(c.slug);
         }
       });
     });
-    return found;
-  }
-
-  const keralaSlugs = findChildSlugsByLabel(["Kerala", "Keralam"]);
-  const indiaSlugs = findChildSlugsByLabel(["India"]);
-  const worldSlugs = findChildSlugsByLabel(["World"]);
-
-  const gulfLabels = ["Gulf", "ഗൾഫ്"];
-  let gulfSlugs = findChildSlugsByLabel(gulfLabels);
-  const gulfGroup = categoryGroups.find(g => gulfLabels.some(l => g.label?.toLowerCase() === l.toLowerCase()) || g.slug === "gulf");
-  if (gulfGroup) {
-    gulfSlugs = [gulfGroup.slug, ...(gulfGroup.children || []).map(c => c.slug), ...gulfSlugs];
+    labelsOrSlugs.forEach(s => { if (s) found.add(s); });
+    return Array.from(found);
   }
 
   function matchByCategoryOrLabel(article, slugs, labels) {
-    if (slugs.length > 0 && slugs.includes(article.category)) return true;
-    if (article.categories && article.categories.some(c => slugs.includes(c))) return true;
-    if (labels.some(l => article.categoryMl?.toLowerCase() === l.toLowerCase())) return true;
-    if (labels.some(l => article.category?.toLowerCase() === l.toLowerCase())) return true;
+    if (!article) return false;
+    const lowerSlugs = (slugs || []).map(s => String(s).toLowerCase().trim());
+    const lowerLabels = (labels || []).map(l => String(l).toLowerCase().trim());
+
+    const artCat = String(article.category || "").toLowerCase().trim();
+    if (artCat && (lowerSlugs.includes(artCat) || lowerLabels.includes(artCat))) return true;
+
+    if (Array.isArray(article.categories)) {
+      if (article.categories.some(c => {
+        const lc = String(c || "").toLowerCase().trim();
+        return lowerSlugs.includes(lc) || lowerLabels.includes(lc);
+      })) return true;
+    }
+
+    const artMl = String(article.categoryMl || "").toLowerCase().trim();
+    if (artMl && (lowerLabels.includes(artMl) || lowerSlugs.includes(artMl))) return true;
+
     return false;
   }
 
-  const keralaStories = articles.filter(a => matchByCategoryOrLabel(a, keralaSlugs, ["Kerala", "കേരളം"]));
-  const keralaLead = keralaStories[0] || articles[1];
-  const keralaSide = keralaStories.slice(1, 5).length ? keralaStories.slice(1, 5) : articles.slice(2, 6);
+  function getArticlesForCategory(slugs = [], labels = []) {
+    const seen = new Set();
+    const result = [];
 
-  const nationalStories = articles.filter(a => matchByCategoryOrLabel(a, indiaSlugs, ["India", "ദേശിയം", "ഇന്ത്യ"])).slice(0, 6);
-  const nationalLead = nationalStories[0] || articles[2];
-  const nationalSide = nationalStories.slice(1, 5).length ? nationalStories.slice(1, 5) : articles.slice(3, 7);
+    const lowerSlugs = slugs.map(s => String(s || "").toLowerCase().trim()).filter(Boolean);
+    const lowerLabels = labels.map(l => String(l || "").toLowerCase().trim()).filter(Boolean);
 
-  const internationalStories = articles.filter(a => matchByCategoryOrLabel(a, worldSlugs, ["World", "അന്തർദേശിയം", "ലോകം"])).slice(0, 6);
-  const internationalLead = internationalStories[0] || articles[3];
-  const internationalSide = internationalStories.slice(1, 5).length ? internationalStories.slice(1, 5) : articles.slice(4, 8);
+    // 1. From database category aggregation (ensures news never disappears after 1 week)
+    for (const [key, list] of Object.entries(categoryArticlesMap || {})) {
+      const lk = String(key || "").toLowerCase().trim();
+      if (lowerSlugs.includes(lk) || lowerLabels.includes(lk)) {
+        for (const item of (list || [])) {
+          const id = item?.id || item?.slug;
+          if (id && !seen.has(id)) {
+            seen.add(id);
+            result.push(item);
+          }
+        }
+      }
+    }
 
-  const gulfStories = articles.filter(a => gulfSlugs.includes(a.category) || matchByCategoryOrLabel(a, gulfSlugs, ["Gulf", "ഗൾഫ്"])).slice(0, 8);
-  const gulfTop = gulfStories.slice(0, 2);
-  const gulfBottomLeft = gulfStories.slice(2, 5);
-  const gulfBottomRight = gulfStories.slice(5, 8);
+    // 2. Also check general articles list in state
+    for (const a of articles) {
+      if (matchByCategoryOrLabel(a, slugs, labels)) {
+        const id = a?.id || a?.slug;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          result.push(a);
+        }
+      }
+    }
 
-  const viewsSlugs = findChildSlugsByLabel(["Views", "അഭിപ്രായം"]);
-  const viewsStories = articles.filter(a =>
-    a.category === "views" || a.category === "opinion" || a.category === "column" ||
-    viewsSlugs.includes(a.category) ||
-    (a.categories && a.categories.some(c => c === "views" || c === "opinion" || c === "column" || viewsSlugs.includes(c))) ||
-    ["അഭിപ്രായം", "വീക്ഷണം", "_views"].some(l => a.categoryMl?.toLowerCase() === l.toLowerCase())
-  ).slice(0, 6);
-  const viewsLead = viewsStories[0];
-  const viewsSide = viewsStories.slice(1, 5);
+    // Sort newest first: the latest published news is current, previous news moves down
+    result.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+    return result;
+  }
+
+  // Ensures news-split-side is ALWAYS 100% full (e.g. 4 cards)
+  function fillSplitSection(categoryStories = [], fallbackPool = [], sideCount = 4) {
+    const lead = categoryStories[0] || fallbackPool[0] || articles[0];
+    const usedIds = new Set([lead?.id || lead?.slug].filter(Boolean));
+
+    const side = [];
+    // 1. Previous news from this category
+    for (let i = 1; i < categoryStories.length; i++) {
+      const item = categoryStories[i];
+      const id = item?.id || item?.slug;
+      if (id && !usedIds.has(id)) {
+        usedIds.add(id);
+        side.push(item);
+        if (side.length >= sideCount) break;
+      }
+    }
+
+    // 2. Backfill remaining slots from fallbackPool so news-split-side is never empty
+    if (side.length < sideCount) {
+      for (const item of fallbackPool) {
+        const id = item?.id || item?.slug;
+        if (id && !usedIds.has(id)) {
+          usedIds.add(id);
+          side.push(item);
+          if (side.length >= sideCount) break;
+        }
+      }
+    }
+
+    return { lead, side };
+  }
+
+  function fillGulfStories(stories = [], fallbackPool = []) {
+    const pool = [...stories];
+    const usedIds = new Set(pool.map(a => a.id || a.slug).filter(Boolean));
+    for (const item of fallbackPool) {
+      if (pool.length >= 8) break;
+      const id = item?.id || item?.slug;
+      if (id && !usedIds.has(id)) {
+        usedIds.add(id);
+        pool.push(item);
+      }
+    }
+    return {
+      top: pool.slice(0, 2),
+      bottomLeft: pool.slice(2, 5),
+      bottomRight: pool.slice(5, 8),
+    };
+  }
+
+  const keralaSlugs = findCategorySlugs(["Kerala", "Keralam", "കേരളം"]);
+  const keralaStories = getArticlesForCategory(keralaSlugs, ["Kerala", "കേരളം", "Keralam"]);
+  const { lead: keralaLead, side: keralaSide } = fillSplitSection(keralaStories, articles.slice(1));
+
+  const indiaSlugs = findCategorySlugs(["India", "ദേശീയം", "ഇന്ത്യ"]);
+  const nationalStories = getArticlesForCategory(indiaSlugs, ["India", "ദേശീയം", "ദേശിയം", "ഇന്ത്യ"]);
+  const { lead: nationalLead, side: nationalSide } = fillSplitSection(nationalStories, articles.slice(2));
+
+  const worldSlugs = findCategorySlugs(["World", "അന്തർദേശീയം", "ലോകം"]);
+  const internationalStories = getArticlesForCategory(worldSlugs, ["World", "അന്തർദേശീയം", "അന്തർദേശിയം", "ലോകം"]);
+  const { lead: internationalLead, side: internationalSide } = fillSplitSection(internationalStories, articles.slice(3));
+
+  const gulfLabels = ["Gulf", "ഗൾഫ്"];
+  const gulfSlugs = findCategorySlugs(["Gulf", "ഗൾഫ്", "saudi-arabia", "uae", "kuwait", "qatar", "oman", "bahrain"]);
+  const gulfStories = getArticlesForCategory(gulfSlugs, gulfLabels);
+  const { top: gulfTop, bottomLeft: gulfBottomLeft, bottomRight: gulfBottomRight } = fillGulfStories(gulfStories, articles.slice(4));
+
+  const viewsSlugs = findCategorySlugs(["Views", "അഭിപ്രായം", "കാഴ്ചപ്പാട്", "കോളം", "ലേഖനം", "Politics", "രാഷ്ട്രീയം"]);
+  const viewsStories = getArticlesForCategory(
+    ["views", "opinion", "column", "lekhanam", "politics", "Judiciary", "Election commission News", ...viewsSlugs],
+    ["Views", "അഭിപ്രായം", "വീക്ഷണം", "കോളം", "ലേഖനം", "രാഷ്ട്രീയം", "Politics", "Judiciary"]
+  );
+  const { lead: viewsLead, side: viewsSide } = fillSplitSection(viewsStories, articles.slice(5));
 
   const _displayMediaRaw = articles.filter((a) => (a.media === "photo" || a.media === "video") && a.image).slice(0, 4);
-  // Priority: local photo/video -> existing DB photo/video from deeper pages -> latest 4 images (never empty)
   const displayMedia = _displayMediaRaw.length > 0 ? _displayMediaRaw : extraMedia.length > 0 ? extraMedia : articles.filter((a) => a.image).slice(0, 4);
   const latestUpdates = articles.slice(0, 6);
 
   const handledSlugs = new Set([
     ...keralaSlugs, ...indiaSlugs, ...worldSlugs, ...gulfSlugs, ...viewsSlugs,
-    "views", "opinion", "column",
+    "views", "opinion", "column", "lekhanam", "politics", "Judiciary", "Election commission News",
     ...categoryGroups.filter(g => g.label?.toLowerCase() === "news" || g.slug?.toLowerCase() === "news").map(g => g.slug),
     ...categoryGroups.filter(g => g.label?.toLowerCase() === "keralam" || g.slug?.toLowerCase() === "keralam").map(g => g.slug)
   ]);
+
   const dynamicCategorySections = categoryGroups
     .filter(group => !handledSlugs.has(group.slug))
     .map((group) => {
       const childSlugs = (group.children || []).map(c => c.slug);
-      const sectionArticles = articles.filter(a =>
-        childSlugs.includes(a.category) || a.category === group.slug ||
-        (a.categories && a.categories.some(c => childSlugs.includes(c) || c === group.slug))
-      ).slice(0, 6);
+      const childLabels = (group.children || []).map(c => c.label);
+      const allSlugs = [group.slug, ...childSlugs];
+      const allLabels = [group.label, group.titleMl, ...childLabels].filter(Boolean);
+
+      const sectionArticles = getArticlesForCategory(allSlugs, allLabels);
       if (sectionArticles.length === 0) return null;
+
+      const { lead, side } = fillSplitSection(sectionArticles, articles, 4);
       return {
         title: SECTION_LABELS[group.slug] || group.titleMl || group.label,
         slug: group.slug,
         articles: sectionArticles,
-        lead: sectionArticles[0],
-        side: sectionArticles.slice(1, 5),
+        lead,
+        side,
       };
     })
     .filter(Boolean);
 
-  return (
+    return (
     <div className="home-page">
       <div className="news-ticker">
         <span className="news-ticker-label">{t("home.breakingNews")}</span>
@@ -294,7 +406,7 @@ export default function HomePage({ navigate }) {
           </div>
         </section>
 
-        {nationalStories.length > 0 && (
+        {nationalLead && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>{t("home.section.national")}</span>
@@ -313,7 +425,7 @@ export default function HomePage({ navigate }) {
           </section>
         )}
 
-        {internationalStories.length > 0 && (
+        {internationalLead && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>{t("home.section.international")}</span>
@@ -332,7 +444,7 @@ export default function HomePage({ navigate }) {
           </section>
         )}
 
-        {gulfStories.length > 0 && (
+        {gulfTop.length > 0 && (
           <section className="section-block" data-aos="fade-up">
             <div className="section-block-title" data-aos="fade-left">
               <span>{t("home.section.gulf")}</span>

@@ -128,6 +128,16 @@ export async function fetchNews(params = {}) {
   return request("/news" + (query ? "?" + query : ""), { headers: getHeaders }, useLang ? 40000 : 15000);
 }
 
+export async function fetchCategoriesLatest() {
+  const lang = currentLang();
+  const useLang = lang !== DEFAULT_LANG;
+  const q = useLang ? "?lang=" + lang : "";
+  const h = headers();
+  const getHeaders = {};
+  if (h.Authorization) getHeaders.Authorization = h.Authorization;
+  return request("/news/categories-latest" + q, { headers: getHeaders }, useLang ? 40000 : 15000).catch(() => ({}));
+}
+
 export async function fetchArticle(slug, options = {}) {
   const h = headers();
   const getHeaders = {};

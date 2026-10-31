@@ -70,7 +70,7 @@ async function findArticleBySlug(slugParam, isAdmin) {
 router.get("/", async (req, res) => {
   try {
     const { category, subcategory, featured, breaking, limit = 50, page = 1, search } = req.query;
-    const lim = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+    const lim = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
     const pg = Math.max(parseInt(page, 10) || 1, 1);
 
     const filter = {};
@@ -122,6 +122,81 @@ router.get("/", async (req, res) => {
     res.json({ news, total, page: pg, limit: lim });
   } catch (err) {
     console.error("GET /api/news error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/categories-latest", async (req, res) => {
+  try {
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
+    const match = isAdmin ? {} : { published: true };
+
+    const grouped = await Article.aggregate([
+      { $match: match },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$category",
+          articles: {
+            $push: {
+              id: "$slug",
+              _id: "$_id",
+              slug: "$slug",
+              title: "$title",
+              titleEn: "$titleEn",
+              category: "$category",
+              categories: "$categories",
+              categoryMl: "$categoryMl",
+              image: "$image",
+              excerpt: "$excerpt",
+              date: "$date",
+              createdAt: "$createdAt",
+              media: "$media",
+              author: "$author",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          articles: { $slice: ["$articles", 8] },
+        },
+      },
+    ]);
+
+    const result = {};
+    for (const group of grouped) {
+      const catKey = group._id;
+      if (!catKey) continue;
+      const translated = await withLang(group.articles, req, false);
+      if (!result[catKey]) result[catKey] = [];
+      result[catKey].push(...translated);
+
+      for (const art of translated) {
+        if (Array.isArray(art.categories)) {
+          for (const c of art.categories) {
+            if (c && c !== catKey) {
+              if (!result[c]) result[c] = [];
+              if (!result[c].some(a => (a.id || a.slug) === (art.id || art.slug))) {
+                result[c].push(art);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (const key of Object.keys(result)) {
+      result[key].sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+      if (result[key].length > 8) {
+        result[key] = result[key].slice(0, 8);
+      }
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("GET /api/news/categories-latest error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });

@@ -48,7 +48,7 @@ a { color: inherit; text-decoration: none; }
 .date-sep { color: #e6b313; font-weight: 600; }
 .masthead { position: relative; min-height: 112px; justify-content: space-between; align-items: center; padding: 0 10px; }
 .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; color: #0d4228; flex-shrink: 0; position: absolute; left: 50%; transform: translateX(-50%); }
-.{ height: 70px; width: auto; }
+.brand img { height: 70px; width: auto; }
 .masthead-search { flex: 0 0 400px !important; max-width: 400px !important; margin-left: 20px; }
 .brand-mark { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #e6b313; color: #0d4228; font-size: 26px; line-height: 1; }
 .brand strong { display: block; font-size: 23px; letter-spacing: 0; }
